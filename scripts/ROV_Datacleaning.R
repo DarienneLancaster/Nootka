@@ -19,7 +19,10 @@ lp("lubridate")
 
 #set working directory (make sure you have a folder named Nootka with subfolders
 #odata, wdata, scripts, figures)
-setwd("C:/Users/dlanc/Documents/PhD/R/Nootka")
+
+## setwd("C:/Users/dlanc/Documents/PhD/R/Nootka") 
+
+setwd("C:/Users/HuttonNoth(HFS)/Desktop/Biosonic_ROV_2023/Nootka_Aug2023/R/Nootka")
 #double check working directory 
 getwd()
 
