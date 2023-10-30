@@ -1,5 +1,6 @@
 #REMEMBER TO PULL from GIT BEFORE DOING ANYTHING IN THE SCRIPT!!!#####
 #Remember to COMMIT and PUSH before stopping work for the day####
+# Test push # 
 
 #Coding Club is a very helpful website if you're looking for helpful tips on R. Worthwhile to work
 #through some of the intro tutorials and some of the graphing tutorials
@@ -18,7 +19,10 @@ lp("lubridate")
 
 #set working directory (make sure you have a folder named Nootka with subfolders
 #odata, wdata, scripts, figures)
-setwd("C:/Users/dlanc/Documents/PhD/R/Nootka")
+
+## setwd("C:/Users/dlanc/Documents/PhD/R/Nootka") 
+
+setwd("C:/Users/HuttonNoth(HFS)/Desktop/Biosonic_ROV_2023/Nootka_Aug2023/R/Nootka")
 #double check working directory 
 getwd()
 
