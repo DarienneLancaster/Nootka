@@ -1,3 +1,6 @@
+#REMEMBER TO PULL from GIT BEFORE DOING ANYTHING IN THE SCRIPT!!!#####
+#Remember to COMMIT and PUSH before stopping work for the day####
+
 #Coding Club is a very helpful website if you're looking for helpful tips on R. Worthwhile to work
 #through some of the intro tutorials and some of the graphing tutorials
 #All Tutorials
