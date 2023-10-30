@@ -1,0 +1,171 @@
+Point measurements
+
+Generated: Monday 30 October 2023 11:11:21
+
+Filename,Frame,Time (mins),Period,Period time (mins),Image row,Image col,Width,Height,OpCode,TapeReader,Depth,Comment,,,,,,,,,Family,Genus,Species,Code,Number,Stage,Activity,Depth,Sub_Slope,Notes
+NS05_T2_ROV_20230811.depth.mp4,   3667,,,,734.64,858.48,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,Start
+NS05_T2_ROV_20230811.depth.mp4,   3667,,,,792.79,965.34,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,165.5,S_0,
+NS05_T2_ROV_20230811.depth.mp4,   4495,,,,550.68,966.53,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,148.7,C_0,
+NS05_T2_ROV_20230811.depth.mp4,   4863,,,,582.73,1112.58,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,133.6,R_60,
+NS05_T2_ROV_20230811.depth.mp4,   6648,,,,652.75,1060.33,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,108.8,R_90,
+NS05_T2_ROV_20230811.depth.mp4,   7193,,,,676.48,1075.77,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,114.4,M_0,
+NS05_T2_ROV_20230811.depth.mp4,   7712,,,,779.74,1084.08,0,0,ROV,Hutton,NA,NA,,,,,,,,,Bothidae,Citharichthys,sordidus,172716,1,AD,Passing,112.7,M_0,
+NS05_T2_ROV_20230811.depth.mp4,   8113,,,,613.58,926.16,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,106.6,B_0,
+NS05_T2_ROV_20230811.depth.mp4,   8271,,,,540.00,959.41,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,105.7,B_0,ROV gets pulled
+NS05_T2_ROV_20230811.depth.mp4,   9814,,,,727.52,958.22,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,End
+NS06_T2_ROV_20230811.depth.mp4,   5295,,,,617.14,1011.65,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,Start
+NS06_T2_ROV_20230811.depth.mp4,   5705,,,,742.95,1152.95,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,142.5,R_90,
+NS06_T2_ROV_20230811.depth.mp4,   6089,,,,421.32,1727.64,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,maliger,166726,1,AD,Passing,134.8,R_90,
+NS06_T2_ROV_20230811.depth.mp4,   6631,,,,611.21,904.79,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,ROV getting pulled
+NS06_T2_ROV_20230811.depth.mp4,   8290,,,,370.29,1599.41,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Oncorhynchus,,,1,AD,Passing,67.3,R_90,uncertain if ling or greenling
+NS06_T2_ROV_20230811.depth.mp4,   9434,,,,639.69,1119.70,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,End
+NS07_T2_ROV_20230811.depth.mp4,   4766,,,,763.12,695.81,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,Start
+NS07_T2_ROV_20230811.depth.mp4,   4766,,,,744.13,704.12,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,157.6,B_60,
+NS07_T2_ROV_20230811.depth.mp4,   4770,,,,446.24,562.82,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,2,,Passing,157.9,B_60,unknown
+NS07_T2_ROV_20230811.depth.mp4,   5235,,,,732.26,1176.70,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,maliger,166726,1,AD,Passing,150.4,B_60,
+NS07_T2_ROV_20230811.depth.mp4,   5552,,,,891.30,1107.83,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,,,,1,AD,Passing,149.7,B_60,
+NS07_T2_ROV_20230811.depth.mp4,   6868,,,,195.82,477.33,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,12,AD,Scavenging,119.8,B_60,SP
+NS07_T2_ROV_20230811.depth.mp4,   7161,,,,262.29,1198.07,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,100,,Scavenging,117.7,B_60,SP_C
+NS07_T2_ROV_20230811.depth.mp4,   7298,,,,51.03,1452.17,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,200,,Scavenging,114.6,B_60,SP_C
+NS07_T2_ROV_20230811.depth.mp4,   8030,,,,275.34,1604.16,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,200,,Scavenging,114.6,B_60,SP_C
+NS07_T2_ROV_20230811.depth.mp4,   8322,,,,513.89,1568.53,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,400,,Scavenging,90.5,B_60,SP_C
+NS07_T2_ROV_20230811.depth.mp4,   8684,,,,690.73,1658.78,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,ID potential for school
+NS07_T2_ROV_20230811.depth.mp4,   8814,,,,524.57,1510.35,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,caurinus,166713,1,AD,Passing,84.7,B_60,
+NS07_T2_ROV_20230811.depth.mp4,  10267,,,,497.27,1030.65,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,77.2,C_60,
+NS07_T2_ROV_20230811.depth.mp4,  12115,,,,814.15,1162.45,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,54.6,P_30,
+NS07_T2_ROV_20230811.depth.mp4,  13646,,,,598.15,1185.01,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,22.5,R_90,
+NS07_T2_ROV_20230811.depth.mp4,  14053,,,,606.46,1125.64,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,End
+NS09_T2_ROV_20230811.depth.mp4,   9876,,,,548.31,848.98,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,,,,,Start
+NS09_T2_ROV_20230811.depth.mp4,   9877,,,,540.00,959.41,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,179.0,R_90,
+NS09_T2_ROV_20230811.depth.mp4,  10912,,,,549.49,1332.24,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,164.0,M_30,
+NS09_T2_ROV_20230811.depth.mp4,  10913,,,,607.65,1650.46,0,0,ROV,Hutton,NA,NA,,,,,,,,,Bothidae,Citharichthys,sordidus,172716,1,AD,Passing,164.0,M_30,
+NS09_T2_ROV_20230811.depth.mp4,  11787,,,,896.04,521.26,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,152.9,M_30,
+NS09_T2_ROV_20230811.depth.mp4,  12173,,,,134.11,1471.17,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,143.4,M_30,
+NS09_T2_ROV_20230811.depth.mp4,  12461,,,,499.65,1250.32,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,,Passing,139.9,M_30,
+NS09_T2_ROV_20230811.depth.mp4,  12540,,,,467.60,1269.31,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,137.7,M_30,
+NS09_T2_ROV_20230811.depth.mp4,  12795,,,,631.38,673.25,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,129.9,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  12797,,,,141.23,514.14,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,pinniger,166734,1,AD,Passing,129.9,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  13422,,,,658.68,315.84,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,109.2,R_60,puget sound?
+NS09_T2_ROV_20230811.depth.mp4,  13579,,,,78.33,1488.98,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,maliger,166726,1,AD,Passing,107.7,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  13599,,,,253.98,1143.45,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,pinniger,166734,1,AD,Passing,107.4,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  13607,,,,71.21,942.78,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,emphaeus,166718,4,AD,Passing,107.4,R_60,?
+NS09_T2_ROV_20230811.depth.mp4,  13833,,,,840.26,712.43,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Hexagrammos,decagrammus,167110,1,AD,Passing,103.8,M_60,
+NS09_T2_ROV_20230811.depth.mp4,  15213,,,,229.05,1110.20,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Scorpaenichthys,,,40,J,Passing,75.2,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  15467,,,,860.44,1071.02,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,76.9,C_30,
+NS09_T2_ROV_20230811.depth.mp4,  15600,,,,839.08,1091.21,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,pinniger,166734,4,AD,Passing,76.7,C_30,
+NS09_T2_ROV_20230811.depth.mp4,  15774,,,,909.10,674.43,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,75.6,C_30,
+NS09_T2_ROV_20230811.depth.mp4,  15984,,,,734.64,1049.65,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,66.2,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  16795,,,,524.57,1418.92,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,4,,Passing,51.0,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  16826,,,,653.93,1633.84,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,50.7,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  16964,,,,941.14,554.51,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,49.0,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  17023,,,,858.07,885.79,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,48.2,R_60,
+NS09_T2_ROV_20230811.depth.mp4,  18105,,,,691.91,986.72,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,67.0,M_0,
+NS09_T2_ROV_20230811.depth.mp4,  18303,,,,678.86,1158.89,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,End
+NS10_T2_ROV_20230811.depth.mp4,   8329,,,,623.08,980.78,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,Start
+NS10_T2_ROV_20230811.depth.mp4,   8339,,,,560.18,1046.09,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,251.1,R_90,
+NS10_T2_ROV_20230811.depth.mp4,   8339,,,,314.51,1293.06,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,maliger,166726,1,AD,Passing,251.1,R_90,
+NS10_T2_ROV_20230811.depth.mp4,   8430,,,,784.48,1766.83,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Ophiodon,elongatus,167116,1,AD,Passing,250.0,B_90,?
+NS10_T2_ROV_20230811.depth.mp4,   8683,,,,244.48,1339.37,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,3,AD,Passing,249.5,B_90,Canary or copper
+NS10_T2_ROV_20230811.depth.mp4,   9953,,,,651.56,743.30,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,231.4,B_60,
+NS10_T2_ROV_20230811.depth.mp4,  10377,,,,681.23,469.02,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,maliger,166726,1,AD,Passing,223.0,B_60,
+NS10_T2_ROV_20230811.depth.mp4,  10720,,,,569.67,1611.28,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,maliger,166726,1,AD,Passing,215.8,B_60,
+NS10_T2_ROV_20230811.depth.mp4,  10852,,,,691.91,159.11,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,maliger,166726,1,AD,Passing,212.1,B_60,
+NS10_T2_ROV_20230811.depth.mp4,  11489,,,,719.21,1410.61,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,198.4,R_90,
+NS10_T2_ROV_20230811.depth.mp4,  12012,,,,754.81,1535.29,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,205.6,R_90,
+NS10_T2_ROV_20230811.depth.mp4,  12027,,,,505.58,1028.27,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,End
+NS11_T2_ROV_20230811.depth.mp4,   3005,,,,486.59,958.22,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,125.8,M_30,
+NS11_T2_ROV_20230811.depth.mp4,   5298,,,,540.00,959.41,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,102.3,C_60,
+NS11_T2_ROV_20230811.depth.mp4,   8388,,,,509.14,1036.59,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,60,,Scavenging,51.9,C_90,
+NS11_T2_ROV_20230811.depth.mp4,   9175,,,,633.76,1327.50,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,End
+NS12_T2_ROV_20230812.depth.mp4,   5050,,,,510.33,828.79,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,163.5,B_30,
+NS12_T2_ROV_20230812.depth.mp4,   5050,,,,619.46,652.04,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,Start
+NS12_T2_ROV_20230812.depth.mp4,   5168,,,,500.84,1787.01,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,pinniger,166734,1,AD,Passing,162.4,B_30,
+NS12_T2_ROV_20230812.depth.mp4,   5465,,,,259.91,547.38,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,pinniger,166734,1,AD,Passing,158.5,B_30,
+NS12_T2_ROV_20230812.depth.mp4,   5529,,,,380.97,135.36,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,2,AD,Passing,156.1,B_30,
+NS12_T2_ROV_20230812.depth.mp4,   5672,,,,216.00,985.53,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,4,AD,Passing,155.0,B_30,
+NS12_T2_ROV_20230812.depth.mp4,   5896,,,,684.79,404.90,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,154.5,B_30,vermillion?
+NS12_T2_ROV_20230812.depth.mp4,   6081,,,,121.05,529.57,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,4,AD,Passing,154.9,B_30,
+NS12_T2_ROV_20230812.depth.mp4,   6510,,,,538.81,1288.31,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,ROV_pulled
+NS12_T2_ROV_20230812.depth.mp4,   8113,,,,173.27,876.29,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,4,AD,Scavenging,129.7,B_30,
+NS12_T2_ROV_20230812.depth.mp4,   9663,,,,136.48,484.45,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,5,AD,Scavenging,147.9,B_30,Possible repeat
+NS12_T2_ROV_20230812.depth.mp4,   9737,,,,486.59,961.78,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,4,AD,Scavenging,148.9,B_30,
+NS12_T2_ROV_20230812.depth.mp4,   9887,,,,401.14,1766.83,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Scavenging,152.3,B_30,
+NS12_T2_ROV_20230812.depth.mp4,   9923,,,,357.23,1853.51,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Scavenging,152.7,B_30,
+NS12_T2_ROV_20230812.depth.mp4,  10581,,,,869.93,1462.86,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,160.6,B_30,lingcod?
+NS12_T2_ROV_20230812.depth.mp4,  11311,,,,890.11,1066.27,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,151.2,M_30,
+NS12_T2_ROV_20230812.depth.mp4,  12073,,,,945.89,610.32,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,143.3,M_30,Flatfish
+NS12_T2_ROV_20230812.depth.mp4,  12984,,,,886.55,1644.53,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,128.2,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  12989,,,,885.36,1744.27,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,,Passing,128.2,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  13247,,,,665.80,668.50,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,2,,Passing,121.3,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  13713,,,,519.82,1490.17,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,30,J,Passing,105.0,B_60,SB
+NS12_T2_ROV_20230812.depth.mp4,  13861,,,,268.22,764.68,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,30,,Passing,102.4,B_60,SB_C
+NS12_T2_ROV_20230812.depth.mp4,  13952,,,,359.60,878.66,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,200,,Passing,100.4,B_60,SB_C
+NS12_T2_ROV_20230812.depth.mp4,  14065,,,,742.95,1211.13,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,,Passing,96.5,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  14420,,,,919.78,419.15,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,91.8,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  14802,,,,734.64,1687.27,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,maliger,166726,1,AD,Passing,92.0,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  14896,,,,670.55,1315.62,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,100,,Passing,91.4,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  15183,,,,639.69,1650.46,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,2,AD,Passing,89.3,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  15183,,,,605.27,1814.32,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,15,,Passing,89.3,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  15731,,,,668.18,1575.66,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,20,,Passing,86.5,B_60,
+NS12_T2_ROV_20230812.depth.mp4,  16170,,,,634.95,898.85,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,87.3,M_0,
+NS12_T2_ROV_20230812.depth.mp4,  16179,,,,568.48,279.04,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,87.3,M_0,
+NS12_T2_ROV_20230812.depth.mp4,  16465,,,,932.84,1880.82,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,87.4,M_30,
+NS12_T2_ROV_20230812.depth.mp4,  16569,,,,643.25,1035.40,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,87.7,M_0,
+NS12_T2_ROV_20230812.depth.mp4,  16965,,,,848.57,1129.20,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,End
+NS13_T2_ROV_20230812.depth.mp4,   3866,,,,541.81,948.26,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,Start
+NS13_T2_ROV_20230812.depth.mp4,   3882,,,,540.00,959.10,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,193.0,M_0,
+NS13_T2_ROV_20230812.depth.mp4,   4534,,,,767.56,222.16,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,183.1,M_0,
+NS13_T2_ROV_20230812.depth.mp4,   5991,,,,866.89,1085.53,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,145.4,M_0,
+NS13_T2_ROV_20230812.depth.mp4,   6039,,,,621.27,1130.69,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,6,AD,Passing,145.1,M_30,
+NS13_T2_ROV_20230812.depth.mp4,   7612,,,,668.23,773.06,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,,Passing,107.1,M_30,
+NS13_T2_ROV_20230812.depth.mp4,   8345,,,,677.26,442.52,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,,Passing,94.9,M_0,
+NS13_T2_ROV_20230812.depth.mp4,   9815,,,,605.02,856.14,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,100,,Scavenging,83.4,M_0,
+NS13_T2_ROV_20230812.depth.mp4,  12189,,,,886.76,1741.19,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,J,Passing,76.3,M_0,
+NS13_T2_ROV_20230812.depth.mp4,  12703,,,,769.36,1379.94,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,75.0,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  12878,,,,307.02,567.15,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,20,,Passing,74.7,C_30,SB
+NS13_T2_ROV_20230812.depth.mp4,  12937,,,,139.06,1676.16,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Ophiodon,elongatus,167116,1,AD,Passing,74.5,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  13051,,,,270.90,516.58,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,15,J,Passing,74.3,C_30,puget?
+NS13_T2_ROV_20230812.depth.mp4,  13091,,,,140.87,558.12,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Ophiodon,elongatus,167116,1,AD,Passing,74.0,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  13368,,,,549.03,1295.05,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Hexagrammos,decagrammus,167110,1,F,Passing,71.2,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  14057,,,,884.95,532.83,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,emphaeus,166718,6,J,Passing,63.8,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  14205,,,,818.13,222.16,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,pinniger,166734,1,AD,Passing,62.8,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  14947,,,,227.56,1179.45,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,200,,Scavenging,62.5,C_30,SP
+NS13_T2_ROV_20230812.depth.mp4,  15359,,,,204.08,1685.19,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,200,,Scavenging,61.3,C_30,SP_C
+NS13_T2_ROV_20230812.depth.mp4,  15689,,,,97.53,699.00,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,400,,Scavenging,63.7,C_30,SP_C
+NS13_T2_ROV_20230812.depth.mp4,  15944,,,,229.36,1206.55,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,400,,Scavenging,63.9,C_30,SP
+NS13_T2_ROV_20230812.depth.mp4,  16345,,,,119.20,1098.17,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,60,,Scavenging,59.7,C_30,SP_C
+NS13_T2_ROV_20230812.depth.mp4,  16694,,,,677.26,1426.90,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,elongatus,166717,1,AD,Passing,56.7,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  17159,,,,484.01,1195.71,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Hexagrammos,decagrammus,167110,1,,Passing,51.0,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  17347,,,,892.17,1152.36,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Hexagrammos,decagrammus,167110,1,M,Passing,48.9,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  17672,,,,606.82,1231.83,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,30,J,Passing,47.2,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  17681,,,,390.10,205.91,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,47.4,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  17782,,,,698.93,986.19,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Hexagrammos,decagrammus,167110,1,M,Passing,47.3,C_30,
+NS13_T2_ROV_20230812.depth.mp4,  17979,,,,724.21,1027.73,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,End
+NS14_T2_ROV_20230812.depth.mp4,   1847,   1.0099,,,850.21,807.30,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,Start
+NS14_T2_ROV_20230812.depth.mp4,   2114,   1.1559,,,879.15,1004.66,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,111.5,M_0,
+NS14_T2_ROV_20230812.depth.mp4,   3399,   1.8586,,,514.89,712.88,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,,Passing,113.2,M_0,
+NS14_T2_ROV_20230812.depth.mp4,   4965,   2.7148,,,588.94,1375.56,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,110.9,M_0,Scuplin or shrimp?
+NS14_T2_ROV_20230812.depth.mp4,   5806,   3.1747,,,531.91,959.57,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,105.3,C_30,
+NS14_T2_ROV_20230812.depth.mp4,   5868,   3.2086,,,539.57,959.57,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,ROV pulled
+NS14_T2_ROV_20230812.depth.mp4,   8148,   4.4553,,,434.89,1168.84,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,1,AD,Passing,89.3,C_30,
+NS14_T2_ROV_20230812.depth.mp4,   8260,   4.5165,,,340.43,635.46,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,2,AD,Passing,88.3,C_30,
+NS14_T2_ROV_20230812.depth.mp4,   8952,   4.8949,,,456.17,995.30,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,2,AD,Passing,80.0,C_30,
+NS14_T2_ROV_20230812.depth.mp4,   8970,   4.9048,,,761.70,1139.07,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,AD,Passing,80.2,C_30,
+NS14_T2_ROV_20230812.depth.mp4,   8992,   4.9168,,,651.91,968.08,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,pinniger,166734,3,AD,Passing,80.2,C_30,
+NS14_T2_ROV_20230812.depth.mp4,   9229,   5.0464,,,159.15,1706.48,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,pinniger,166734,1,AD,Passing,81.7,C_30,could be a yelloweye
+NS14_T2_ROV_20230812.depth.mp4,  10167,   5.5593,,,664.68,894.92,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,pinniger,166734,1,AD,Passing,80.2,C_30,
+NS14_T2_ROV_20230812.depth.mp4,  11190,   6.1187,,,426.38,1173.10,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,150,,Passing,78.4,C_30,SB
+NS14_T2_ROV_20230812.depth.mp4,  11882,   6.4970,,,463.83,1032.73,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,flavidus,166720,150,,Passing,75.6,C_30,SB_C
+NS14_T2_ROV_20230812.depth.mp4,  12046,   6.5867,,,506.38,1896.18,0,0,ROV,Hutton,NA,NA,,,,,,,,,Hexagrammidae,Hexagrammos,decagrammus,167110,1,F,Passing,74.2,C_30,
+NS14_T2_ROV_20230812.depth.mp4,  12093,   6.6124,,,753.19,1300.70,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,150,,Passing,74.0,C_30,SB_C
+NS14_T2_ROV_20230812.depth.mp4,  12324,   6.7387,,,549.79,1014.02,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,75,,Passing,71.8,C_30,SB_C
+NS14_T2_ROV_20230812.depth.mp4,  12640,   6.9115,,,864.68,209.27,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,20,,Passing,68.8,C_30,SB_C
+NS14_T2_ROV_20230812.depth.mp4,  13387,   7.3200,,,624.68,556.35,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,75,,Passing,61.6,C_30,SB_C
+NS14_T2_ROV_20230812.depth.mp4,  13587,   7.4293,,,691.06,964.68,0,0,ROV,Hutton,NA,NA,,,,,,,,,Scorpaenidae,Sebastes,,,10,,Passing,59.7,C_30,
+NS14_T2_ROV_20230812.depth.mp4,  13587,   7.4293,,,869.79,1013.17,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,Attracted,59.7,R_60,
+NS14_T2_ROV_20230812.depth.mp4,  14301,   7.8197,,,457.02,564.01,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,10,,Passing,,R_60,SB
+NS14_T2_ROV_20230812.depth.mp4,  15294,   8.3627,,,674.04,733.29,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,100,,Passing,37.7,R_60,SB_C
+NS14_T2_ROV_20230812.depth.mp4,  15745,   8.6093,,,709.79,967.23,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,15,,Passing,36.8,R_60,SB_C
+NS14_T2_ROV_20230812.depth.mp4,  15952,   8.7225,,,845.11,508.71,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,20,,Passing,34.7,R_60,SB_C
+NS14_T2_ROV_20230812.depth.mp4,  16429,   8.9833,,,886.81,1293.04,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,1,,Passing,32.2,R_60,
+NS14_T2_ROV_20230812.depth.mp4,  16760,   9.1643,,,539.57,959.57,0,0,ROV,Hutton,NA,NA,,,,,,,,,,,,,,,,,,End
