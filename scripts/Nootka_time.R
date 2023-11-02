@@ -9,22 +9,17 @@ lp("readxl")
 lp("tidyr")
 lp("lubridate")
 
+setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 
+nootkadata <-read_excel("odata/Nootka_Data_2023.xlsx")
 
-nootkadata <- read_excel('C:\\Users\\HuttonNoth(HFS)\\OneDrive - Ha’oom Fisheries Society\\Hutton\\Nootka_August2023\\Nootka_data_2023.xlsx')
 head(nootkadata)
 
+str(nootkadata)
+
 ## Convert the excel time to a time usable in R ## 
-## requires the package library(lubridate) ## 
-##"1899-12-31 11:36:00": Excel stores date and time values as a numeric value where the whole number 
-##part represents the number of days since January 1, 1900, and the decimal part represents the time as a fraction of a day.
-##In this format, "1899-12-31 11:36:00" represents a time value with 11 hours and 36 minutes on December 31, 1899. 
-##When you import this value into R, it recognizes it as a date-time format.
-
-nootkadata$T1_Start <- as.POSIXct(nootkadata$T1_Start, format = "%H:%M:%S")
-
-nootkadata$T1_End <- as.POSIXct(nootkadata$T1_End, format = "%H:%M:%S")
+# I struggled getting time calculations because in time columns on excel there was written out NA's this caused the it to be chr not POSIXct 
 
 ## T2 and T3 times were loaded in as fractions instead of the format of the last one
 ## "0.41319444444444442": This is also a representation of time as a fraction of a day.
@@ -32,23 +27,6 @@ nootkadata$T1_End <- as.POSIXct(nootkadata$T1_End, format = "%H:%M:%S")
 ## there was NA written into the excel file with made the dates show up as fractions and characters 
 ## removing NA from the excel file solved this issue
 
-## class(nootkadata$T2_Start)
-
-## The time is stored as a charcter and we need to convert it to numeric ## 
-
-# nootkadata$T2_Start < as.numeric(nootkadata$T2_Start)
-# nootkadata$T2_End <- as.numeric(nootkadata$T2_End)
-# class(nootkadata$T2_Start)
-# nootkadata$T2_Start_Seconds <- nootkadata$T2_Start * 86400
-# nootkadata$T2_End_Seconds <- nootkadata$T2_End * 86400
-
-# Create a function to format seconds as HH:MM:SS
-#format_seconds <- function(seconds) {
-#  h <- floor(seconds / 3600)
-# m <- floor((seconds %% 3600) / 60)
-#  s <- seconds %% 60
-#  return(sprintf("%02d:%02d:%02d", h, m, s))
-#}
  
 ## Calculate the duration for transect for each transect ## 
 nootkadata$T1_duration <- nootkadata$T1_End - nootkadata$T1_Start
@@ -73,7 +51,7 @@ nootkadata$T3_DepthDif <- nootkadata$T3_Edepth - nootkadata$T3_Sdepth
 ## Lat and long conversion calculations ## 
 
 # Load the required library
-library(dplyr)
+lp("dplyr")
 
 # Function to convert DMS to decimal degrees
 # we are keeping the degrees then pasting the minutes plus decimals of the minutes to the equation that divides them by 60
@@ -91,13 +69,9 @@ dm_to_decimal <- function(dm) {
 nootkadata <- nootkadata %>%
   mutate(Lat_Decimal = sapply(Lat, dm_to_decimal))
 
+
 nootkadata <- nootkadata %>%
   mutate(Long_Decimal = sapply(Long, dm_to_decimal))
-
-# Assuming 'nootkadata' is your dataset, and 'Lat' is the DM column with decimal fraction of minutes
-nootkadata <- nootkadata %>%
-  mutate(Lat_Decimal = sapply(Lat, dm_to_decimal))
-
 
 # Calculate summary statistics across specified columns
 ## identify the class 
@@ -153,3 +127,7 @@ siteduration <- ggplot(nootkadata_long, aes(x = Duration_Type, y = Value)) +
   labs(title = "Duration at sites", y = "Duration (secounds)", x = "Duration Type")
 
 siteduration
+
+## Save Nootka data 
+save(nootkadata, file = "nootkadata.Rdata")
+
