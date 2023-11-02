@@ -1,32 +1,13 @@
-
-# install packages #
-install.packages('tidyverse')
-install.packages('readr')
-install.packages('wesanderson')
-##install.packages('RColorBrewer')
-install.packages('here')
-install.packages("ggplot2")
-install.packages("dplyr")
-install.packages("readxl")
-install.packages("tidyr")
-
-install.packages("lubridate")
-
-# Load packages # 
-library(tidyverse)
-library(readr)
-library(wesanderson)
-##library(RColorBrewer)
-library(here)
-library(ggplot2)
-library(dplyr)
-library(readxl)
-library(tidyr)
-library(lubridate)
-
-
-
-
+## use package to install and 
+lp("tidyverse")
+lp("readr")
+lp("wesanderson")
+lp("here")
+lp("ggplot2")
+lp("dplyr")
+lp("readxl")
+lp("tidyr")
+lp("lubridate")
 
 
 
