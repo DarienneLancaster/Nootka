@@ -1,18 +1,13 @@
-## use package to install and 
-lp("tidyverse")
-lp("readr")
-lp("wesanderson")
-lp("here")
-lp("ggplot2")
-lp("dplyr")
-lp("readxl")
-lp("tidyr")
-lp("lubridate")
 
+## set working directory 
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
+## required packages 
+lp("tidyverse")
+lp("readxl")
 
-nootkadata <-read_excel("odata/Nootka_Data_2023.xlsx")
+## if you read in the file as a excel vs csv it will keep column class's proper for doing time calculations. 
+nootkadata <- read_excel("odata/Nootka_Data_2023.xlsx")
 
 head(nootkadata)
 
@@ -50,7 +45,7 @@ nootkadata$T3_DepthDif <- nootkadata$T3_Edepth - nootkadata$T3_Sdepth
 
 ## Lat and long conversion calculations ## 
 
-# Load the required library
+# Load the required packages 
 lp("dplyr")
 
 # Function to convert DMS to decimal degrees
@@ -72,6 +67,12 @@ nootkadata <- nootkadata %>%
 
 nootkadata <- nootkadata %>%
   mutate(Long_Decimal = sapply(Long, dm_to_decimal))
+
+
+## Save Nootka data 
+save(nootkadata, file = "nootkadata.Rdata")
+
+######################################################################################################################################################
 
 # Calculate summary statistics across specified columns
 ## identify the class 
@@ -128,6 +129,5 @@ siteduration <- ggplot(nootkadata_long, aes(x = Duration_Type, y = Value)) +
 
 siteduration
 
-## Save Nootka data 
-save(nootkadata, file = "nootkadata.Rdata")
+
 
