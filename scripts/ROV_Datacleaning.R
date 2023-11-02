@@ -121,11 +121,14 @@ ROVFish$Site_ID <- substr(ROVFish$Filename, 1, 4)
 
 ## load in nootka data 
 load("nootkadata.Rdata")
+
 ## Lets make a dataset with Site info for each site. 
 
 colnames(nootkadata)
 
-siteinfo2 <- unique(nootkadata[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal")])
+siteinfo <- unique(nootkadata[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal")])
+
+head(siteinfo)
 
 ## Create a function to calculate Fish abundance per site 
 
@@ -135,37 +138,102 @@ get.abundance <- function(xx){
   return(sum(ROVFish$Number[keep]))
 }
 
-head(siteinfo2)
-## Use Mapply to fill siteinfo2 with total number of fish 
-siteinfo2$Abundance <- mapply(get.abundance, xx = siteinfo2$Site_ID)
+## Use Mapply to fill siteinfo with total number of fish 
+siteinfo$Abundance <- mapply(get.abundance, xx = siteinfo$Site_ID)
 
 ## Get Abundance per species ## 
 
+## Calculate abundance of each species per site 
+
+sitespecies <- unique(ROVFish[, c("Site_ID", "FullName")])
+
+# create a function 
+get.abundance.species <- function(xx, ss){ 
+  keep <- which(ROVFish$Site_ID == xx & ROVFish$FullName == ss)
+  if (length(keep) == 0) return(0)
+  return(sum(ROVFish$Number[keep]))
+}
+
+## apply function 
+sitespecies$Abundance <- mapply(get.abundance.species, xx = sitespecies$Site_ID, ss = sitespecies$FullName)
+
+## reshape the dataframe so it shows each species per site along with its abundance at that site
+sitespecies <- reshape(sitespecies, v.names = "Abundance", idvar = "Site_ID", timevar = "FullName", direction = "wide")
+sitespecies[is.na(sitespecies)] <- 0
+
+#### SPECIES RICHNESS PER SITE 
+speciesrichnes <- function(x) { 
+  apply(sitespecies[, 2:22 ]> 0, 1, sum)
+}
+sitespecies$SpeciesRichness <- mapply(speciesrichnes, x = 2)
+
+## now lets add species richness total from sitespecies into siteinfo
+
+addSR <-  function(xx, ss){ 
+  keep <- which(sitespecies$Site_ID == xx)
+  if (length(keep) == 0) return(0)
+  return(sum(sitespecies$SpeciesRichness[keep]))
+}
+
+siteinfo$speciesrichness <- mapply(addSR, xx = siteinfo$Site_ID)
+
+###################################################################################################################################################################
+
+## Calculate species richness for only sebastes 
+
+#create sebastes only dataset 
+
+Sebastes <-  ROVFish%>%
+  filter(Genus == "Sebastes")
 
 
+sitesebastes <- unique(Sebastes[, c("Site_ID", "FullName")])
+
+# create a function 
+get.abundance.sebastes <- function(xx, ss){ 
+  keep <- which(Sebastes$Site_ID == xx & Sebastes$FullName == ss)
+  if (length(keep) == 0) return(0)
+  return(sum(Sebastes$Number[keep]))
+}
+
+## apply function 
+sitesebastes$Abundance <- mapply(get.abundance.sebastes, xx = sitesebastes$Site_ID, ss = sitesebastes$FullName)
+
+## reshape the dataframe so it shows each species per site along with its abundance at that site
+sitesebastes <- reshape(sitesebastes, v.names = "Abundance", idvar = "Site_ID", timevar = "FullName", direction = "wide")
+sitesebastes[is.na(sitesebastes)] <- 0
+
+## Calculate Sebastes total abundance per site 
+sebastesabundance <- function(x) {
+  apply(sitesebastes[, 2:11], 1, sum)
+}
+
+sitesebastes$Total_Abund <- mapply(sebastesabundance, x = 2)
+
+## add this to site info 
+addSA <- function(xx, ss){
+  keep <- which(sitesebastes$Site_ID == xx)
+  if (length(keep) == 0) return(0)
+  return(sum(sitesebastes$Total_Abund[keep]))
+}
+
+siteinfo$SebastesAbundance <- mapply(addSA, xx = siteinfo$Site_ID)
 
 
+#### Sebastes species richness per site 
+sebspeciesrichnes <- function(x) { 
+  apply(sitesebastes[, 2:11 ]> 0, 1, sum)
+}
+sitesebastes$SpeciesRichness <- mapply(sebspeciesrichnes, x = 2)
 
+## now lets add sebastes species richness total from sitesebastes into siteinfo
 
+addSSR <-  function(xx, ss){ 
+  keep <- which(sitesebastes$Site_ID == xx)
+  if (length(keep) == 0) return(0)
+  return(sum(sitesebastes$SpeciesRichness[keep]))
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+siteinfo$SebastesSR <- mapply(addSSR, xx = siteinfo$Site_ID)
 
 
