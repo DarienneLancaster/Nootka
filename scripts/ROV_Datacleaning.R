@@ -236,4 +236,94 @@ addSSR <-  function(xx, ss){
 
 siteinfo$SebastesSR <- mapply(addSSR, xx = siteinfo$Site_ID)
 
+#####################################################################################################################################################
+
+## lets look at the relative frequency of each species 
+
+## Create a function to count the number of each species of fish using the FullName
+
+speciescount <- function(xx){ 
+  keep <- which(ROVFish$FullName == xx)
+  if (length(keep) == 0) return(0)
+  return(sum(ROVFish$Number[keep]))
+}
+
+## create a data set to populate 
+# to create a data frame, you need more then only column to add to the datafrane 
+
+species <- unique(ROVFish[, c("Family", "Genus", "Species", "FullName")])
+
+species$count <- mapply(speciescount, xx = species$FullName )
+
+
+# now we have calculated the total number of each species seen across all of the sites
+# we can use this to calculate the relative frequency of each species across all surveys 
+
+## function to calculate relative frequency 
+
+library(tidyverse)
+
+species1 <- species %>% group_by(FullName) %>% 
+   summarise( total_count = sum(count), .groups = "drop" ) %>% 
+   mutate( frequency = total_count / sum(total_count) ) 
+View(species1)
+
+library(ggplot2)
+
+
+species1 %>%
+  mutate(name = fct_reorder(FullName, desc(frequency))) %>%
+  ggplot( aes(x= reorder(FullName, - frequency), y=frequency)) +
+  geom_bar(stat="identity", alpha=.6, width=.4) +
+  coord_flip() +
+  xlab("") +
+  theme_bw()
+
+## lets remove unknown unknown unknown to get a better understanding of known species  
+species2 <- species %>%
+  filter(!FullName == "unknown unknown unknown")
+
+species2 <- species2 %>% group_by(FullName) %>% 
+  summarise( total_count = sum(count), .groups = "drop" ) %>% 
+  mutate( frequency = total_count / sum(total_count) ) 
+View(species2)
+
+species2 %>%
+  mutate(name = fct_reorder(FullName, desc(frequency))) %>%
+  ggplot( aes(x= reorder(FullName, - frequency), y=frequency)) +
+  geom_bar(stat="identity", alpha=.6, width=.4) +
+  coord_flip() +
+  xlab("") +
+  theme_bw()
+
+## redo for only sebastes 
+
+rockfish <- species %>%
+  filter(Genus == "Sebastes")
+
+rockfish <- rockfish %>% group_by(FullName) %>% 
+  summarise( total_count = sum(count), .groups = "drop" ) %>% 
+  mutate( frequency = total_count / sum(total_count) ) 
+
+rockfish %>%
+  mutate(name = fct_reorder(FullName, desc(frequency))) %>%
+  ggplot( aes(x= reorder(FullName, - frequency), y=frequency)) +
+  geom_bar(stat="identity", alpha=.6, width=.4) +
+  coord_flip() +
+  xlab("") +
+  theme_bw()
+
+
+####################################################################################################################################################
+
+## Write code for fish schools abundance and number 
+
+# subset data to get pelagic schools only 
+# pelagic schools were activity == scavenging 
+
+pelagic <-  ROVFish%>%
+  filter(Activity == "Scavenging")
+
+## pelagic only by number of school and fish in each school 
+# we need to figure out a way to total the fish in each school even considering the SP_C 
 
