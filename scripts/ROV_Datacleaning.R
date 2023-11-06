@@ -236,6 +236,20 @@ addSSR <-  function(xx, ss){
 
 siteinfo$SebastesSR <- mapply(addSSR, xx = siteinfo$Site_ID)
 
+
+## plot species richness 
+  
+ggplot(siteinfo, aes(x = Site_ID, y = SebastesSR)) +
+    geom_histogram(stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90))+
+    labs(x = "\n Site ID", y = "RF species richness") 
+ 
+## plot rockfish abundance per site
+ggplot(siteinfo, aes(x = Site_ID, y = SebastesAbundance)) +
+  geom_histogram(stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90))+
+  labs(title = "Rockfish abundance per site", 
+       x = "\n Site ID", y = "abundance")
 #####################################################################################################################################################
 
 ## lets look at the relative frequency of each species 
@@ -323,7 +337,37 @@ rockfish %>%
 
 pelagic <-  ROVFish%>%
   filter(Activity == "Scavenging")
-
+## realized that this is not needed because there are large fish schools that
+# where labeled "benthic" and catergorized as passing 
 ## pelagic only by number of school and fish in each school 
-# we need to figure out a way to total the fish in each school even considering the SP_C 
+ROVFish <- ROVFish %>% 
+  mutate(rowID = as.numeric(row_number()))
+str(ROVFish)
+process_school_type <- function(ROVFish, school_type, continuation_type){
+  ROVFish %>% 
+    mutate(SchoolID = cumsum(Notes == school_type)) %>%
+    group_by(SchoolID) %>%
+    filter(Notes %in% c(school_type, continuation_type) | SchoolID == 0) %>%
+    mutate(ValidNumber = ifelse(Notes != "", Number, NA_integer_)) %>%
+    summarise(
+      Notes = first(Notes[Notes == school_type]), 
+      TotalNumber = sum(ValidNumber, na.rm = TRUE),
+     Site_IDS = list(unique(Site_ID)),
+     Activitys = list(unique(Activity)), 
+      .groups = "drop"
+    )
+}
 
+# run each school type through the function 
+sp_data <- process_school_type(ROVFish, "SP", "SP_C")
+sp_data
+bp_data <- process_school_type(ROVFish, "BP", "BP_C")
+bp_data
+sb_data <- process_school_type(ROVFish, "SB", "SB_C")
+sb_data
+
+# Combine the processed data back into one dataframe
+combined_data <- bind_rows(sp_data, bp_data, sb_data)
+## now this combined data has the site_ID and activity type associated with 
+# the schools, now we can calculate how many schools in each site and add to 
+# site info 
