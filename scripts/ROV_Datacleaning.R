@@ -280,7 +280,7 @@ library(tidyverse)
 species1 <- species %>% group_by(FullName) %>% 
    summarise( total_count = sum(count), .groups = "drop" ) %>% 
    mutate( frequency = total_count / sum(total_count) ) 
-View(species1)
+
 
 library(ggplot2)
 
@@ -368,6 +368,56 @@ sb_data
 
 # Combine the processed data back into one dataframe
 combined_data <- bind_rows(sp_data, bp_data, sb_data)
+
 ## now this combined data has the site_ID and activity type associated with 
 # the schools, now we can calculate how many schools in each site and add to 
-# site info 
+
+## first we need to clean up the data set 
+## remove the Notes labeled as "NA", it appears to be errors in these values 
+cleandata <-combined_data %>%
+  filter(Notes!= "NA")
+
+## insure Site_IDS are characters. 
+cleandata$Site_ID <- as.character(cleandata$Site_IDS)
+## code to create a new column with school ID that is unique per school site (SP, BP etc.)
+# this will make it easier to do something with the data 
+cleandata$School_ID <- paste(cleandata$Notes, cleandata$SchoolID, sep = ".")
+## remove unnessecary columns 
+cleandata <- select(cleandata, -c(Activitys, Notes, SchoolID, Site_IDS))
+
+## make the data into a wide form to figure out how many schools are at each site
+wide_data <- cleandata %>%
+  pivot_wider(names_from = School_ID, values_from = TotalNumber, values_fill = 0)
+
+## Calculate the total fish in schools at a site. 
+numberofschoolingfish <- function(x) {
+  apply(wide_data[, 2:46], 1, sum)
+}
+
+wide_data$TotalSF <- mapply(numberofschoolingfish, x = 2)
+
+## create a function that adds this to site info 
+addSF <- function(xx, ss){
+  keep <- which(wide_data$Site_ID == xx)
+  if (length(keep) == 0) return(0)
+  return(sum(wide_data$TotalSF[keep]))
+}
+## add the total number of schooling fish to Site info 
+siteinfo$TotalSF <- mapply(addSF, xx = siteinfo$Site_ID)
+
+
+#### function that counts the fish school at each site
+numberFS <- function(x) { 
+  apply(wide_data[, 2:46 ]> 0, 1, sum)
+}
+wide_data$NumberFS <- mapply(numberFS, x = 2)
+
+## now lets add sebastes species richness total from sitesebastes into siteinfo
+
+addFS <-  function(xx, ss){ 
+  keep <- which(wide_data$Site_ID == xx)
+  if (length(keep) == 0) return(0)
+  return(sum(wide_data$NumberFS[keep]))
+}
+
+siteinfo$NumberFS <- mapply(addFS, xx = siteinfo$Site_ID)
