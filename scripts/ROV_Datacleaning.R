@@ -39,9 +39,7 @@ ROV = select(ROV, -"Code")
 #  filter(Notes!='Start', Notes!='start', Notes!='End', Notes!='end')
 ## the start and end for each site could be used to get accurate times surveying sites 
 
-#create substrate only dataset named ROVS
-ROVSub <-ROV%>%
-  filter(Activity=="Attracted")
+
 
 #create fish only dataset named ROVFish
 
@@ -421,3 +419,33 @@ addFS <-  function(xx, ss){
 }
 
 siteinfo$NumberFS <- mapply(addFS, xx = siteinfo$Site_ID)
+
+###############################################################################################
+# Create substrate only dataset named ROVS
+ROVSub <-ROV%>%
+  filter(Activity=="Attracted")
+## remove unnessecary columns 
+## this function will pull the first 4 letters of a character and then paste them in a new column to make a unique site ID 
+## this will allow us to merge datasets using this column 
+ROVSub$Site_ID <- substr(ROVSub$Filename, 1, 4)
+ROVSub<- select(ROVSub, -c(Stage, Notes, Family, Genus, Species, Number, Activity, Filename))
+colnames(ROVSub)[which(names(ROVSub) == "Depth.1")] <- "Depth"
+colnames(ROVSub)[which(names(ROVSub) == "Time..mins.")] <- "Time"
+
+#duration_data <- ROVSub %>%
+ # group_by(Site_ID, Sub_Slope) %>%
+  #summarise(Duration = diff(Time)) %>%
+#  ungroup()
+
+ROVSub$Time <- as.numeric(ROVSub$Time)  # Ensure Time_Stamp is numeric
+
+
+Duration_data <- ROVSub %>%
+  arrange(Site_ID, Time) %>%
+  group_by(Site_ID) %>%
+  mutate(Duration = ifelse(Sub_Slope != lag(Sub_Slope), 
+                           Time - lag(Time, default = first(Time)), 
+                           0)) %>%
+  ungroup()
+
+
