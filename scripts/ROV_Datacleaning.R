@@ -423,29 +423,83 @@ siteinfo$NumberFS <- mapply(addFS, xx = siteinfo$Site_ID)
 ###############################################################################################
 # Create substrate only dataset named ROVS
 ROVSub <-ROV%>%
-  filter(Activity=="Attracted")
+  filter(Activity=="Attracted" | Notes == "End")
 ## remove unnessecary columns 
 ## this function will pull the first 4 letters of a character and then paste them in a new column to make a unique site ID 
 ## this will allow us to merge datasets using this column 
 ROVSub$Site_ID <- substr(ROVSub$Filename, 1, 4)
-ROVSub<- select(ROVSub, -c(Stage, Notes, Family, Genus, Species, Number, Activity, Filename))
+ROVSub<- select(ROVSub, -c(Stage, Family, Genus, Species, Number, Activity, Filename))
 colnames(ROVSub)[which(names(ROVSub) == "Depth.1")] <- "Depth"
 colnames(ROVSub)[which(names(ROVSub) == "Time..mins.")] <- "Time"
 
-#duration_data <- ROVSub %>%
- # group_by(Site_ID, Sub_Slope) %>%
-  #summarise(Duration = diff(Time)) %>%
-#  ungroup()
+## ensure time is numeric so that you can preform a calculation with the time 
 
 ROVSub$Time <- as.numeric(ROVSub$Time)  # Ensure Time_Stamp is numeric
+ROVSub$Sub <- substr(ROVSub$Sub_Slope, 1, 1)
 
+
+## create a new dataset called duration time 
 
 Duration_data <- ROVSub %>%
+  ## arrange 
   arrange(Site_ID, Time) %>%
+  ## group the data by Site ID - this will help ensure that calculations 
+  # are only done for each site 
   group_by(Site_ID) %>%
-  mutate(Duration = ifelse(Sub_Slope != lag(Sub_Slope), 
-                           Time - lag(Time, default = first(Time)), 
+  # this code calculates the time at each subslope, and includes the end of transet 
+  mutate(Duration = ifelse(Sub != lead(Sub) | lead(Notes == "End"), 
+                           lead(Time) - Time, 
                            0)) %>%
   ungroup()
 
+## now we need to calculate the total duration at each site by using 
+# the first sub_slope value and the notes == "end" point 
+Duration_data <- Duration_data %>%
+  group_by(Site_ID) %>%
+mutate(Total_Duration = ifelse(Notes == "End", 
+                               last(Time) - first(Time), 
+                               NA_real_)) %>%
+group_by(Site_ID) %>%
+  mutate(Total_Duration = last(Total_Duration)) %>%
+  ungroup() %>%
+  mutate(Proportion = Duration / Total_Duration)
 
+## now lets clean the dataset by removing the Notes == "End" column and the 
+## Column named notes 
+Duration_data <- filter(Duration_data, Notes!='End') 
+Duration_data <-  select(Duration_data, -c(Frame, Depth, Time,
+                                           Duration, Total_Duration, Notes, Sub_Slope))
+
+## lets pool the data 
+wide_duration <- Duration_data %>%
+  group_by(Site_ID, Sub) %>%
+  summarize(Proportion = sum(Proportion)) %>%
+  pivot_wider(names_from = Sub, values_from = Proportion)%>%
+  replace(is.na(.), 0)
+
+## lets look at the relative proportion of each substrate type at a particular site 
+NS05_sub <- Duration_data %>%
+  filter(Site_ID == "NS05")  # Filter the data for the chosen Site_ID
+## turn the proportion into percent for cleaner visual 
+NS05_sub <- NS05_sub %>%
+  mutate(Percent = round(Proportion * 100))
+NS05_sub <- filter(NS05_sub, Percent !=0) 
+
+ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
+  geom_bar(stat = "identity", width = 1) +
+ coord_polar(theta = "y") +
+  labs(title = paste( "NS05")) +
+  theme_minimal() +
+  theme(axis.text = element_blank(), legend.position = "bottom")
+
+ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
+  geom_col(color = "black") +
+  geom_text(aes(label = Percent),
+        position = position_stack(vjust = 0.5)) +
+  ## creates a title 
+  labs(title = paste( "NS05")) +
+  ## creates the pie chart
+  coord_polar(theta = "y")
+
+## now lets do this for each slope type and subrate type 
+## clean the dataset 
