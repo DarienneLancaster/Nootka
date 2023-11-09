@@ -237,17 +237,33 @@ siteinfo$SebastesSR <- mapply(addSSR, xx = siteinfo$Site_ID)
 
 ## plot species richness 
   
-ggplot(siteinfo, aes(x = Site_ID, y = SebastesSR)) +
+ggplot(siteinfo %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
+       aes(x = Site_ID, y = SebastesSR)) +
     geom_histogram(stat = "identity", position = "dodge") +
   theme(axis.text.x = element_text(angle = 90))+
-    labs(x = "\n Site ID", y = "RF species richness") 
+    labs(x = "\n Site ID", y = "Rockfish species richness") 
  
 ## plot rockfish abundance per site
+
+siteinfo_1 <- tidyr::pivot_longer(siteinfo, cols=c('SebastesAbundance', 'Abundance'), names_to='variable', 
+                           values_to="value")
+head(siteinfo_1)
+
+ggplot(siteinfo_1 %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
+       aes(x=Site_ID, y=value, fill=variable)) +
+  geom_bar(stat='identity', position='dodge') +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x = "\n Site ID", y = "Abundance") +
+  scale_fill_manual(values = c(SebastesAbundance = "blue", Abundance = "red")) +
+  guides(fill = guide_legend(title = NULL))
+ # geom_bar(stat='identity', position='dodge')
+
+#This code uses position = "dodge" to place the bars for "SebastesAbundance" and "abundance" side by side for each "Site_ID". The scale_fill_manual function is used to set different colors for the two sets of bars.
+  
 ggplot(siteinfo, aes(x = Site_ID, y = SebastesAbundance)) +
   geom_histogram(stat = "identity", position = "dodge") +
   theme(axis.text.x = element_text(angle = 90))+
-  labs(title = "Rockfish abundance per site", 
-       x = "\n Site ID", y = "abundance")
+  labs( x = "\n Site ID", y = "Rockfish abundance")
 #####################################################################################################################################################
 
 ## lets look at the relative frequency of each species 
@@ -308,6 +324,15 @@ species2 %>%
   xlab("") +
   theme_bw()
 
+
+result_table <- species1 %>%
+  mutate(name = forcats::fct_reorder(FullName, desc(total_count))) %>%
+  arrange(desc(total_count)) %>%
+  select(FullName, total_count = total_count)
+
+# Display the table
+kable(result_table)
+
 ## redo for only sebastes 
 
 rockfish <- species %>%
@@ -326,6 +351,16 @@ rockfish %>%
   theme_bw()
 
 
+## just Rockfish lets put this in a table with the total count 
+lp('knitr')
+
+result_table1 <- rockfish %>%
+  mutate(name = forcats::fct_reorder(FullName, desc(total_count))) %>%
+  arrange(desc(total_count)) %>%
+  select(FullName, total_count = total_count)
+
+# Display the table
+kable(result_table1)
 ####################################################################################################################################################
 
 ## Write code for fish schools abundance and number 
@@ -420,6 +455,15 @@ addFS <-  function(xx, ss){
 
 siteinfo$NumberFS <- mapply(addFS, xx = siteinfo$Site_ID)
 
+## plot rockfish abundance per site
+ggplot(siteinfo %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
+       aes(x = Site_ID, y = NumberFS)) +
+  geom_histogram(stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90))+
+  labs( x = "\n Site ID", y = "Number of pelagic schools")
+
+
+
 ###############################################################################################
 # Create substrate only dataset named ROVS
 ROVSub <-ROV%>%
@@ -484,6 +528,15 @@ NS05_sub <- Duration_data %>%
 NS05_sub <- NS05_sub %>%
   mutate(Percent = round(Proportion * 100))
 NS05_sub <- filter(NS05_sub, Percent !=0) 
+## lets change the names to make the visual look better 
+
+# Mapping values
+sub_mapping <- c("B" = "Boulder", "C" = "Cobble", "M" = "Mud", "R" = "Bed Rock", "S" = "Sand")
+
+# Use mutate and recode the values in the Sub column
+NS05_sub <- NS05_sub %>% 
+  mutate(Sub = recode(Sub, !!!sub_mapping))
+
 
 ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
   geom_bar(stat = "identity", width = 1) +
@@ -497,9 +550,9 @@ ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
   geom_text(aes(label = Percent),
         position = position_stack(vjust = 0.5)) +
   ## creates a title 
-  labs(title = paste( "NS05")) +
+  labs(title = paste( "Substrate types - NS05")) +
   ## creates the pie chart
   coord_polar(theta = "y")
 
-## now lets do this for each slope type and subrate type 
+## now lets do this for each slope type and substrate type 
 ## clean the dataset 
