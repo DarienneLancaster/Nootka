@@ -528,8 +528,8 @@ NS05_sub <- Duration_data %>%
 NS05_sub <- NS05_sub %>%
   mutate(Percent = round(Proportion * 100))
 NS05_sub <- filter(NS05_sub, Percent !=0) 
-## lets change the names to make the visual look better 
 
+## lets change the names to make the visual look better 
 # Mapping values
 sub_mapping <- c("B" = "Boulder", "C" = "Cobble", "M" = "Mud", "R" = "Bed Rock", "S" = "Sand")
 
@@ -538,13 +538,7 @@ NS05_sub <- NS05_sub %>%
   mutate(Sub = recode(Sub, !!!sub_mapping))
 
 
-ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
-  geom_bar(stat = "identity", width = 1) +
- coord_polar(theta = "y") +
-  labs(title = paste( "NS05")) +
-  theme_minimal() +
-  theme(axis.text = element_blank(), legend.position = "bottom")
-
+## create the pie chart 
 ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
   geom_col(color = "black") +
   geom_text(aes(label = Percent),
@@ -554,5 +548,5 @@ ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
   ## creates the pie chart
   coord_polar(theta = "y")
 
-## now lets do this for each slope type and substrate type 
-## clean the dataset 
+## now lets do this for each slope
+
