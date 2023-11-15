@@ -11,11 +11,32 @@ lp("dplyr")
 ManualDT <- read_excel("odata/StarOddi_Depth_Temp.xlsx")
 StarDT <- read_excel("odata/StarOddiDataNootka_.xlsx")
 colnames(StarDT)[which(names(StarDT) == "Depth(m)")] <- "Depth"
-## first lets filter all the empty rows under site ID 
-
 unique(StarDT$Date)
+
 ## lets start working on subsetting the data to remove excess points 
 ## only care about positive depth values 
 StarDT <- StarDT %>%
-  filter(Depth > 0) + 
-  filter(!Date == "10.08.2023")
+  ## we only care about the data in depths greater then 10m (thermocline)
+  filter(Depth > 10) %>%
+  ## we void all the study sites from the first day (NS01 - NS04)
+  filter(!Date %in% "10.08.2023")
+
+
+# Create a function to determine Site_ID
+get_site_id <- function(Depth, Time) {
+  if (Depth <= 10) {
+    return(NA)  # No Site_ID for depths <= 10m
+  } else {
+    site_num <- as.numeric(substr(Time, 12, 13))  # Extract hours from the time
+    if (site_num %in% c(8, 18)) {
+      return(NA)  # Skip NS08 and NS18
+    } else {
+      site_id <- sprintf("NS%02d", (site_num - 4) %% 50 + 5)  # Start from NS05
+      return(site_id)
+    }
+  }
+}
+
+# Apply the function to create the Site_ID column
+StarDT$Site_ID <- mapply(get_site_id, StarDT$Depth, as.character(StarDT$Time))
+

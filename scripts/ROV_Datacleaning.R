@@ -258,8 +258,7 @@ ggplot(siteinfo_1 %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
   guides(fill = guide_legend(title = NULL))
  # geom_bar(stat='identity', position='dodge')
 
-#This code uses position = "dodge" to place the bars for "SebastesAbundance" and "abundance" side by side for each "Site_ID". The scale_fill_manual function is used to set different colors for the two sets of bars.
-  
+
 ggplot(siteinfo, aes(x = Site_ID, y = SebastesAbundance)) +
   geom_histogram(stat = "identity", position = "dodge") +
   theme(axis.text.x = element_text(angle = 90))+
@@ -547,6 +546,6 @@ ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
   labs(title = paste( "Substrate types - NS05")) +
   ## creates the pie chart
   coord_polar(theta = "y")
+ 
 
-## now lets do this for each slope
 
