@@ -125,7 +125,7 @@ nootkadata_long <- nootkadata %>%
 siteduration <- ggplot(nootkadata_long, aes(x = Duration_Type, y = Value)) +
   geom_boxplot() +
   theme_minimal() +
-  labs(title = "Duration at sites", y = "Duration (secounds)", x = "Duration Type")
+  labs(title = "Duration at sites", y = "Duration (seconds)", x = "Duration Type")
 
 siteduration
 

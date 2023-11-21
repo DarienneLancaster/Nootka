@@ -360,6 +360,8 @@ result_table1 <- rockfish %>%
 
 # Display the table
 kable(result_table1)
+
+write.csv(result_table1,"wdata/total_count_rockfish.csv", row.names = FALSE )
 ####################################################################################################################################################
 
 ## Write code for fish schools abundance and number 
@@ -461,7 +463,7 @@ ggplot(siteinfo %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
   theme(axis.text.x = element_text(angle = 90))+
   labs( x = "\n Site ID", y = "Number of pelagic schools")
 
-
+write.csv(siteinfo,"wdata/siteinfo.csv", row.names = FALSE)
 
 ###############################################################################################
 # Create substrate only dataset named ROVS
