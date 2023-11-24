@@ -180,7 +180,6 @@ siteinfo$speciesrichness <- mapply(addSR, xx = siteinfo$Site_ID)
 ## Calculate species richness for only sebastes 
 
 #create sebastes only dataset 
-
 Sebastes <-  ROVFish%>%
   filter(Genus == "Sebastes")
 
@@ -247,7 +246,6 @@ ggplot(siteinfo %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
 
 siteinfo_1 <- tidyr::pivot_longer(siteinfo, cols=c('SebastesAbundance', 'Abundance'), names_to='variable', 
                            values_to="value")
-head(siteinfo_1)
 
 ggplot(siteinfo_1 %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
        aes(x=Site_ID, y=value, fill=variable)) +
@@ -259,7 +257,8 @@ ggplot(siteinfo_1 %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
  # geom_bar(stat='identity', position='dodge')
 
 
-ggplot(siteinfo, aes(x = Site_ID, y = SebastesAbundance)) +
+ggplot(siteinfo %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
+       aes(x = Site_ID, y = SebastesAbundance)) +
   geom_histogram(stat = "identity", position = "dodge") +
   theme(axis.text.x = element_text(angle = 90))+
   labs( x = "\n Site ID", y = "Rockfish abundance")
@@ -422,7 +421,7 @@ cleandata <- select(cleandata, -c(Activitys, Notes, SchoolID, Site_IDS))
 ## make the data into a wide form to figure out how many schools are at each site
 wide_data <- cleandata %>%
   pivot_wider(names_from = School_ID, values_from = TotalNumber, values_fill = 0)
-
+view(cleandata)
 ## Calculate the total fish in schools at a site. 
 numberofschoolingfish <- function(x) {
   apply(wide_data[, 2:46], 1, sum)
@@ -465,41 +464,120 @@ ggplot(siteinfo %>% filter(!Site_ID %in% c("NS01", "NS02", "NS03", "NS04")),
 
 write.csv(siteinfo,"wdata/siteinfo.csv", row.names = FALSE)
 
+
+#############################################################################################
+## Calculate the abundance and species richness of non-schooling fish. 
+fishschool <-c("End", "Start","SP", "SP_C","BB_C","BP", "SB", "BP_C", "SB_C", "BB")
+
+##Remove all fishschools that are denoted as these values
+ROV_noschool <- ROVFish %>%
+  filter(! Notes %in% fishschool)
+## looking over the dataset there are multiple fishschools that weren't denoted in "Notes" 
+ROV_noschool <- ROVFish %>%
+  # Fish schools, if we call over 6 fish schooling 
+  filter(! Number > 6)
+
+# Calculate abundance of each species per site 
+
+sitenoschool <- unique(ROV_noschool[, c("Site_ID", "FullName")])
+
+# create a function 
+get.noschool.abundance.species <- function(xx, ss){ 
+  keep <- which(ROV_noschool$Site_ID == xx & ROV_noschool$FullName == ss)
+  if (length(keep) == 0) return(0)
+  return(sum(ROV_noschool$Number[keep]))
+}
+
+## apply function 
+sitenoschool$Abundance <- mapply(get.noschool.abundance.species, xx = sitenoschool$Site_ID, ss = sitenoschool$FullName)
+
+## reshape the dataframe so it shows each species per site along with its abundance at that site
+sitenoschool <- reshape(sitenoschool, v.names = "Abundance", idvar = "Site_ID", timevar = "FullName", direction = "wide")
+sitenoschool[is.na(sitenoschool)] <- 0
+
+#### SPECIES RICHNESS PER SITE 
+speciesrichnes <- function(x) { 
+  apply(sitenoschool[, 2:21 ]> 0, 1, sum)
+}
+sitenoschool$SRnoschool <- mapply(speciesrichnes, x = 2)
+
+## now lets add species richness into siteinfo
+
+addSR <-  function(xx, ss){ 
+  keep <- which(sitenoschool$Site_ID == xx)
+  if (length(keep) == 0) return(0)
+  return(sum(sitenoschool$SRnoschool[keep]))
+}
+
+siteinfo$SRnoschool <- mapply(addSR, xx = siteinfo$Site_ID)
+
+## lets calculate abundance of non-schooling fish 
+noschoolabundance <- function(x) {
+  apply(sitenoschool[, 2:21], 1, sum)
+}
+
+sitenoschool$AbundanceNoschool <- mapply(noschoolabundance, x = 2)
+
+## lets add the abundance of non-schooling fish 
+addabundance <-  function(xx, ss){ 
+  keep <- which(sitenoschool$Site_ID == xx)
+  if (length(keep) == 0) return(0)
+  return(sum(sitenoschool$AbundanceNoschool[keep]))
+}
+
+siteinfo$Abundancenoschool <- mapply(addabundance, xx = siteinfo$Site_ID)
 ###############################################################################################
 # Create substrate only dataset named ROVS
-ROVSub <-ROV%>%
+ROVSubSlope <-ROV%>%
   filter(Activity=="Attracted" | Notes == "End")
 ## remove unnessecary columns 
 ## this function will pull the first 4 letters of a character and then paste them in a new column to make a unique site ID 
 ## this will allow us to merge datasets using this column 
-ROVSub$Site_ID <- substr(ROVSub$Filename, 1, 4)
-ROVSub<- select(ROVSub, -c(Stage, Family, Genus, Species, Number, Activity, Filename))
-colnames(ROVSub)[which(names(ROVSub) == "Depth.1")] <- "Depth"
-colnames(ROVSub)[which(names(ROVSub) == "Time..mins.")] <- "Time"
+ROVSubSlope$Site_ID <- substr(ROVSubSlope$Filename, 1, 4)
+## remove unnecessary columns 
+ROVSubSlope<- select(ROVSubSlope, -c(Stage, Family, Genus, Species, Number, Activity, Filename))
+## rename columns 
+colnames(ROVSubSlope)[which(names(ROVSubSlope) == "Depth.1")] <- "Depth"
+colnames(ROVSubSlope)[which(names(ROVSubSlope) == "Time..mins.")] <- "Time"
 
 ## ensure time is numeric so that you can preform a calculation with the time 
+ROVSubSlope$Time <- as.numeric(ROVSubSlope$Time)
 
-ROVSub$Time <- as.numeric(ROVSub$Time)  # Ensure Time_Stamp is numeric
-ROVSub$Sub <- substr(ROVSub$Sub_Slope, 1, 1)
+## Code that creates a new column with just substrate information 
+ROVSubSlope$Sub <- substr(ROVSub$Sub_Slope, 1, 1)
+## lets repeat this for slope only 
+ROVSubSlope$Slope <- substr(ROVSub$Sub_Slope, 3, 4)
 
 
 ## create a new dataset called duration time 
-
-Duration_data <- ROVSub %>%
+Sub_Duration_data <- ROVSubSlope %>%
   ## arrange 
   arrange(Site_ID, Time) %>%
   ## group the data by Site ID - this will help ensure that calculations 
   # are only done for each site 
   group_by(Site_ID) %>%
   # this code calculates the time at each subslope, and includes the end of transet 
-  mutate(Duration = ifelse(Sub != lead(Sub) | lead(Notes == "End"), 
+  mutate(SubDuration = ifelse(Sub != lead(Sub) | lead(Notes == "End"), 
                            lead(Time) - Time, 
                            0)) %>%
   ungroup()
 
+## repeat for slope 
+Slope_Duration_data <- ROVSubSlope %>%
+  ## arrange 
+  arrange(Site_ID, Time) %>%
+  ## group the data by Site ID - this will help ensure that calculations 
+  # are only done for each site 
+  group_by(Site_ID) %>%
+  # this code calculates the time at each subslope, and includes the end of transet 
+  mutate(SlopeDuration = ifelse(Slope != lead(Slope) | lead(Notes == "End"), 
+                              lead(Time) - Time, 
+                              0)) %>%
+  ungroup()
+
 ## now we need to calculate the total duration at each site by using 
 # the first sub_slope value and the notes == "end" point 
-Duration_data <- Duration_data %>%
+Sub_Duration_data <- Sub_Duration_data %>%
   group_by(Site_ID) %>%
 mutate(Total_Duration = ifelse(Notes == "End", 
                                last(Time) - first(Time), 
@@ -507,40 +585,70 @@ mutate(Total_Duration = ifelse(Notes == "End",
 group_by(Site_ID) %>%
   mutate(Total_Duration = last(Total_Duration)) %>%
   ungroup() %>%
-  mutate(Proportion = Duration / Total_Duration)
+  mutate(Proportion = SubDuration / Total_Duration)
+
+Slope_Duration_data <- Slope_Duration_data %>%
+  group_by(Site_ID) %>%
+  mutate(Total_Duration = ifelse(Notes == "End", 
+                                 last(Time) - first(Time), 
+                                 NA_real_)) %>%
+  group_by(Site_ID) %>%
+  mutate(Total_Duration = last(Total_Duration)) %>%
+  ungroup() %>%
+  mutate(Proportion = SlopeDuration / Total_Duration)
 
 ## now lets clean the dataset by removing the Notes == "End" column and the 
 ## Column named notes 
-Duration_data <- filter(Duration_data, Notes!='End') 
-Duration_data <-  select(Duration_data, -c(Frame, Depth, Time,
-                                           Duration, Total_Duration, Notes, Sub_Slope))
-
+Sub_Duration_data <- filter(Sub_Duration_data, Notes!='End') 
+Sub_Duration_data <-  select(Sub_Duration_data, -c(Frame, Depth, Time, Slope,
+                                           SubDuration, Total_Duration, Notes, Sub_Slope))
+Slope_Duration_data <- filter(Slope_Duration_data, Notes!='End') 
+Slope_Duration_data <-  select(Slope_Duration_data, -c(Frame, Depth, Time, Sub,
+                                                   SlopeDuration, Total_Duration, Notes, Sub_Slope))
 ## lets pool the data 
-wide_duration <- Duration_data %>%
+Sub_wide_duration <- Sub_Duration_data %>%
   group_by(Site_ID, Sub) %>%
   summarize(Proportion = sum(Proportion)) %>%
   pivot_wider(names_from = Sub, values_from = Proportion)%>%
   replace(is.na(.), 0)
 
-## lets look at the relative proportion of each substrate type at a particular site 
-NS05_sub <- Duration_data %>%
-  filter(Site_ID == "NS05")  # Filter the data for the chosen Site_ID
-## turn the proportion into percent for cleaner visual 
-NS05_sub <- NS05_sub %>%
+Slope_Wide_duration <- Slope_Duration_data %>%
+  group_by(Site_ID, Slope) %>%
+  summarize(Proportion = sum(Proportion)) %>%
+  pivot_wider(names_from = Slope, values_from = Proportion) %>%
+  replace(is.na(.), 0)
+View(Slope_Wide_duration)
+
+## we might have not needed to do the prior code. Lets try something 
+Sub_Duration_data <- Sub_Duration_data %>%
   mutate(Percent = round(Proportion * 100))
-NS05_sub <- filter(NS05_sub, Percent !=0) 
+
+Slope_Duration_data <- Slope_Duration_data %>%
+  mutate(Percent = round(Proportion * 100))
+
+##Slope_Duration_data <- filter(Slope_Duration_data, Percent !=0) 
 
 ## lets change the names to make the visual look better 
 # Mapping values
-sub_mapping <- c("B" = "Boulder", "C" = "Cobble", "M" = "Mud", "R" = "Bed Rock", "S" = "Sand")
-
-# Use mutate and recode the values in the Sub column
-NS05_sub <- NS05_sub %>% 
+sub_mapping <- c("B" = "Boulder", "C" = "Cobble", "M" = "Mud", "R" = "Bed Rock", "S" = "Sand", "P" = "Pepple")
+Sub_Duration_data <- Sub_Duration_data %>% 
   mutate(Sub = recode(Sub, !!!sub_mapping))
 
 
+
+slope_mapping <-c("0" = "0-30", "30" = "30-60", "60" = "60-90", "90" = "90")
+Slope_Duration_data <- Slope_Duration_data %>% 
+  mutate(Slope = recode(Slope, !!!slope_mapping))
+## Particular site 
+
+## this needs some help - need to figure out why they aren't adding up to 100 for the slope- 
+
+NS05_Sub <- Sub_Duration_data %>% 
+  select(Sub_Duration_data, Site_ID == "NS05")
+
+NS05_Slope <- subset(Slope_Duration_data, Site_ID == "NS05")
 ## create the pie chart 
-ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
+ggplot(NS05_Slope, aes(x = "", y = Percent, fill = Slope)) +
   geom_col(color = "black") +
   geom_text(aes(label = Percent),
         position = position_stack(vjust = 0.5)) +
@@ -549,5 +657,3 @@ ggplot(NS05_sub, aes(x = "", y = Percent, fill = Sub)) +
   ## creates the pie chart
   coord_polar(theta = "y")
  
-
-
