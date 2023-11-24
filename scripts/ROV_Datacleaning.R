@@ -25,9 +25,13 @@ lp("dplyr")
 
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
-#load Event Measure annotation file (need to edit header of csv to delete extra info at top)
-ROV<-read.csv("odata/ROVcomplete.csv",skip=4, stringsAsFactors = FALSE)
-str(ROV)
+#load in subarea data to add to siteinfo 
+ROV<-read.csv("odata/ROVcomplete.csv")
+
+#load in subarea data to add to siteinfo 
+subarea<-read.csv("odata/Sitebysubarea.csv")
+head(subarea)
+colnames(subarea)[which(names(subarea) == "Site.ID")] <- "Site_ID"
 
 #remove unnecessary columns
 ROV=select(ROV, -4:-21)
@@ -125,6 +129,7 @@ load("nootkadata.Rdata")
 colnames(nootkadata)
 
 siteinfo <- unique(nootkadata[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal")])
+siteinfo <- merge(siteinfo, subarea, by = "Site_ID")
 
 head(siteinfo)
 
