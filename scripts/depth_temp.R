@@ -7,6 +7,7 @@ setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Roc
 lp("tidyverse")
 lp("readxl")
 lp("dplyr")
+lp("writexl")
 
 ManualDT <- read_excel("odata/StarOddi_Depth_Temp.xlsx")
 StarDT <- read_excel("odata/StarOddiDataNootka_.xlsx")
@@ -21,7 +22,7 @@ StarDT <- StarDT %>%
   ## we void all the study sites from the first day (NS01 - NS04)
   filter(!Date %in% "10.08.2023")
 
-
+write_xlsx(StarDT, "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/odata/StarDT.xlsx")
 # Create a function to determine Site_ID
 get_site_id <- function(Depth, Time) {
   if (Depth <= 10) {
