@@ -676,3 +676,38 @@ FOVvolume <- FOVmean %>%
               select(Site_ID, Volume)
 ## now lets add the volume surveyed into site ID 
 siteinfo <- merge(siteinfo, FOVvolume, by = "Site_ID")
+
+#########################################################################################
+## Load in Depth and Temperature datasheet from Star oddi 
+
+DT <- read.csv("odata/StarDT.csv")
+colnames(DT)
+colnames(DT)[which(names(DT) == "Temp..C.")] <- "Temp"
+
+## lets remove all values with depths > 10m to accommodate the thermocline 
+
+DT <- DT %>% 
+    filter(! Depth < 10) %>% 
+filter(! Activity == "Ascend") %>% 
+  filter(! Site_ID == "")
+
+
+
+## Now lets calculate the average temperature for the descend to get 
+#the average temperature of the water column 
+unique(DT$Activity)
+
+average_temp_descend <- DT %>%
+  ## there is spaces in some of the activity types - this subsets the dataset
+  filter(Activity %in% c("Descend ","Descend")) %>%
+  group_by(Site_ID) %>%
+  summarise(avg_temp = mean(Temp, na.rm = TRUE))
+
+# the average depth while the ROV was on the bottom 
+average_depth_bottom <- DT %>%
+  filter(Activity %in% c("Bottom", "Bottom ")) %>%
+  group_by(Site_ID) %>%
+  summarise(avg_depth = mean(Depth, na.rm = TRUE))
+
+siteinfo <- merge(siteinfo, average_temp_descend, by ="Site_ID")
+siteinfo <- merge(siteinfo, average_depth_bottom, by = "Site_ID")
