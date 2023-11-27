@@ -25,13 +25,14 @@ lp("dplyr")
 
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
-#load in subarea data to add to siteinfo 
-ROV<-read.csv("odata/ROVcomplete.csv")
-
-#load in subarea data to add to siteinfo 
+## load in subarea data 
 subarea<-read.csv("odata/Sitebysubarea.csv")
 head(subarea)
 colnames(subarea)[which(names(subarea) == "Site.ID")] <- "Site_ID"
+
+#load Event Measure annotation file (need to edit header of csv to delete extra info at top)
+ROV<-read.csv("odata/ROVcomplete.csv", skip=4, stringsAsFactors = FALSE)
+
 
 #remove unnecessary columns
 ROV=select(ROV, -4:-21)
@@ -661,4 +662,17 @@ ggplot(NS05_Slope, aes(x = "", y = Percent, fill = Slope)) +
   labs(title = paste( "Substrate types - NS05")) +
   ## creates the pie chart
   coord_polar(theta = "y")
- 
+################################################################################################################################
+
+## Add Field of View measurements in siteinfo 
+FOV<-read.csv("odata/FOV.csv")
+
+## for sites that do not have a calculated field of view as the lasers where not positioned properly, 
+# lets fill in the NA's with the column average 
+colnames(FOV)
+FOVmean <- FOV %>% 
+          mutate_at(vars(Width, SD, SE, Height, Area, Volume), ~ifelse(is.na(.x), mean(.x, na.rm = TRUE), .x))
+FOVvolume <- FOVmean %>% 
+              select(Site_ID, Volume)
+## now lets add the volume surveyed into site ID 
+siteinfo <- merge(siteinfo, FOVvolume, by = "Site_ID")
