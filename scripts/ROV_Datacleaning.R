@@ -711,3 +711,4 @@ average_depth_bottom <- DT %>%
 
 siteinfo <- merge(siteinfo, average_temp_descend, by ="Site_ID")
 siteinfo <- merge(siteinfo, average_depth_bottom, by = "Site_ID")
+

@@ -23,21 +23,4 @@ StarDT <- StarDT %>%
   filter(!Date %in% "10.08.2023")
 
 write_xlsx(StarDT, "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/odata/StarDT.xlsx")
-# Create a function to determine Site_ID
-get_site_id <- function(Depth, Time) {
-  if (Depth <= 10) {
-    return(NA)  # No Site_ID for depths <= 10m
-  } else {
-    site_num <- as.numeric(substr(Time, 12, 13))  # Extract hours from the time
-    if (site_num %in% c(8, 18)) {
-      return(NA)  # Skip NS08 and NS18
-    } else {
-      site_id <- sprintf("NS%02d", (site_num - 4) %% 50 + 5)  # Start from NS05
-      return(site_id)
-    }
-  }
-}
-
-# Apply the function to create the Site_ID column
-StarDT$Site_ID <- mapply(get_site_id, StarDT$Depth, as.character(StarDT$Time))
-
+#
