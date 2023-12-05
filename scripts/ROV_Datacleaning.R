@@ -14,9 +14,6 @@
 # Open install_packages.R script separately and run it. 
 #This creates a super easy function to install packages quickly for the rest of your work
 #now install these packages using the lp function
-lp("tidyverse")
-lp("lubridate")
-lp("dplyr")
 
 #set working directory (make sure you have a folder named Nootka with subfolders
 #odata, wdata, scripts, figures)
@@ -47,7 +44,7 @@ ROV = select(ROV, -"Code")
 
 
 #create fish only dataset named ROVFish
-
+unique(ROV$Activity)
 ROVFish<-ROV%>%
   filter(Activity!="Attracted", Number!= "NA")
 
@@ -162,8 +159,6 @@ get.abundance.species <- function(xx, ss){
 sitespecies$Abundance <- mapply(get.abundance.species, xx = sitespecies$Site_ID, ss = sitespecies$FullName)
 
 ## reshape the dataframe so it shows each species per site along with its abundance at that site
-sitespecies <- reshape(sitespecies, v.names = "Abundance", idvar = "Site_ID", timevar = "FullName", direction = "wide")
-sitespecies[is.na(sitespecies)] <- 0
 
 #### SPECIES RICHNESS PER SITE 
 speciesrichnes <- function(x) { 
@@ -296,8 +291,8 @@ species$count <- mapply(speciescount, xx = species$FullName )
 library(tidyverse)
 
 species1 <- species %>% group_by(FullName) %>% 
-   summarise( total_count = sum(count), .groups = "drop" ) %>% 
-   mutate( frequency = total_count / sum(total_count) ) 
+   summarise(total_count = sum(count), .groups = "drop" ) %>% 
+   mutate(frequency = total_count / sum(total_count) ) 
 
 
 library(ggplot2)
