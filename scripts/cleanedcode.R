@@ -596,9 +596,6 @@ Subareadata <- merge(Subareadata, RF, by = "Subarea", all.x = TRUE)
     arrange(desc(count)) %>% 
     select(- Family, - Genus, -Species)
   flextable(subspecies5, col_keys = c("FullName", "count"))
-  
-  
-
 
 ## Lets try to create 5 bins of time at each site. Then we want to figure out what species where found in which bins. 
 
@@ -614,24 +611,27 @@ durationdata <- ROV %>%
 
 # Determine the length of each bin
 durationdata <- durationdata %>%
-  mutate(Bin_Length = Total_Duration / 5)
+  mutate(Bin_length = Total_Duration / 5)
 
-# create unique dataframe 
-durationdata2 <- durationdata %>% 
-  unique(dSite_ID, Total_Duration, Bin_Length)
+## place each observation within a bin 
+create_bins <- function(data) {
+  data %>%
+    group_by(Site_ID) %>%
+    mutate(
+      Min_Time = min(Time),
+      Bin = case_when(
+        between(Time, Min_Time, Min_Time + Bin_length) ~ 1,
+        between(Time, Min_Time + Bin_length, Min_Time + 2 * Bin_length) ~ 2,
+        between(Time, Min_Time + 2 * Bin_length, Min_Time + 3 * Bin_length) ~ 3,
+        between(Time, Min_Time + 3 * Bin_length, Min_Time + 4 * Bin_length) ~ 4,
+        TRUE ~ 5
+      )
+    ) %>%
+    select(-Min_Time)
+}
 
-# Create intervals for each Site_ID
-interval_data <- durationdata %>%
-  group_by(Site_ID) %>%
-  summarise(Interval_Start = min(Time) + Bin_Length * (0:4),
-            Interval_End = min(Time) + Bin_Length * (1:5))
-View(interval_data)
+# Apply the function to your dataset
+durationdata <- create_bins(durationdata)
 
-# Create an "Interval" column in ROV dataframe
-ROV <- ROV %>%
-  left_join(interval_data, by = "Site_ID") %>%
-  mutate(Interval = case_when(
-    Time >= Interval_Start & Time < Interval_End ~ as.integer(row_number()),
-    TRUE ~ NA_integer_
-  ))
+
 
