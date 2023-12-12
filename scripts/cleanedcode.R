@@ -4,6 +4,7 @@ lp<-function(pck){
   if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
 }
 
+
 lp("tidyverse")
 lp("lubridate")
 lp("dplyr")
@@ -496,24 +497,110 @@ subareasebastes[is.na(subareasebastes)] <- 0
 sebastesabundance <- function(x) {apply(subareasebastes[, 2:11], 1, sum)}
 subareasebastes$RFAbundance <- mapply(sebastesabundance, x = 2)
 # find rockfish species richness per subarea 
+
 RFSpeciesRichness <- function(x) {apply(subareasebastes[, 2:11 ]> 0, 1, sum)}
 subareasebastes$RFSpeciesRichness <- mapply(RFSpeciesRichness, x = 2)
 RF <- select(subareasebastes, c("Subarea", "RFAbundance", "RFSpeciesRichness"))
 
 Subareadata <- merge(subarea_counts, subarea1, by = "Subarea", all.x = TRUE)
 Subareadata <- merge(Subareadata, RF, by = "Subarea", all.x = TRUE)
+  View(Subareadata)
   
+  flextable(subarea_table, col_keys = c("Subarea", "TotalSites"))
+  flextable(subarea_table)
+  
+# calculate total sites in each subarea 
   subarea_table <- Subareadata %>%
   mutate(name = forcats::fct_reorder(Subarea, desc(TotalSites))) %>%
   arrange(desc(TotalSites)) %>% 
   select(- name)
 
 
-flextable(subarea_table, col_keys = c("Subarea", "TotalSites"))
+# lets make a list of species and counts within each subarea
+  
+  # Subarea 6
+  subarea6 <- ROVFish %>% 
+    filter(Subarea == "Subarea 25-6") 
+  subspecies6 <-  unique(subarea6[, c("Family", "Genus","Species","FullName")])
+  speciescount6 <- function(xx){ 
+    keep <- which(subarea6$FullName == xx)
+    if (length(keep) == 0) return(0)
+    return(sum(subarea6$Number[keep]))
+  }
+  subspecies6$count <- mapply(speciescount6, xx = subspecies6$FullName )
+  
+  subspecies6 <- subspecies6 %>%
+    mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
+    arrange(desc(count)) %>% 
+    select(- Family, - Genus, -Species)
+  flextable(subspecies6, col_keys = c("FullName", "count"))
+  # Subarea 8 
+  subarea8 <- ROVFish %>% 
+    filter(Subarea == "Subarea 25-8") 
+  subspecies8 <-  unique(subarea8[, c("Family", "Genus","Species","FullName")])
+  speciescount8 <- function(xx){ 
+    keep <- which(subarea8$FullName == xx)
+    if (length(keep) == 0) return(0)
+    return(sum(subarea8$Number[keep]))
+  }
+  subspecies8$count <- mapply(speciescount8, xx = subspecies8$FullName )
+  
+  subspecies8 <- subspecies8 %>%
+    mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
+    arrange(desc(count)) %>% 
+    select(- Family, - Genus, -Species)
+  flextable(subspecies8, col_keys = c("FullName", "count"))
+  # Subarea 4
+  subarea4 <- ROVFish %>% 
+    filter(Subarea == "Subarea 25-4") 
+  subspecies4 <-  unique(subarea4[, c("Family", "Genus","Species","FullName")])
+  speciescount4 <- function(xx){ 
+    keep <- which(subarea4$FullName == xx)
+    if (length(keep) == 0) return(0)
+    return(sum(subarea4$Number[keep]))
+  }
+  subspecies4$count <- mapply(speciescount4, xx = subspecies4$FullName )
+  subspecies4 <- subspecies4 %>%
+    mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
+    arrange(desc(count)) %>% 
+    select(- Family, - Genus, -Species)
+  flextable(subspecies4, col_keys = c("FullName", "count"))
+  
+  # Subarea 15 
+  subarea15 <- ROVFish %>% 
+    filter(Subarea == "Subarea 25-15") 
+  subspecies15 <-  unique(subarea15[, c("Family", "Genus","Species","FullName")])
+  speciescount15 <- function(xx){ 
+    keep <- which(subarea15$FullName == xx)
+    if (length(keep) == 0) return(0)
+    return(sum(subarea15$Number[keep]))
+  }
+  subspecies15$count <- mapply(speciescount15, xx = subspecies15$FullName )
+  subspecies15 <- subspecies15 %>%
+    mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
+    arrange(desc(count)) %>% 
+    select(- Family, - Genus, -Species)
+  flextable(subspecies15, col_keys = c("FullName", "count"))
+  # Subarea 5
+  subarea5 <- ROVFish %>% 
+    filter(Subarea == "Subarea 25-5") 
+  subspecies5 <-  unique(subarea5[, c("Family", "Genus","Species","FullName")])
+  speciescount5 <- function(xx){ 
+    keep <- which(subarea5$FullName == xx)
+    if (length(keep) == 0) return(0)
+    return(sum(subarea5$Number[keep]))
+  }
+  subspecies5$count <- mapply(speciescount5, xx = subspecies5$FullName )
+  subspecies5 <- subspecies5 %>%
+    mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
+    arrange(desc(count)) %>% 
+    select(- Family, - Genus, -Species)
+  flextable(subspecies5, col_keys = c("FullName", "count"))
+  
+  
 
-# Lets figure out what species and how many of them at in each subarea to share. 
 
-
+## Lets try to create 5 bins of time at each site. Then we want to figure out what species where found in which bins. 
 
 ## try to create 5 bins of time per site. 
 
@@ -529,6 +616,9 @@ durationdata <- ROV %>%
 durationdata <- durationdata %>%
   mutate(Bin_Length = Total_Duration / 5)
 
+# create unique dataframe 
+durationdata2 <- durationdata %>% 
+  unique(dSite_ID, Total_Duration, Bin_Length)
 
 # Create intervals for each Site_ID
 interval_data <- durationdata %>%
@@ -544,3 +634,4 @@ ROV <- ROV %>%
     Time >= Interval_Start & Time < Interval_End ~ as.integer(row_number()),
     TRUE ~ NA_integer_
   ))
+
