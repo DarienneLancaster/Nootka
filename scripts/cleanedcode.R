@@ -48,6 +48,7 @@ ROV<- ROV%>%
 
 
 
+
 ############## Site information ###########################
 #### Subarea for each site #### 
 
@@ -595,7 +596,8 @@ flextable(subarea_table)
   flextable(subspecies5, col_keys = c("FullName", "count"))
 
 
-##### Redo code with 5 bins ##### 
+  
+############## Bin Information ############################
 ## try to create 5 bins of time per site. 
 
 ROV$Time <- as.numeric(ROV$Time)
@@ -632,7 +634,8 @@ durationdata <- create_bins(durationdata)
 
 ##### Run calculations to get Bin level data ##### 
 # Create bin level dataframe 
-bininfo2 <- unique(nootkadata[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal", "avg_temp", "avg_depth")])
+bininfo2 <- unique(siteinfo[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal", "avg_temp", "avg_depth", "Volume")])
+bininfo2$Volume <- bininfo2$Volume / 5
 bininfo <- bininfo %>%
   # expand each Site_ID to have 5 different BinID 
   expand(Site_ID, BinID = 1:5) %>%
@@ -681,7 +684,7 @@ binspecieswide$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
 bin <- select(binspecieswide, c("BinID", "TotalAbundance", "SpeciesRichness"))
 bininfo <- merge(bininfo, bin, by = "BinID", all.x = TRUE)
 
-#### Calculate Rockfish Abundance and Species Richness #### 
+#### Bin level calculate Rockfish Abundance and Species Richness #### 
 
 # subset the the BinFish data to only include sebastes 
 binsebastes <-  BinFish%>% filter(Genus == "Sebastes")
@@ -720,7 +723,7 @@ binsebastes$RFSpeciesRichness <- mapply(RFSpeciesRichness, x = 2)
 binRF <- select(binsebastes, c("BinID", "RFAbundance", "RFSpeciesRichness"))
 bininfo <- merge(bininfo, binRF, by = "BinID", all.x = TRUE)
 
-#### Calculate Fish School Abundance and Number #### 
+#### Bin level Calculate Fish School Abundance and Number #### 
 
 # filter out non-fishschool 
 binfishschool <- BinFish%>%
@@ -763,6 +766,7 @@ FSbindata$schoolID <- paste(FSbindata$Notes, FSbindata$rowID, sep = ".")
 FSbindata <- select(FSbindata, c("BinID", "schoolID", "Number"))
 
 # we can see that the fish schools cross multiple bins, how do we deal with this? 
+# call them a fish school in each one
 
 # transform the data to wide 
 FSbinwide <- FSbindata %>%
@@ -797,7 +801,7 @@ binfishschooldata <- select(FSbinwide, c("BinID", "TotalSchoolFish", "NumberFS")
 # merge this to siteinfo 
 #bininfo <- merge(bininfo, binfishschooldata, by = "BinID", all.x = TRUE)
 
-#### Calculate Non-Schooling Fish Abundance and Species Richness #### 
+#### Bin level Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
 # filter out any groups of fish over 10 
 nonschooling <- BinFish %>% 
@@ -843,3 +847,7 @@ bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
 
 
 
+
+
+
+# pull all substrate types through observations 
