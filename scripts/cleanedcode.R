@@ -727,38 +727,24 @@ bininfo <- merge(bininfo, binRF, by = "BinID", all.x = TRUE)
 
 # filter out non-fishschool 
 binfishschool <- BinFish%>%
-  filter(Activity == "Scavenging" | Number > 10) 
-
-# code to calculate fish schools 
-process_school_type <- function(fishschool, school_type, continuation_type){
-  binfishschool %>% 
-    mutate(SchoolID = cumsum(Notes == school_type)) %>%
-    group_by(Site_ID) %>%
-    filter(Notes %in% c(school_type, continuation_type) | SchoolID == 0) %>%
-    mutate(ValidNumber = ifelse(Notes != "", Number, NA_integer_)) %>%
-    summarise(
-      Notes = first(Notes[Notes == school_type]), 
-      Number = sum(ValidNumber, na.rm = TRUE),
-      BinID= list(unique(BinID)),
-      Activity = list(unique(Activity)), 
-      .groups = "drop"
-    )
-}
-
-# run each school type through the function 
-sp_data <- process_school_type(binfishschool, "SP", "SP_C")
-bp_data <- process_school_type(binfishschool, "BP", "BP_C")
-sb_data <- process_school_type(binfishschool, "SB", "SB_C")
-bb_data <- process_school_type(binfishschool, "BB", "BB_C")
-
-# combine the data 
-FSbindata <- bind_rows(sp_data, bp_data, sb_data, bb_data)
-
+  filter(Number > 10) 
+binfishschools <- unique(binfishschool[, c("BinID", "FullName")])
 # remove FS with number = 0 
-FSbindata <- filter(FSbindata, Number!= 0)
+get.bin.schoolingfish <- function(xx, ss){ 
+  keep <- which(binfishschool$BinID == xx & binfishschool$FullName == ss)
+  if (length(keep) == 0) return(0)
+  return(sum(binfishschool$Number[keep]))}
+binfishschools$Abundance <- mapply(get.bin.schoolingfish, 
+                                xx = binfishschools$BinID, ss = binfishschools$FullName)
+unique(binfishschools$FullName)
+# transform the data to wide 
+binfishschoolswide <- binfishschools %>%
+  pivot_wider(names_from = FullName, values_from = Abundance, values_fill = 0)
 
-# replace the notes == na with unknown 
-FSbindata[is.na(FSbindata)] <- "Unknown"
+View(binfishschoolswide)
+## I think there is a error in labeling some the schools as Scorpaenidae Scorpaenichthys unknown when they should be 
+## "Scorpaenidae Sebastes unknown"
+
 
 # create a unique identifier to link with the school type 
 FSbindata <- FSbindata %>% mutate(rowID = as.numeric(row_number())) %>% select(-Activity)
