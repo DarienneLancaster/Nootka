@@ -1,5 +1,5 @@
 
-####  Load in Packages #### 
+####  Load in Packages ####
 lp<-function(pck){
   if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
 }
@@ -174,6 +174,7 @@ average_depth_bottom <- DT %>%
 
 siteinfo <- merge(siteinfo, average_temp_descend, by ="Site_ID", all.x = TRUE)
 siteinfo <- merge(siteinfo, average_depth_bottom, by = "Site_ID", all.x = TRUE)
+
 
 
 #### FUNCTIONS - ABUNDANCE / SPECIES RICHNESS ####  
@@ -404,7 +405,7 @@ species2 <- species %>%
 species2 <- species2 %>% group_by(FullName) %>% 
   summarise( total_count = sum(count), .groups = "drop" ) %>% 
   mutate( frequency = total_count / sum(total_count) ) 
-View(species2)
+
 
 species2 %>%
   mutate(name = fct_reorder(FullName, desc(frequency))) %>%
@@ -837,3 +838,4 @@ bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
 
 
 # pull all substrate types through observations 
+View(bininfo)
