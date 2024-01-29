@@ -19,7 +19,6 @@
 #odata, wdata, scripts, figures)
 
 ## setwd("C:/Users/dlanc/Documents/PhD/R/Nootka") 
-
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 ## load in subarea data 
