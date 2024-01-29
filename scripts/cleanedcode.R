@@ -461,6 +461,7 @@ subarea_counts <- subarea %>%
 # create a species by subarea dataframe 
 subareaspecies <- unique(ROVFish[, c("Subarea", "FullName")])
 
+
 # find species abundance per subarea 
 get.abundance <- function(xx, ss){ 
   keep <- which(ROVFish$Subarea == xx & ROVFish$FullName == ss)
