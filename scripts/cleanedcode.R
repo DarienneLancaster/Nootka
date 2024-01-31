@@ -8,6 +8,7 @@ lp("lubridate")
 lp("dplyr")
 lp("ggplot2")
 lp("flextable")
+lp("xlsx")
 
 #### Set Working Directory #### 
 
@@ -421,7 +422,9 @@ result_table <- species1 %>%
   arrange(desc(total_count)) %>%
   select(FullName, total_count = total_count)
 
-flextable(result_table)
+view(result_table)
+
+flextable(result_table) 
 
 # rockfish only
 rockfish <- species %>%
