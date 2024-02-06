@@ -176,8 +176,8 @@ average_depth_bottom <- DT %>%
 siteinfo <- merge(siteinfo, average_temp_descend, by ="Site_ID", all.x = TRUE)
 siteinfo <- merge(siteinfo, average_depth_bottom, by = "Site_ID", all.x = TRUE)
 
-
-
+tempdepth <- select(siteinfo, "Site_ID", "avg_temp", "avg_depth")
+view(tempdepth)
 #### FUNCTIONS - ABUNDANCE / SPECIES RICHNESS ####  
 
 ### Calculate Abundance and Species Richness of all species ### 

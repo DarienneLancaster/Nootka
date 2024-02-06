@@ -24,3 +24,4 @@ StarDT <- StarDT %>%
 
 write_xlsx(StarDT, "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/odata/StarDT.xlsx")
 #
+
