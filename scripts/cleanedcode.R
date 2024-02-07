@@ -41,6 +41,7 @@ ROV$Site_ID <- substr(ROV$Filename, 1, 4)
 ROV$Species[ROV$Species== ""] <- "unknown" 
 ROV$Genus[ROV$Genus== ""] <- "unknown"
 ROV$Family[ROV$Family== ""] <- "unknown"
+ROV$Site_ID <- substr(ROV$Filename, 1, 4)
 
 # create a new column with species full name 
 ROV<- ROV%>%
@@ -262,7 +263,7 @@ siteinfo <- merge(siteinfo, RF, by = "Site_ID", all.x = TRUE)
 
 # filter out non-fishschool 
 fishschool <- ROVFish%>%
-  filter(Activity == "Scavenging" | Number > 10) 
+  filter(Number > 10) 
 
 # code to calculate fish schools 
 process_school_type <- function(fishschool, school_type, continuation_type){
@@ -279,6 +280,7 @@ process_school_type <- function(fishschool, school_type, continuation_type){
       .groups = "drop"
     )
 }
+view(fishschool)
 
 # run each school type through the function 
 sp_data <- process_school_type(fishschool, "SP", "SP_C")
