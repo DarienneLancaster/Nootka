@@ -306,10 +306,11 @@ FSwide <- FSdata %>%
 ncol(FSwide)
 
 # calculate total number of schooling fish per site 
-schoolingfish <- function(x) {apply(FSwide[, 2:66], 1, sum)}
+#schoolingfish <- function(x) {apply(FSwide[, 2:66], 1, sum)}
+#this doesn't work!! 
 
 # apply the function 
-FSwide$TotalSchoolFish <- mapply(schoolingfish, x = 2)
+#FSwide$TotalSchoolFish <- mapply(schoolingfish, x = 2)
 
 # function that counts the number of
 addFS <-  function(xx, ss){ 
