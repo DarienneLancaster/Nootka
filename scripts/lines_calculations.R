@@ -34,9 +34,17 @@ NS07$GreatCircleDistance[2:(nrow(NS07))] <- sapply(2:(nrow(NS07)), function(i) {
 ## Calculate difference in depth 
 NS07$DepthDifference <- c(NA, NS07$Depth[-1] - NS07$Depth[-nrow(NS07)])
 
-## Now create a row looking at slope 
+# Calculate Slope 
 NS07$Slope <- sapply(1:nrow(NS07), function(i) {
   ifelse(is.na(NS07$GreatCircleDistance[i]) || is.na(NS07$DepthDifference[i]),
-         0,
-         atan(NS07$GreatCircleDistance[i] / NS07$DepthDifference[i]))
+         NA,
+         (180.0/pi) * atan(NS07$GreatCircleDistance[i] / NS07$DepthDifference[i]))
 })
+# calculate hypotenuse 
+NS07$Hypothenuse <- sqrt(NS07$GreatCircleDistance^2 + NS07$DepthDifference^2)
+
+# Cumulative sum of great circle distance 
+NS07$CumSumGCD <- cumsum(NS07$GreatCircleDistance)
+
+sum(NS07$GreatCircleDistance, na.rm = TRUE)
+sum(NS07$Hypothenuse, na.rm = TRUE)
