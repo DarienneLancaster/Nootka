@@ -8,6 +8,7 @@ lp("dplyr")
 lp("ggplot2")
 lp("flextable")
 lp("xlsx")
+lp("Pracma")
 
 #### Set Working Directory #### 
 
@@ -21,15 +22,21 @@ calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
   return(distance)
 }
 
-
-# Apply 
-NS07$GreatCircleDistance <- c(0, sapply(2:(nrow(NS07)- 1), function(i) {
-  lat1 <- NS07$Latitude[i]
-  lon1 <- NS07$Longitude[i]
-  lat2 <- NS07$Latitude[i+1]
-  lon2 <- NS07$Longitude[i+1]
+# Apply to data 
+NS07$GreatCircleDistance[2:(nrow(NS07))] <- sapply(2:(nrow(NS07)), function(i) {
+  lat1 <- NS07$Latitude[i - 1]
+  lon1 <- NS07$Longitude[i - 1]
+  lat2 <- NS07$Latitude[i]
+  lon2 <- NS07$Longitude[i]
   calc_great_circle_distance(lat1, lon1, lat2, lon2)
-}))
+})
 
-NS07$DepthDifference <- c(NA, NS07$Depth[1] - NS07$Depth[+1])
+## Calculate difference in depth 
+NS07$DepthDifference <- c(NA, NS07$Depth[-1] - NS07$Depth[-nrow(NS07)])
 
+## Now create a row looking at slope 
+NS07$Slope <- sapply(1:nrow(NS07), function(i) {
+  ifelse(is.na(NS07$GreatCircleDistance[i]) || is.na(NS07$DepthDifference[i]),
+         0,
+         atan(NS07$GreatCircleDistance[i] / NS07$DepthDifference[i]))
+})

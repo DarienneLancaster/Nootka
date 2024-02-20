@@ -846,4 +846,4 @@ bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
 
 # pull all substrate types through observations 
 View(bininfo)
-
+View(siteinfo)
