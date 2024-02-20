@@ -51,6 +51,9 @@ ROV<- ROV%>%
 
 
 
+
+
+
 ############## Site information ###########################
 #### Subarea for each site #### 
 
@@ -100,7 +103,6 @@ SubDuration <- SubDuration %>%
 SubDuration <- SubDuration %>% select(- Notes) %>% 
   filter(!is.na(SubDuration)) %>%
   mutate(Percent = round(Proportion * 100))
-
 
 
 # Slope calculations 
@@ -178,7 +180,7 @@ siteinfo <- merge(siteinfo, average_temp_descend, by ="Site_ID", all.x = TRUE)
 siteinfo <- merge(siteinfo, average_depth_bottom, by = "Site_ID", all.x = TRUE)
 
 tempdepth <- select(siteinfo, "Site_ID", "avg_temp", "avg_depth")
-view(tempdepth)
+
 #### FUNCTIONS - ABUNDANCE / SPECIES RICHNESS ####  
 
 ### Calculate Abundance and Species Richness of all species ### 
@@ -188,7 +190,7 @@ ROVFish<- ROV%>%
   filter(Activity!= "Attracted" , Number!= "NA")
 
 # create dataset that has only Site_ID and FullName 
-binspecies <- unique(ROVFish[, c("Site_ID", "FullName")])
+sitespecies <- unique(ROVFish[, c("Site_ID", "FullName")])
 
 # function to get abundance of each species per site 
 get.abundance <- function(xx, ss){ 
@@ -219,7 +221,8 @@ sitespecies$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
 # add these to siteinfo 
 subsitespecies <- select(sitespecies, c("Site_ID", "TotalAbundance", "SpeciesRichness"))
 siteinfo <- merge(siteinfo, subsitespecies, by = "Site_ID", all.x = TRUE)
-
+siteinfo <- siteinfo %>% mutate(SpeciesRichness = ifelse(is.na(SpeciesRichness), 0, SpeciesRichness),
+                                TotalAbundance = ifelse(is.na(TotalAbundance), 0, TotalAbundance))
 #### Calculate Rockfish Abundance and Species Richness #### 
 
 # subset the the ROVFish data to only include sebastes 
@@ -258,6 +261,8 @@ sitesebastes$RFSpeciesRichness <- mapply(sebspeciesrichnes, x = 2)
 ## add to siteinfo 
 RF <- select(sitesebastes, c("Site_ID", "RFAbundance", "RFSpeciesRichness"))
 siteinfo <- merge(siteinfo, RF, by = "Site_ID", all.x = TRUE)
+siteinfo <- siteinfo %>% mutate(RFAbundance = ifelse(is.na(RFAbundance), 0, RFAbundance),
+                                RFSpeciesRichness = ifelse(is.na(RFSpeciesRichness), 0, RFSpeciesRichness))
 
 #### Calculate Fish School Abundance and Number #### 
 
@@ -302,33 +307,20 @@ FSdata <- select(FSdata, c("Site_ID", "schoolID", "Number"))
 # transform the data to wide 
 FSwide <- FSdata %>%
   pivot_wider(names_from = schoolID, values_from = Number, values_fill = 0)
-## there is 66 columns that you can't see all on in the normal view
-ncol(FSwide)
 
-# calculate total number of schooling fish per site 
-#schoolingfish <- function(x) {apply(FSwide[, 2:66], 1, sum)}
-#this doesn't work!! 
-
-# apply the function 
-#FSwide$TotalSchoolFish <- mapply(schoolingfish, x = 2)
-
-# function that counts the number of
-addFS <-  function(xx, ss){ 
-  keep <- which(FSwide$Site_ID == xx)
-  if (length(keep) == 0) return(0)
-  return(sum(FSwide$NumberFS[keep]))
-}
-
+# this isnt working 
+#Schoolingfish <- function(x) {apply(FSwide[, 2:71], 1, sum)}
+#FSwide$SFCount <- mapply(Schoolingfish, x = 2)
 
 # count the number of fish schools at each site
 numberFS <- function(x) { 
-  apply(FSwide[, 2:66 ]> 0, 1, sum)
+  apply(FSwide[, 2:71 ]> 0, 1, sum)
 }
 
 FSwide$NumberFS <- mapply(numberFS, x = 2)
 
 # subset the data to certain columns 
-Fishschooldata <- select(FSwide, c("Site_ID", "TotalSchoolFish", "NumberFS"))
+Fishschooldata <- select(FSwide, c("Site_ID", "SFCount", "NumberFS"))
 
 # merge this to siteinfo 
 siteinfo <- merge(siteinfo, Fishschooldata, by = "Site_ID", all.x = TRUE)
@@ -640,15 +632,17 @@ create_bins <- function(data) {
 # Apply the function 
 durationdata <- create_bins(durationdata)
 
+
 ##### Run calculations to get Bin level data ##### 
 # Create bin level dataframe 
-bininfo2 <- unique(siteinfo[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal", "avg_temp", "avg_depth", "Volume")])
-bininfo2$Volume <- bininfo2$Volume / 5
+bininfo <- siteinfo %>% select("Site_ID")
+bininfo2 <- siteinfo %>% select("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal", "avg_temp", "avg_depth", "Volume")
+bininfo$Volume <- bininfo$Volume / 5
 bininfo <- bininfo %>%
   # expand each Site_ID to have 5 different BinID 
   expand(Site_ID, BinID = 1:5) %>%
   # name the BinID by pasting Site_ID_BinID (1-5)
-  mutate(BinID = paste0(Site_ID, "_", BinID)) %>% 
+  mutate(BinID = paste0(Site_ID, "_", BinID)) %>%
   # add all other site data 
   left_join(bininfo2, by = "Site_ID")
 
@@ -690,6 +684,7 @@ binspecieswide$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
 
 ## add to bininfo
 bin <- select(binspecieswide, c("BinID", "TotalAbundance", "SpeciesRichness"))
+bin <- bin %>% replace(is.na(.), 0)
 bininfo <- merge(bininfo, bin, by = "BinID", all.x = TRUE)
 
 #### Bin level calculate Rockfish Abundance and Species Richness #### 
@@ -750,47 +745,55 @@ binfishschoolswide <- binfishschools %>%
   pivot_wider(names_from = FullName, values_from = Abundance, values_fill = 0)
 
 View(binfishschoolswide)
-## I think there is a error in labeling some the schools as Scorpaenidae Scorpaenichthys unknown when they should be 
-## "Scorpaenidae Sebastes unknown"
+# calculate total number of schooling fish per bin
+schoolingfish <- function(x) {apply(binfishschoolswide[, 2:6], 1, sum)}
+# apply the function 
+binfishschoolswide$SFCount <- mapply(schoolingfish, x = 2)
 
+## Count number of fish schools 
+numberFS <- function(x) { 
+  apply(binfishschoolswide[, 2:6]> 0, 1, sum)
+}
 
+binfishschoolswide$NumberFS <- mapply(numberFS, x = 2)
+#### Clean this Code #### 
 # create a unique identifier to link with the school type 
-FSbindata <- FSbindata %>% mutate(rowID = as.numeric(row_number())) %>% select(-Activity)
-FSbindata$schoolID <- paste(FSbindata$Notes, FSbindata$rowID, sep = ".")
-FSbindata <- select(FSbindata, c("BinID", "schoolID", "Number"))
+#FSbindata <- FSbindata %>% mutate(rowID = as.numeric(row_number())) %>% select(-Activity)
+#FSbindata$schoolID <- paste(FSbindata$Notes, FSbindata$rowID, sep = ".")
+#FSbindata <- select(FSbindata, c("BinID", "schoolID", "Number"))
 
 # we can see that the fish schools cross multiple bins, how do we deal with this? 
 # call them a fish school in each one
 
 # transform the data to wide 
-FSbinwide <- FSbindata %>%
-  pivot_wider(names_from = schoolID, values_from = Number, values_fill = 0)
+#FSbinwide <- FSbindata %>%
+ # pivot_wider(names_from = schoolID, values_from = Number, values_fill = 0)
 ## there is 66 columns that you can't see all on in the normal view
-ncol(FSbinwide)
+#ncol(FSbinwide)
 
 # calculate total number of schooling fish per site 
-schoolingfish <- function(x) {apply(FSbinwide[, 2:137], 1, sum)}
+#schoolingfish <- function(x) {apply(FSbinwide[, 2:137], 1, sum)}
 
 # apply the function 
-FSbinwide$TotalSchoolFish <- mapply(schoolingfish, x = 2)
+#FSbinwide$TotalSchoolFish <- mapply(schoolingfish, x = 2)
 
 # function that counts the number of
-addFS <-  function(xx, ss){ 
-  keep <- which(FSbinwide$BinID == xx)
-  if (length(keep) == 0) return(0)
-  return(sum(FSbinwide$NumberFS[keep]))
-}
+#addFS <-  function(xx, ss){ 
+ # keep <- which(FSbinwide$BinID == xx)
+ # if (length(keep) == 0) return(0)
+#  return(sum(FSbinwide$NumberFS[keep]))
+#}
 
 
 # count the number of fish schools at each site
-numberFS <- function(x) { 
-  apply(FSbinwide[, 2:137]> 0, 1, sum)
-}
+#numberFS <- function(x) { 
+ # apply(FSbinwide[, 2:137]> 0, 1, sum)
+#}
 
-FSbinwide$NumberFS <- mapply(numberFS, x = 2)
+#FSbinwide$NumberFS <- mapply(numberFS, x = 2)
 
 # subset the data to certain columns 
-binfishschooldata <- select(FSbinwide, c("BinID", "TotalSchoolFish", "NumberFS"))
+#binfishschooldata <- select(FSbinwide, c("BinID", "TotalSchoolFish", "NumberFS"))
 
 # merge this to siteinfo 
 #bininfo <- merge(bininfo, binfishschooldata, by = "BinID", all.x = TRUE)
@@ -839,11 +842,3 @@ nonschooling <- select(NSbinwide, c("BinID", "AbundanceNonSchooling", "SRNonScho
 # merge this to siteinfo 
 bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
 
-
-
-
-
-
-# pull all substrate types through observations 
-View(bininfo)
-View(siteinfo)
