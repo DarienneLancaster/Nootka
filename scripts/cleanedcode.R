@@ -75,7 +75,6 @@ SubSlope <-ROV%>%
   filter(Activity=="Attracted" | Notes == "End") %>%
   select(Site_ID, Time, Depth, Sub_Slope, Notes)
 
-
 # create a new column with just substrate information 
 SubSlope$Sub <- substr(SubSlope$Sub_Slope, 1, 1)
 
@@ -165,7 +164,16 @@ DominateSlope <- SlopeDuration %>%
   top_n(1, SlopePercent) %>%
   ungroup()
 
-# Now lets add this to siteinfo 
+# add these to the siteinfo data frame 
+DominateSub$TopSub <- DominateSub$Sub
+DomSub <- DominateSub %>% select("Site_ID", "TopSub", "SubPercent")
+
+DominateSlope$TopSlope <- DominateSlope$Slope
+DomSlope <- DominateSlope %>% select("Site_ID", "TopSlope", "SlopePercent")
+
+siteinfo <- merge(siteinfo, DomSub, by = "Site_ID", all.x = TRUE)
+siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
+
 
 #### Field of View - Volume of water surveyed #### 
 # load in data 
