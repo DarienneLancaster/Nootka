@@ -89,36 +89,37 @@ file_df$Site_ID <- substr(file_df$file_name, 1, 4)
 merged_df <- data.frame()
 ## for loop 
 
-# Specify the path to the folder containing your files
+# make path for the for-loop to pull from 
 folder_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Bottom"
 save_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Bottom/RCODED"
 
-# Loop through each row of the file_df data frame
+# loop each row in the file_df that contains al the names of files of interest
 for (i in 1:nrow(file_df)) {
-  # Get the file name and its Site_ID
+  # set the file name and site ID 
   file_name <- file_df$file_name[i]
   site_id <- file_df$Site_ID[i]
   
-  # Read in the file
+  # pull in files from our st pathway 
   file <- read.csv(file.path(folder_path, file_name))
   
-  # subset df
+  # clean and subset the data to keep only what we need 
   file <- file %>%
     select("Latitude", "Longitude", "Depth")
   
-  #remove any duplicate pings with same lat long and depth
+  # remove any duplicate pings with same lat long and depth
   file <- distinct(file, Latitude, Longitude, Depth, .keep_all = TRUE)
   
-  # Add a column with site id 
+  # write column with containing the site_IDs 
   file$Site_ID <- site_id
   
   # calculate the great circle distance 
   calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
-    distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
+    distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) *
+                        cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
     return(distance)
   }
   
-  # Apply to data 
+  # apply the GCD function to our data 
   file$GreatCircleDistance[2:(nrow(file))] <- sapply(2:(nrow(file)), function(j) {
     lat1 <- file$Latitude[j - 1]
     lon1 <- file$Longitude[j - 1]
@@ -130,7 +131,7 @@ for (i in 1:nrow(file_df)) {
   ## difference in depth 
   file$DepthDifference <- c(NA, file$Depth[-1] - file$Depth[-nrow(file)])
   
-  # measure slope 
+  # measures slope 
   file$Slope <- sapply(1:nrow(file), function(j) {
     ifelse(is.na(file$GreatCircleDistance[j]) || is.na(file$DepthDifference[j]),
            NA,
@@ -157,7 +158,7 @@ for (i in 1:nrow(file_df)) {
   
   # create a df what has all the data from each file in it 
   merged_df <- rbind(merged_df, file)
-  # export the files to another directory
+  # export the files to path to save CSV in a folder 
   write.csv(file, file.path(save_path, paste0(site_id, "_", file_name)), row.names = FALSE)
 }
 
