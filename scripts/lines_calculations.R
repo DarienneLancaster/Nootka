@@ -1,3 +1,6 @@
+# By: Hutton Noth 
+# Date: Feb 20th, 2024 
+
 #### Load Packages #### 
 lp<-function(pck){
   if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
@@ -81,7 +84,7 @@ file_df <- data.frame(file_name = csv_files)
 
 # create a column in the dataframe for site ID 
 file_df$Site_ID <- substr(file_df$file_name, 1, 4)
-View(file_df)
+
 
 merged_df <- data.frame()
 ## for loop 
@@ -92,24 +95,24 @@ save_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Noo
 
 # Loop through each row of the file_df data frame
 for (i in 1:nrow(file_df)) {
-  # Get the file name and corresponding Site_ID
+  # Get the file name and its Site_ID
   file_name <- file_df$file_name[i]
   site_id <- file_df$Site_ID[i]
   
-  # Read the file
+  # Read in the file
   file <- read.csv(file.path(folder_path, file_name))
   
-  # Select columns
+  # subset df
   file <- file %>%
     select("Latitude", "Longitude", "Depth")
   
-  #remove duplicates to avoid errors 
+  #remove any duplicate pings with same lat long and depth
   file <- distinct(file, Latitude, Longitude, Depth, .keep_all = TRUE)
   
-  # Add Site_ID column
+  # Add a column with site id 
   file$Site_ID <- site_id
   
-  # Function to calculate the great circle distance between two points 
+  # calculate the great circle distance 
   calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
     distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
     return(distance)
@@ -124,20 +127,20 @@ for (i in 1:nrow(file_df)) {
     calc_great_circle_distance(lat1, lon1, lat2, lon2)
   })
   
-  ## Calculate difference in depth 
+  ## difference in depth 
   file$DepthDifference <- c(NA, file$Depth[-1] - file$Depth[-nrow(file)])
   
-  # Calculate Slope 
+  # measure slope 
   file$Slope <- sapply(1:nrow(file), function(j) {
     ifelse(is.na(file$GreatCircleDistance[j]) || is.na(file$DepthDifference[j]),
            NA,
            (180.0/pi) * atan(file$GreatCircleDistance[j] / file$DepthDifference[j]))
   })
   
-  # calculate hypotenuse 
+  # calculate the hypotenuse 
   file$Hypothenuse <- sqrt(file$GreatCircleDistance^2 + file$DepthDifference^2)
   
-  # Calculate the cumulative sum of great circle distance 
+  # cumulative sum of great circle distance to help bin the data
   file$GreatCircleDistance[is.na(file$GreatCircleDistance)] <- 0
   file$CumulativeGCD <- cumsum(file$GreatCircleDistance)
   
@@ -145,22 +148,186 @@ for (i in 1:nrow(file_df)) {
   file$Hypothenuse[is.na(file$Hypothenuse)] <- 0
   file$CumulativeHypo <- cumsum(file$Hypothenuse)
   
-  #### Label the bins to be 20m segments of the great circle distance ####
-  # definte the bin width
+  # set bin width to 20 
   bin_width <- 20
   
-  # create a column for the bins and label them based on where they fit in 20m intervals
+  # create a column for bin annd same them based on what part of the 20m segement it falls in 
   file <- file %>%
     mutate(Bin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + bin_width, bin_width), labels = FALSE))
   
-  #merge the files
+  # create a df what has all the data from each file in it 
   merged_df <- rbind(merged_df, file)
-  # Save the processed file with the Site_ID label
+  # export the files to another directory
   write.csv(file, file.path(save_path, paste0(site_id, "_", file_name)), row.names = FALSE)
 }
 
-
-merged_df$Bin_ID <- paste(merged_df$Site_ID, merged_df$Bin, sep = "_")
+# create binID to match other data frames 
+merged_df$BinID <- paste(merged_df$Site_ID, merged_df$Bin, sep = "_")
 
 merged_df <-merged_df %>%
   filter(!is.na(Bin))
+
+# load in bininfo from saved on cleandata.R 
+load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
+
+#### lets calculate different variables for each of the bin level 
+BinBottom <- merged_df %>%
+  group_by(BinID) %>%
+  summarize(
+    Average_Slope = mean(Slope, na.rm = TRUE),
+    Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
+    profilelength = sum(GreatCircleDistance, na.rm = TRUE),
+    chainlength = sum(Hypothenuse, na.rm = TRUE)
+  )
+BinBottom <- BinBottom %>% mutate(Ratio = chainlength / profilelength)
+
+binlines <- bininfo %>% select("BinID")
+binlines <- left_join(binlines, BinBottom, by = "BinID")
+
+# Lets calculate site level variables 
+SiteBottom <- merged_df %>%
+  group_by(Site_ID) %>%
+  summarize(
+    Average_Slope = mean(Slope, na.rm = TRUE),
+    Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
+    profilelength = sum(GreatCircleDistance, na.rm = TRUE),
+    chainlength = sum(Hypothenuse, na.rm = TRUE)
+  )
+SiteBottom <- SiteBottom %>% mutate(Ratio = chainlength / profilelength)
+
+
+sitelines <- siteinfo %>% select("Site_ID")
+sitelines <- left_join(sitelines, SiteBottom, by = "Site_ID")
+
+
+#### Deadzone for-loop ####
+
+# define paths 
+deadzone_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone"
+deadzone_save_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone/RCODED"
+
+# list all relevant files 
+deadzone_names <- list.files(deadzone_path)
+
+# filter for only CSV files 
+deadzone_csv <- deadzone_names[grep("\\.csv$", deadzone_names)]
+
+# make dataframe 
+deadzone_df <- data.frame(deadzone_names = deadzone_csv)
+
+# site_Id column 
+deadzone_df$Site_ID <- substr(deadzone_df$deadzone_names, 1, 4)
+
+# make empty datagram 
+deadzone_merge <- data.frame()
+
+# now lets run the for-loop on the deadzone line 
+for (i in 1:nrow(deadzone_df)) {
+  # set site id and file names to run through the for loop 
+  deadzone_file_name <- deadzone_df$deadzone_names[i]
+  deadzone_site_id <- deadzone_df$Site_ID[i]
+  
+  # read in the files 
+  deadzone_file <- read.csv(file.path(deadzone_path, deadzone_file_name))
+  
+  # clean up the dataframe 
+  deadzone_file <- deadzone_file %>%
+    select("Latitude", "Longitude", "Depth")
+  
+  # remove duplicate pings 
+  deadzone_file <- distinct(deadzone_file, Latitude, Longitude, Depth, .keep_all = TRUE)
+  
+  # Add site ID 
+  deadzone_file$Site_ID <- deadzone_site_id
+  
+  # great circle distance 
+  calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
+    distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
+    return(distance)
+  }
+  
+  # apply GCD to data 
+  deadzone_file$GreatCircleDistance[2:(nrow(deadzone_file))] <- sapply(2:(nrow(deadzone_file)), function(j) {
+    lat1 <- deadzone_file$Latitude[j - 1]
+    lon1 <- deadzone_file$Longitude[j - 1]
+    lat2 <- deadzone_file$Latitude[j]
+    lon2 <- deadzone_file$Longitude[j]
+    calc_great_circle_distance(lat1, lon1, lat2, lon2)
+  })
+  
+  ## measure the depth change 
+  deadzone_file$DepthDifference <- c(NA, deadzone_file$Depth[-1] - deadzone_file$Depth[-nrow(deadzone_file)])
+  
+  # calculate the slope 
+  deadzone_file$Slope <- sapply(1:nrow(deadzone_file), function(j) {
+    ifelse(is.na(deadzone_file$GreatCircleDistance[j]) || is.na(deadzone_file$DepthDifference[j]),
+           NA,
+           (180.0/pi) * atan(deadzone_file$GreatCircleDistance[j] / deadzone_file$DepthDifference[j]))
+  })
+  
+  # calculate the hypotenuse 
+  deadzone_file$Hypothenuse <- sqrt(deadzone_file$GreatCircleDistance^2 + deadzone_file$DepthDifference^2)
+  
+  # measure the cumulative sum of GCD to allow the data to get binned 
+  deadzone_file$GreatCircleDistance[is.na(deadzone_file$GreatCircleDistance)] <- 0
+  deadzone_file$CumulativeGCD <- cumsum(deadzone_file$GreatCircleDistance)
+  
+  # do the same for the hypothenuse 
+  deadzone_file$Hypothenuse[is.na(deadzone_file$Hypothenuse)] <- 0
+  deadzone_file$CumulativeHypo <- cumsum(deadzone_file$Hypothenuse)
+  
+  # make the min 20m 
+  bin_width <- 20
+  
+  # column for bin and name them based on what part of the 20m segment it falls in 
+  deadzone_file <- deadzone_file %>%
+    mutate(Bin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + bin_width, bin_width), labels = FALSE))
+  
+  # create a df that holds all the data
+  deadzone_merge <- rbind(deadzone_merge, deadzone_file)
+  
+  # export csv of the calculations
+  write.csv(deadzone_file, file.path(deadzone_save_path, paste0(deadzone_site_id, "_", deadzone_file_name)), row.names = FALSE)
+}
+
+# create binID to match other data frames 
+deadzone_merge$BinID <- paste(deadzone_merge$Site_ID, deadzone_merge$Bin, sep = "_")
+
+# remove the unnecessary columns 
+deadzone_merge <- deadzone_merge %>%filter(!is.na(Bin))
+
+deadzone_merge$DZDepth <- deadzone_merge$Depth
+#subset the data 
+deadzone_clean <- deadzone_merge %>% select(Latitude, Longitude, GreatCircleDistance, DZDepth)
+
+# Now lets add the depth of the deadzone to the bottom dataframe
+combined_df <- merge(merged_df,  deadzone_clean, 
+                  by = c("Latitude", "Longitude", "GreatCircleDistance"))
+
+# now lets create a column to calculate the difference in depth of the deadzone to bottom line 
+combined_df <- combined_df %>% mutate(DZDifference = abs(Depth - DZDepth))
+combined_df <- combined_df %>% mutate(Area = DZDifference * GreatCircleDistance)
+
+
+
+#### lets calculate different variables for each of variables at bin level ####
+BinDeadzone <- combined_df %>%
+  group_by(BinID) %>%
+  summarize(
+    Average_DZDiff = mean(DZDifference, na.rm = TRUE),
+    Std_Dev_DZDiff = sd(DZDifference, na.rm = TRUE), 
+    CumulativeArea= sum(Area, na.rm = TRUE),
+  )
+
+binlines <- left_join(binlines, BinDeadzone, by = "BinID")
+
+# Lets calculate site level variables 
+SiteDeadzone <- combined_df %>%
+  group_by(Site_ID) %>%
+  summarize(
+    Average_DZDiff = mean(DZDifference, na.rm = TRUE),
+    Std_Dev_DZDiff = sd(DZDifference, na.rm = TRUE), 
+    CumulativeArea= sum(Area, na.rm = TRUE),
+  )
+sitelines <- left_join(sitelines, SiteDeadzone, by = "Site_ID")
+

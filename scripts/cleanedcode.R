@@ -1,3 +1,5 @@
+# By: Hutton Noth 
+# Date: Fall 2023
 
 ####  Load in Packages ####
 lp<-function(pck){
@@ -841,4 +843,9 @@ nonschooling <- select(NSbinwide, c("BinID", "AbundanceNonSchooling", "SRNonScho
 
 # merge this to siteinfo 
 bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
+
+# Save 
+save(bininfo, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
+
+
 

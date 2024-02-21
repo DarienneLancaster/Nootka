@@ -1,4 +1,5 @@
-
+# By: Hutton Noth 
+# Date: Fall 2023
 ## set working directory 
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
