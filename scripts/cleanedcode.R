@@ -105,7 +105,21 @@ SubDuration <- SubDuration %>%
 SubDuration <- SubDuration %>% select(- Notes) %>% 
   filter(!is.na(SubDuration)) %>%
   mutate(Percent = round(Proportion * 100))
+## this code combined together Sub of a certain type so we can see the dominate slope
+SubDuration <- SubDuration %>%
+  group_by(Site_ID, Sub, SiteDuration) %>%
+  summarize(
+    Time = sum(Time),
+    SubDuration = sum(SubDuration),
+    SubProportion = sum(Proportion),
+    SubPercent = sum(Percent),
+    .groups = "drop"  
+  )
 
+DominateSub <- SubDuration %>%
+  group_by(Site_ID) %>%
+  top_n(1, SubPercent) %>%
+  ungroup()
 
 # Slope calculations 
 SubSlope$Slope <- substr(SubSlope$Sub_Slope, 3, 4)
@@ -136,8 +150,22 @@ SlopeDuration <- SlopeDuration %>% select(- Notes) %>%
   filter(!is.na(SlopeDuration)) %>% 
   mutate(Percent = round(Proportion * 100))
 
-## add percentages in wide format X Sub/Slope 
+## this code combined together Slopes of a certain type so we can see the dominate slope
+SlopeDuration <- SlopeDuration %>%
+  group_by(Site_ID, Slope, SiteDuration) %>%
+  summarize(
+    Time = sum(Time),
+    SlopeDuration = sum(SlopeDuration),
+    SlopeProportion = sum(Proportion),
+    SlopePercent = sum(Percent),
+    .groups = "drop"  
+  )
+DominateSlope <- SlopeDuration %>%
+  group_by(Site_ID) %>%
+  top_n(1, SlopePercent) %>%
+  ungroup()
 
+# Now lets add this to siteinfo 
 
 #### Field of View - Volume of water surveyed #### 
 # load in data 
