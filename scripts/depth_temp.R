@@ -3,7 +3,7 @@
 
 ## setwd("C:/Users/dlanc/Documents/PhD/R/Nootka") 
 
-setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 ## There is two files we will be working with, one with the Staroddi data 
 ## the other is manual measurements of temp and depth from ROV 
@@ -25,6 +25,6 @@ StarDT <- StarDT %>%
   ## we void all the study sites from the first day (NS01 - NS04)
   filter(!Date %in% "10.08.2023")
 
-write_xlsx(StarDT, "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/odata/StarDT.xlsx")
+write_xlsx(StarDT, "wdata/StarDT.xlsx")
 #
 
