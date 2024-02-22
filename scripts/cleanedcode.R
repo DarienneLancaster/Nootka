@@ -14,7 +14,7 @@ lp("xlsx")
 
 #### Set Working Directory #### 
 
-setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 
 #### Create siteinfo Data frame #### 
@@ -178,10 +178,14 @@ siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
 #### Field of View - Volume of water surveyed #### 
 # load in data 
 FOV<-read.csv("odata/FOV.csv")
+#when I load in FOV file it gives weird name for Site_ID
+FOV<-FOV%>%
+  rename(Site_ID=ï..Site_ID)
 
 # fill in sites with no calculate FOV with the average 
 FOVmean <- FOV %>% 
   mutate_at(vars(Width, SD, SE, Height, Area, Volume), ~ifelse(is.na(.x), mean(.x, na.rm = TRUE), .x))
+
 FOVvolume <- FOVmean %>% select(Site_ID, Volume)
 
 ## now lets add the volume surveyed into site ID 
@@ -192,7 +196,8 @@ siteinfo <- merge(siteinfo, FOVvolume, by = "Site_ID", all.x = TRUE)
 
 # load in depth and temperature data 
 DT <- read.csv("odata/StarDT.csv")
-colnames(DT)[which(names(DT) == "Temp..C.")] <- "Temp"
+colnames(DT)[which(names(DT) == "Temp.Â.C.")] <- "Temp"
+colnames(DT)[which(names(DT) == "ï..Number")] <- "Number"
 
 # remove depths < 10m, ascending data, and blank data 
 DT <- DT %>% 
@@ -294,7 +299,7 @@ sitesebastes$RFAbundance <- mapply(sebastesabundance, x = 2)
 RFSpeciesRichness <- function(x) {apply(sitesebastes[, 2:11 ]> 0, 1, sum)}
 
 # apply the function 
-sitesebastes$RFSpeciesRichness <- mapply(sebspeciesrichnes, x = 2)
+sitesebastes$RFSpeciesRichness <- mapply(RFSpeciesRichness, x = 2)
 
 ## add to siteinfo 
 RF <- select(sitesebastes, c("Site_ID", "RFAbundance", "RFSpeciesRichness"))
@@ -358,8 +363,8 @@ numberFS <- function(x) {
 FSwide$NumberFS <- mapply(numberFS, x = 2)
 
 # subset the data to certain columns 
-Fishschooldata <- select(FSwide, c("Site_ID", "SFCount", "NumberFS"))
-
+#Fishschooldata <- select(FSwide, c("Site_ID", "SFCount", "NumberFS"))
+Fishschooldata <- select(FSwide, c("Site_ID",  "NumberFS"))
 # merge this to siteinfo 
 siteinfo <- merge(siteinfo, Fishschooldata, by = "Site_ID", all.x = TRUE)
 
@@ -367,7 +372,7 @@ siteinfo <- merge(siteinfo, Fishschooldata, by = "Site_ID", all.x = TRUE)
 
 # filter out any groups of fish over 10 
 nonschooling <- ROVFish %>% 
-              filter(! Number < 10)
+              filter(Number < 10) # removed ! here
 
 # create outline to apply function 
 sitenonschooling <- unique(nonschooling[, c("Site_ID", "FullName")])
@@ -881,7 +886,8 @@ nonschooling <- select(NSbinwide, c("BinID", "AbundanceNonSchooling", "SRNonScho
 bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
 
 # Save 
-save(bininfo, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
+save(bininfo, file = "bininfo.RData")
+write.csv(bininfo,"wdata/bininfo.csv")
 
 
 
