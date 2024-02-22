@@ -50,15 +50,15 @@ NS07$Slope <- sapply(1:nrow(NS07), function(i) {
          (180.0/pi) * atan(NS07$GreatCircleDistance[i] / NS07$DepthDifference[i]))
 })
 # calculate hypotenuse 
-NS07$Hypothenuse <- sqrt(NS07$GreatCircleDistance^2 + NS07$DepthDifference^2)
+NS07$Hypotenuse <- sqrt(NS07$GreatCircleDistance^2 + NS07$DepthDifference^2)
 
 # Calculate the cumulative sum of great circle distance 
 NS07$GreatCircleDistance[is.na(NS07$GreatCircleDistance)] <- 0
 NS07$CumulativeGCD <- cumsum(NS07$GreatCircleDistance)
 
-# do the same for the hypothenuse
-NS07$Hypothenuse[is.na(NS07$Hypothenuse)] <- 0
-NS07$CumulativeHypo <- cumsum(NS07$Hypothenuse)
+# do the same for the Hypotenuse
+NS07$Hypotenuse[is.na(NS07$Hypotenuse)] <- 0
+NS07$CumulativeHypo <- cumsum(NS07$Hypotenuse)
 
 # Label the bins to be 20m segments of the great circle distance 
 # definte the bin width
@@ -70,8 +70,9 @@ NS07 <- NS07 %>%
 
 ####  Lets attempt a for loop #### 
 # create a list of all the file names we need to pull through the code 
-# specify the path on the computer to the folder with the files you want to run through the code 
-folder_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Bottom"
+# specify the path on the computer to the folder with the files you want to run through the code
+#changed path to work on both our computers, just need to load Transect 1 into odata folder
+folder_path <- "odata/Transect 1/100mLines/Bottom"
 
 # get a list of file names 
 file_names <- list.files(folder_path)
@@ -90,8 +91,8 @@ merged_df <- data.frame()
 ## for loop 
 
 # make path for the for-loop to pull from 
-folder_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Bottom"
-save_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Bottom/RCODED"
+folder_path <- "odata/Transect 1/100mLines/Bottom"
+save_path <- "odata/Transect 1/100mLines/Bottom/RCODED"
 
 # loop each row in the file_df that contains al the names of files of interest
 for (i in 1:nrow(file_df)) {
@@ -139,15 +140,15 @@ for (i in 1:nrow(file_df)) {
   })
   
   # calculate the hypotenuse 
-  file$Hypothenuse <- sqrt(file$GreatCircleDistance^2 + file$DepthDifference^2)
+  file$Hypotenuse <- sqrt(file$GreatCircleDistance^2 + file$DepthDifference^2)
   
   # cumulative sum of great circle distance to help bin the data
   file$GreatCircleDistance[is.na(file$GreatCircleDistance)] <- 0
   file$CumulativeGCD <- cumsum(file$GreatCircleDistance)
   
-  # do the same for the hypothenuse
-  file$Hypothenuse[is.na(file$Hypothenuse)] <- 0
-  file$CumulativeHypo <- cumsum(file$Hypothenuse)
+  # do the same for the Hypotenuse
+  file$Hypotenuse[is.na(file$Hypotenuse)] <- 0
+  file$CumulativeHypo <- cumsum(file$Hypotenuse)
   
   # set bin width to 20 
   bin_width <- 20
@@ -169,7 +170,7 @@ merged_df <-merged_df %>%
   filter(!is.na(Bin))
 
 # load in bininfo from saved on cleandata.R 
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
+load("bininfo.RData")
 
 #### lets calculate different variables for each of the bin level 
 BinBottom <- merged_df %>%
@@ -178,7 +179,7 @@ BinBottom <- merged_df %>%
     Average_Slope = mean(Slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
-    chainlength = sum(Hypothenuse, na.rm = TRUE)
+    chainlength = sum(Hypotenuse, na.rm = TRUE)
   )
 BinBottom <- BinBottom %>% mutate(Ratio = chainlength / profilelength)
 
@@ -192,7 +193,7 @@ SiteBottom <- merged_df %>%
     Average_Slope = mean(Slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
-    chainlength = sum(Hypothenuse, na.rm = TRUE)
+    chainlength = sum(Hypotenuse, na.rm = TRUE)
   )
 SiteBottom <- SiteBottom %>% mutate(Ratio = chainlength / profilelength)
 
@@ -204,8 +205,11 @@ sitelines <- left_join(sitelines, SiteBottom, by = "Site_ID")
 #### Deadzone for-loop ####
 
 # define paths 
-deadzone_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone"
-deadzone_save_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone/RCODED"
+# deadzone_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone"
+# deadzone_save_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone/RCODED"
+
+deadzone_path <- "odata/Transect 1/100mLines/Deadzone"
+deadzone_save_path <- "odata/Transect 1/100mLines/Deadzone/RCODED"
 
 # list all relevant files 
 deadzone_names <- list.files(deadzone_path)
@@ -267,15 +271,15 @@ for (i in 1:nrow(deadzone_df)) {
   })
   
   # calculate the hypotenuse 
-  deadzone_file$Hypothenuse <- sqrt(deadzone_file$GreatCircleDistance^2 + deadzone_file$DepthDifference^2)
+  deadzone_file$Hypotenuse <- sqrt(deadzone_file$GreatCircleDistance^2 + deadzone_file$DepthDifference^2)
   
   # measure the cumulative sum of GCD to allow the data to get binned 
   deadzone_file$GreatCircleDistance[is.na(deadzone_file$GreatCircleDistance)] <- 0
   deadzone_file$CumulativeGCD <- cumsum(deadzone_file$GreatCircleDistance)
   
-  # do the same for the hypothenuse 
-  deadzone_file$Hypothenuse[is.na(deadzone_file$Hypothenuse)] <- 0
-  deadzone_file$CumulativeHypo <- cumsum(deadzone_file$Hypothenuse)
+  # do the same for the Hypotenuse 
+  deadzone_file$Hypotenuse[is.na(deadzone_file$Hypotenuse)] <- 0
+  deadzone_file$CumulativeHypo <- cumsum(deadzone_file$Hypotenuse)
   
   # make the min 20m 
   bin_width <- 20
