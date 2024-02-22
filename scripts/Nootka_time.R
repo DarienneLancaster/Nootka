@@ -1,7 +1,7 @@
 # By: Hutton Noth 
 # Date: Fall 2023
 ## set working directory 
-setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 ## required packages 
 lp("tidyverse")
@@ -72,6 +72,7 @@ nootkadata <- nootkadata %>%
 
 ## Save Nootka data 
 save(nootkadata, file = "nootkadata.Rdata")
+write.csv(nootkadata,"wdata/nootkadata.csv")
 
 ######################################################################################################################################################
 
