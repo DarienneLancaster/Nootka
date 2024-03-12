@@ -26,8 +26,9 @@ siteinfo <- unique(nootkadata[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Lon
 #### Load  & Clean Event Measure Annotation Data #### 
 
 # skipping the first 4 rows of data / removing empty rows (strings)
-ROV<-read.csv("odata/ROVcomplete.csv", skip=4, stringsAsFactors = FALSE)
+#ROV<-read.csv("odata/ROVcomplete.csv", skip=4, stringsAsFactors = FALSE)
 
+ROV <-read.csv("odata/NootkaROV_20240301_finalDL.csv",  skip=4, stringsAsFactors = FALSE)
 # remove unnecessary columns 
 ROV = select(ROV, -4:-21)
 ROV = select(ROV, -"Code")
@@ -80,7 +81,6 @@ SubSlope$Sub <- substr(SubSlope$Sub_Slope, 1, 1)
 
 # rename all sand and mud to soft and all other substrate to be labeled as hard substrate 
 SubSlope <- SubSlope %>%
-  filter(Sub != "") %>%
   mutate(Sub = ifelse(Sub %in% c("S", "M"), "soft",
                       ifelse(Sub %in% c("C", "R", "P", "B"), "hard", Sub)))
 
@@ -185,8 +185,8 @@ siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
 # load in data 
 FOV<-read.csv("odata/FOV.csv")
 #when I load in FOV file it gives weird name for Site_ID
-FOV<-FOV%>%
-  rename(Site_ID=ï..Site_ID)
+#FOV<-FOV%>%
+ # rename(Site_ID=ï..Site_ID)
 
 # fill in sites with no calculate FOV with the average 
 FOVmean <- FOV %>% 
@@ -202,8 +202,8 @@ siteinfo <- merge(siteinfo, FOVvolume, by = "Site_ID", all.x = TRUE)
 
 # load in depth and temperature data 
 DT <- read.csv("odata/StarDT.csv")
-colnames(DT)[which(names(DT) == "Temp.Â.C.")] <- "Temp"
-colnames(DT)[which(names(DT) == "ï..Number")] <- "Number"
+colnames(DT)[which(names(DT) == "Temp..C.")] <- "Temp"
+#colnames(DT)[which(names(DT) == "ï..Number")] <- "Number"
 
 # remove depths < 10m, ascending data, and blank data 
 DT <- DT %>% 
@@ -296,13 +296,13 @@ sitesebastes <- reshape(sitesebastes, v.names = "Abundance", idvar = "Site_ID", 
 sitesebastes[is.na(sitesebastes)] <- 0
 
 # calculate the abundance of rockfish at each site
-sebastesabundance <- function(x) {apply(sitesebastes[, 2:11], 1, sum)}
+sebastesabundance <- function(x) {apply(sitesebastes[, 2:10], 1, sum)}
 
 # apply the function 
 sitesebastes$RFAbundance <- mapply(sebastesabundance, x = 2)
 
 # calculate the species richness of rockfish per site 
-RFSpeciesRichness <- function(x) {apply(sitesebastes[, 2:11 ]> 0, 1, sum)}
+RFSpeciesRichness <- function(x) {apply(sitesebastes[, 2:10 ]> 0, 1, sum)}
 
 # apply the function 
 sitesebastes$RFSpeciesRichness <- mapply(RFSpeciesRichness, x = 2)
@@ -315,70 +315,45 @@ siteinfo <- siteinfo %>% mutate(RFAbundance = ifelse(is.na(RFAbundance), 0, RFAb
 
 #### Calculate Fish School Abundance and Number #### 
 
-# filter out non-fishschool 
-fishschool <- ROVFish%>%
-  filter(Number > 10) 
+# filter out non-fishschool  and blank data
+fishschool <- ROV %>%
+  filter(Number > 10, Number!= "NA") 
 
 # code to calculate fish schools 
-process_school_type <- function(fishschool, school_type, continuation_type){
-  fishschool %>% 
-    mutate(SchoolID = cumsum(Notes == school_type)) %>%
-    group_by(Site_ID) %>%
-    filter(Notes %in% c(school_type, continuation_type) | SchoolID == 0) %>%
-    mutate(ValidNumber = ifelse(Notes != "", Number, NA_integer_)) %>%
-    summarise(
-      Notes = first(Notes[Notes == school_type]), 
-      Number = sum(ValidNumber, na.rm = TRUE),
-      Site_ID = list(unique(Site_ID)),
-      Activity = list(unique(Activity)), 
-      .groups = "drop"
-    )
-}
-view(fishschool)
+summary_fishschool <- fishschool %>%
+  group_by(Site_ID, Notes) %>%
+  summarise(Total_Number = sum(Number, na.rm = TRUE), .groups = "drop")
 
-# run each school type through the function 
-sp_data <- process_school_type(fishschool, "SP", "SP_C")
-bp_data <- process_school_type(fishschool, "BP", "BP_C")
-sb_data <- process_school_type(fishschool, "SB", "SB_C")
-bb_data <- process_school_type(fishschool, "BB", "BB_C")
+site_fishschool <- summary_fishschool %>%
+  group_by(Site_ID) %>%
+  summarise(total_number_schoolingfish = sum(Total_Number),
+            number_FS = n_distinct(Notes))
 
-# combine the data 
-FSdata <- bind_rows(sp_data, bp_data, sb_data, bb_data)
+siteinfo <- merge(siteinfo, site_fishschool, by = "Site_ID", all.x = TRUE)
 
-# replace the notes == na with unknown 
-FSdata[is.na(FSdata)] <- "Unknown"
+## now lets do it for each type of fish school 
+summary_fishschool <- summary_fishschool %>%
+  mutate(fishschool_type = substr(Notes, 1, 2))
 
-# create a unique identifier to link with the school type 
-FSdata <- FSdata %>% mutate(rowID = as.numeric(row_number())) %>% select(-Activity)
-FSdata$schoolID <- paste(FSdata$Notes, FSdata$rowID, sep = ".")
-FSdata <- select(FSdata, c("Site_ID", "schoolID", "Number"))
+summary_fishschool_summary <- summary_fishschool %>%
+  group_by(Site_ID, fishschool_type) %>%
+  summarise(num_FS = n_distinct(Notes),
+            sum_SF = sum(Total_Number),
+            .groups = "drop")
 
-# transform the data to wide 
-FSwide <- FSdata %>%
-  pivot_wider(names_from = schoolID, values_from = Number, values_fill = 0)
-
-# this isnt working 
-#Schoolingfish <- function(x) {apply(FSwide[, 2:71], 1, sum)}
-#FSwide$SFCount <- mapply(Schoolingfish, x = 2)
-
-# count the number of fish schools at each site
-numberFS <- function(x) { 
-  apply(FSwide[, 2:71 ]> 0, 1, sum)
-}
-
-FSwide$NumberFS <- mapply(numberFS, x = 2)
-
-# subset the data to certain columns 
-#Fishschooldata <- select(FSwide, c("Site_ID", "SFCount", "NumberFS"))
-Fishschooldata <- select(FSwide, c("Site_ID",  "NumberFS"))
-# merge this to siteinfo 
-siteinfo <- merge(siteinfo, Fishschooldata, by = "Site_ID", all.x = TRUE)
+summary_fishschool_pivoted <- summary_fishschool_summary %>%
+  pivot_wider(names_from = fishschool_type,
+              values_from = c(num_FS, sum_SF),
+              names_prefix = "--",
+              names_sep = "")
+summary_fishschool_pivoted[is.na(summary_fishschool_pivoted)] <- 0
+siteinfo <- merge(siteinfo, summary_fishschool_pivoted, by = "Site_ID", all.x = TRUE)
 
 #### Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
 # filter out any groups of fish over 10 
-nonschooling <- ROVFish %>% 
-              filter(Number < 10) # removed ! here
+nonschooling <- ROV %>% 
+              filter(Number < 10, Number!= "NA") 
 
 # create outline to apply function 
 sitenonschooling <- unique(nonschooling[, c("Site_ID", "FullName")])
@@ -420,20 +395,24 @@ siteinfo <- merge(siteinfo, nonschooling, by = "Site_ID", na.rm = TRUE, all = TR
 #### Calculate Relative Frequency of each Species ##### 
 
 # Subset data 
-species <- unique(ROVFish[, c("Family", "Genus", "Species", "FullName")])
-
+species <- unique(ROV[, c("Family", "Genus", "Species", "FullName")])
+species[is.na(species)] <- 0
 # function to count the number of each species using the full name 
 speciescount <- function(xx){ 
-  keep <- which(ROVFish$FullName == xx)
+  keep <- which(ROV$FullName == xx)
   if (length(keep) == 0) return(0)
-  return(sum(ROVFish$Number[keep]))
+  return(sum(ROV$Number[keep]))
 }
 species$count <- mapply(speciescount, xx = species$FullName )
 
+species <- species %>%filter(count!= "NA")
+
+view(species)
 # calculate the relative frequency 
 species1 <- species %>% group_by(FullName) %>% 
   summarise(total_count = sum(count), .groups = "drop" ) %>% 
   mutate(frequency = total_count / sum(total_count) ) 
+
 # plot 
 species1 %>%
   mutate(name = fct_reorder(FullName, desc(frequency))) %>%
@@ -444,22 +423,6 @@ species1 %>%
   theme_bw()
 
 ## lets remove unknown unknown unknown to get a better understanding of known species  
-species2 <- species %>%
-  filter(!FullName == "unknown unknown unknown")
-
-species2 <- species2 %>% group_by(FullName) %>% 
-  summarise( total_count = sum(count), .groups = "drop" ) %>% 
-  mutate( frequency = total_count / sum(total_count) ) 
-
-
-species2 %>%
-  mutate(name = fct_reorder(FullName, desc(frequency))) %>%
-  ggplot( aes(x= reorder(FullName, - frequency), y=frequency)) +
-  geom_bar(stat="identity", alpha=.6, width=.4) +
-  coord_flip() +
-  xlab("") +
-  theme_bw()
-
 
 result_table <- species1 %>%
   mutate(name = forcats::fct_reorder(FullName, desc(total_count))) %>%
