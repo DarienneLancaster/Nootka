@@ -14,7 +14,7 @@ lp("xlsx")
 
 #### Set Working Directory #### 
 
-#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 
 #### Create siteinfo Data frame #### 
@@ -71,12 +71,18 @@ siteinfo <- merge(siteinfo, subarea, by = "Site_ID", all.x = TRUE)
 #### Substrate and Slope - Proportion at each site #### 
 
 # subset subslope information 
-SubSlope <-ROV%>%
+SubSlope <- ROV %>%
   filter(Activity=="Attracted" | Notes == "End") %>%
   select(Site_ID, Time, Depth, Sub_Slope, Notes)
 
-# create a new column with just substrate information 
+# create a new column with just substrate information  
 SubSlope$Sub <- substr(SubSlope$Sub_Slope, 1, 1)
+
+# rename all sand and mud to soft and all other substrate to be labeled as hard substrate 
+SubSlope <- SubSlope %>%
+  filter(Sub != "") %>%
+  mutate(Sub = ifelse(Sub %in% c("S", "M"), "soft",
+                      ifelse(Sub %in% c("C", "R", "P", "B"), "hard", Sub)))
 
 # create new dataset called duration time 
 SubDuration <- SubSlope %>% 
