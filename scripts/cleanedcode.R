@@ -407,7 +407,7 @@ species$count <- mapply(speciescount, xx = species$FullName )
 
 species <- species %>%filter(count!= "NA")
 
-view(species)
+
 # calculate the relative frequency 
 species1 <- species %>% group_by(FullName) %>% 
   summarise(total_count = sum(count), .groups = "drop" ) %>% 
@@ -612,15 +612,38 @@ flextable(subarea_table)
 ############## Bin Information ############################
 ## try to create 5 bins of time per site. 
 
+## remove the times that the ROv gets pulled from the time from aanotations
 ROV$Time <- as.numeric(ROV$Time)
 ROV$Time <- as.numeric(ROV$Time)
 
-# Calculate total duration for each Site_ID using dplyr
+pulled_indices <- which(ROV$Notes == "pulled")
+resume_indices <- which(ROV$Notes == "resume")
+
+for (i in 1:length(pulled_indices)) {
+  # figure out what Site_ID have pulls 
+  site_id <- ROV$Site_ID[pulled_indices[i]]
+  
+  # match them with the resume 
+  resume_index <- resume_indices[resume_indices > pulled_indices[i]][1]
+  
+  # calculate the duration it was pulled
+  duration <- ROV$Time[resume_index] - ROV$Time[pulled_indices[i]]
+  
+  # make time resumed = time pulled
+  ROV$Time[resume_index] <- ROV$Time[pulled_indices[i]]
+  
+  # subtract the duration pulled from the following time after the resume
+  following_time <- which(ROV$Site_ID == site_id & ROV$Time > ROV$Time[resume_index])
+  ROV$Time[following_time] <- ROV$Time[following_time] - duration
+}
+
+
+# Measure the total duration for each of the sites
 durationdata <- ROV %>%
   group_by(Site_ID) %>%
   mutate(Total_Duration = max(Time) - min(Time))
 
-# Determine the length of each bin
+# the length of the bin will be the total duration / 5
 durationdata <- durationdata %>%
   mutate(Bin_length = Total_Duration / 5)
 
@@ -649,7 +672,7 @@ durationdata <- create_bins(durationdata)
 # Create bin level dataframe 
 bininfo <- siteinfo %>% select("Site_ID")
 bininfo2 <- siteinfo %>% select("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal", "avg_temp", "avg_depth", "Volume")
-bininfo$Volume <- bininfo$Volume / 5
+bininfo2$Volume <- bininfo2$Volume / 5
 bininfo <- bininfo %>%
   # expand each Site_ID to have 5 different BinID 
   expand(Site_ID, BinID = 1:5) %>%
@@ -660,7 +683,7 @@ bininfo <- bininfo %>%
 
 # subset dataframe to only be fish
 BinFish<- durationdata %>%
-  filter(Activity!= "Attracted" , Number!= "NA", Notes!= "Start")
+  filter(Number!= "NA")
 
 # create a column that merges Site_ID and bin number 
 BinFish$BinID <- paste(BinFish$Site_ID, BinFish$Bin, sep = "_")
@@ -740,6 +763,42 @@ bininfo <- merge(bininfo, binRF, by = "BinID", all.x = TRUE)
 
 #### Bin level Calculate Fish School Abundance and Number #### 
 
+# filter out non-fishschool  and blank data
+fishschoolbin <- BinFish %>%
+  filter(Number > 10, Number!= "NA") 
+
+# code to calculate fish schools 
+Bin_sum_fishschool <- fishschoolbin %>%
+  group_by(BinID, Notes) %>%
+  summarise(Total_Number = sum(Number, na.rm = TRUE), .groups = "drop")
+
+Bin_fishschool <- Bin_sum_fishschool %>%
+  group_by(BinID) %>%
+  summarise(total_number_schoolingfish = sum(Total_Number),
+            number_FS = n_distinct(Notes))
+
+bininfo <- merge(bininfo, Bin_fishschool, by = "BinID", all.x = TRUE)
+
+## now lets do it for each type of fish school 
+Bin_sum_fishschool <- Bin_sum_fishschool %>%
+  mutate(fishschool_type = substr(Notes, 1, 2))
+
+Bin_fishschool_summary <- summary_fishschool %>%
+  group_by(Site_ID, fishschool_type) %>%
+  summarise(num_FS = n_distinct(Notes),
+            sum_SF = sum(Total_Number),
+            .groups = "drop")
+
+Bin_fishschool_pivoted <- Bin_fishschool_summary %>%
+  pivot_wider(names_from = fishschool_type,
+              values_from = c(num_FS, sum_SF),
+              names_prefix = "--",
+              names_sep = "")
+Bin_fishschool_pivoted[is.na(Bin_fishschool_pivoted)] <- 0
+siteinfo <- merge(siteinfo, Bin_fishschool_pivoted, by = "Site_ID", all.x = TRUE)
+
+#### Calculate Non-Schooling Fish Abundance and Species Richness #### 
+
 # filter out non-fishschool 
 binfishschool <- BinFish%>%
   filter(Number > 10) 
@@ -758,57 +817,17 @@ binfishschoolswide <- binfishschools %>%
 
 View(binfishschoolswide)
 # calculate total number of schooling fish per bin
-schoolingfish <- function(x) {apply(binfishschoolswide[, 2:6], 1, sum)}
+schoolingfish <- function(x) {apply(binfishschoolswide[, 2:9], 1, sum)}
 # apply the function 
 binfishschoolswide$SFCount <- mapply(schoolingfish, x = 2)
 
 ## Count number of fish schools 
 numberFS <- function(x) { 
-  apply(binfishschoolswide[, 2:6]> 0, 1, sum)
+  apply(binfishschoolswide[, 2:9]> 0, 1, sum)
 }
 
 binfishschoolswide$NumberFS <- mapply(numberFS, x = 2)
-#### Clean this Code #### 
-# create a unique identifier to link with the school type 
-#FSbindata <- FSbindata %>% mutate(rowID = as.numeric(row_number())) %>% select(-Activity)
-#FSbindata$schoolID <- paste(FSbindata$Notes, FSbindata$rowID, sep = ".")
-#FSbindata <- select(FSbindata, c("BinID", "schoolID", "Number"))
 
-# we can see that the fish schools cross multiple bins, how do we deal with this? 
-# call them a fish school in each one
-
-# transform the data to wide 
-#FSbinwide <- FSbindata %>%
- # pivot_wider(names_from = schoolID, values_from = Number, values_fill = 0)
-## there is 66 columns that you can't see all on in the normal view
-#ncol(FSbinwide)
-
-# calculate total number of schooling fish per site 
-#schoolingfish <- function(x) {apply(FSbinwide[, 2:137], 1, sum)}
-
-# apply the function 
-#FSbinwide$TotalSchoolFish <- mapply(schoolingfish, x = 2)
-
-# function that counts the number of
-#addFS <-  function(xx, ss){ 
- # keep <- which(FSbinwide$BinID == xx)
- # if (length(keep) == 0) return(0)
-#  return(sum(FSbinwide$NumberFS[keep]))
-#}
-
-
-# count the number of fish schools at each site
-#numberFS <- function(x) { 
- # apply(FSbinwide[, 2:137]> 0, 1, sum)
-#}
-
-#FSbinwide$NumberFS <- mapply(numberFS, x = 2)
-
-# subset the data to certain columns 
-#binfishschooldata <- select(FSbinwide, c("BinID", "TotalSchoolFish", "NumberFS"))
-
-# merge this to siteinfo 
-#bininfo <- merge(bininfo, binfishschooldata, by = "BinID", all.x = TRUE)
 
 #### Bin level Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
@@ -837,14 +856,14 @@ ncol(NSbinwide)
 
 # function to calculate abundance for non-schooling fish 
 nonschoolingabundance <- function(x) {
-  apply(NSbinwide[, 2:21], 1, sum)
+  apply(NSbinwide[, 2:24], 1, sum)
 }
 
 NSbinwide$AbundanceNonSchooling <- mapply(nonschoolingabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSbinwide[, 2:21]> 0, 1, sum)
+  apply(NSbinwide[, 2:24]> 0, 1, sum)
 }
 NSbinwide$SRNonSchooling <- mapply(nonschoolspeciesrichness, x = 2)
 
