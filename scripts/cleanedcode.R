@@ -407,7 +407,7 @@ species$count <- mapply(speciescount, xx = species$FullName )
 
 species <- species %>%filter(count!= "NA")
 
-view(species)
+
 # calculate the relative frequency 
 species1 <- species %>% group_by(FullName) %>% 
   summarise(total_count = sum(count), .groups = "drop" ) %>% 
@@ -612,15 +612,38 @@ flextable(subarea_table)
 ############## Bin Information ############################
 ## try to create 5 bins of time per site. 
 
+## remove the times that the ROv gets pulled from the time from aanotations
 ROV$Time <- as.numeric(ROV$Time)
 ROV$Time <- as.numeric(ROV$Time)
 
-# Calculate total duration for each Site_ID using dplyr
+pulled_indices <- which(ROV$Notes == "pulled")
+resume_indices <- which(ROV$Notes == "resume")
+
+for (i in 1:length(pulled_indices)) {
+  # figure out what Site_ID have pulls 
+  site_id <- ROV$Site_ID[pulled_indices[i]]
+  
+  # match them with the resume 
+  resume_index <- resume_indices[resume_indices > pulled_indices[i]][1]
+  
+  # calculate the duration it was pulled
+  duration <- ROV$Time[resume_index] - ROV$Time[pulled_indices[i]]
+  
+  # make time resumed = time pulled
+  ROV$Time[resume_index] <- ROV$Time[pulled_indices[i]]
+  
+  # subtract the duration pulled from the following time after the resume
+  following_time <- which(ROV$Site_ID == site_id & ROV$Time > ROV$Time[resume_index])
+  ROV$Time[following_time] <- ROV$Time[following_indices] - duration
+}
+
+
+# Measure the total duration for each of the sites
 durationdata <- ROV %>%
   group_by(Site_ID) %>%
   mutate(Total_Duration = max(Time) - min(Time))
 
-# Determine the length of each bin
+# the length of the bin will be the total duration / 5
 durationdata <- durationdata %>%
   mutate(Bin_length = Total_Duration / 5)
 
