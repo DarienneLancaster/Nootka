@@ -459,6 +459,7 @@ flextable(result_table1)
 
 
 
+
 #### Subarea level - abundance and species richness #### 
 # figure out the species richness and abundance by subarea 
 ROVFish <- merge(ROVFish, subarea, by = "Site_ID", all.x = TRUE) 
@@ -746,13 +747,13 @@ binsebastes <- binsebastes %>%
 binsebastes[is.na(binsebastes)] <- 0
 
 # calculate the abundance of rockfish at each site
-binsebastesabundance <- function(x) {apply(binsebastes[, 2:11], 1, sum)}
+binsebastesabundance <- function(x) {apply(binsebastes[, 2:10], 1, sum)}
 
 # apply the function 
 binsebastes$RFAbundance <- mapply(binsebastesabundance, x = 2)
 
 # calculate the species richness of rockfish per site 
-RFSpeciesRichness <- function(x) {apply(binsebastes[, 2:11 ]> 0, 1, sum)}
+RFSpeciesRichness <- function(x) {apply(binsebastes[, 2:10 ]> 0, 1, sum)}
 
 # apply the function 
 binsebastes$RFSpeciesRichness <- mapply(RFSpeciesRichness, x = 2)
