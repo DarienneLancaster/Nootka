@@ -877,5 +877,5 @@ bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
 save(bininfo, file = "bininfo.RData")
 write.csv(bininfo,"wdata/bininfo.csv")
 
-
+save(siteinfo, file = "siteinfo.Rdata")
 

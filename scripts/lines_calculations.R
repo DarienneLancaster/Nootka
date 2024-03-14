@@ -72,7 +72,7 @@ NS07 <- NS07 %>%
 # create a list of all the file names we need to pull through the code 
 # specify the path on the computer to the folder with the files you want to run through the code
 #changed path to work on both our computers, just need to load Transect 1 into odata folder
-folder_path <- "odata/Transect 1/100mLines/Bottom"
+folder_path <- "100mLines/Bottom"
 
 # get a list of file names 
 file_names <- list.files(folder_path)
@@ -91,8 +91,8 @@ merged_df <- data.frame()
 ## for loop 
 
 # make path for the for-loop to pull from 
-folder_path <- "odata/Transect 1/100mLines/Bottom"
-save_path <- "odata/Transect 1/100mLines/Bottom/RCODED"
+folder_path <- "100mLines/Bottom"
+save_path <- "100mLines/Bottom/RCODED"
 
 # loop each row in the file_df that contains al the names of files of interest
 for (i in 1:nrow(file_df)) {
@@ -170,7 +170,7 @@ merged_df <-merged_df %>%
   filter(!is.na(Bin))
 
 # load in bininfo from saved on cleandata.R 
-load("bininfo.RData")
+load("C:/Users/HuttonNoth(HFS)/Desktop/Biosonic_ROV_2023/Nootka_Aug2023/R/Nootka/bininfo.RData")
 
 #### lets calculate different variables for each of the bin level 
 BinBottom <- merged_df %>%
@@ -205,11 +205,11 @@ sitelines <- left_join(sitelines, SiteBottom, by = "Site_ID")
 #### Deadzone for-loop ####
 
 # define paths 
-# deadzone_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone"
-# deadzone_save_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone/RCODED"
+deadzone_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone"
+deadzone_save_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100mLines/Deadzone/RCODED"
 
-deadzone_path <- "odata/Transect 1/100mLines/Deadzone"
-deadzone_save_path <- "odata/Transect 1/100mLines/Deadzone/RCODED"
+#deadzone_path <- "odata/Transect 1/100mLines/Deadzone"
+#deadzone_save_path <- "odata/Transect 1/100mLines/Deadzone/RCODED"
 
 # list all relevant files 
 deadzone_names <- list.files(deadzone_path)
@@ -335,4 +335,9 @@ SiteDeadzone <- combined_df %>%
     CumulativeArea= sum(Area, na.rm = TRUE),
   )
 sitelines <- left_join(sitelines, SiteDeadzone, by = "Site_ID")
+
+view(sitelines)
+
+save(sitelines, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
+save(binlines, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
 
