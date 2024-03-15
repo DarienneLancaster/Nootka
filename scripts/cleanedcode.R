@@ -456,7 +456,26 @@ result_table1 <- rockfish %>%
   arrange(desc(total_count)) %>%
   select(FullName, total_count = total_count)
 flextable(result_table1)
+View(rockfish)
 
+get_common_name <- function(full_name) {
+  common_names <- c("Copper Rockfish", "Puget Sound Rockfish", "Widow Rockfish", 
+                    "Yellowtail Rockfish", "Quillback Rockfish", "Black Rockfish", 
+                    "Vermilion Rockfish", "Canary Rockfish", "Unknown Rockfish")
+  latin_names <- c("Scorpaenidae Sebastes caurinus", "Scorpaenidae Sebastes emphaeus",
+                   "Scorpaenidae Sebastes entomelas", "Scorpaenidae Sebastes flavidus",
+                   "Scorpaenidae Sebastes maliger", "Scorpaenidae Sebastes melanops",
+                   "Scorpaenidae Sebastes miniatus", "Scorpaenidae Sebastes pinniger",
+                   "Scorpaenidae Sebastes unknown")
+  
+  if (full_name %in% latin_names) {
+    return(common_names[which(latin_names == full_name)])
+  } else {
+    return("Unknown Rockfish")
+  }
+}
+
+RockFish <- mutate(rockfish, CommonName = sapply(data$FullName, get_common_name))
 
 
 
@@ -608,7 +627,27 @@ flextable(subarea_table)
     select(- Family, - Genus, -Species)
   flextable(subspecies5, col_keys = c("FullName", "count"))
 
-
+  get_common_name <- function(full_name) {
+    common_names <- c("Copper Rockfish", "Puget Sound Rockfish", "Widow Rockfish", 
+                      "Yellowtail Rockfish", "Quillback Rockfish", "Black Rockfish", 
+                      "Vermilion Rockfish", "Canary Rockfish", "Unknown Rockfish")
+    latin_names <- c("Scorpaenidae Sebastes caurinus", "Scorpaenidae Sebastes emphaeus",
+                     "Scorpaenidae Sebastes entomelas", "Scorpaenidae Sebastes flavidus",
+                     "Scorpaenidae Sebastes maliger", "Scorpaenidae Sebastes melanops",
+                     "Scorpaenidae Sebastes miniatus", "Scorpaenidae Sebastes pinniger",
+                     "Scorpaenidae Sebastes unknown")
+    if (full_name %in% latin_names) {
+      return(common_names[which(latin_names == full_name)])
+    } else {
+      return("Unknown")
+    }
+  }
+  rockfish <- mutate(rockfish, CommonName = sapply(FullName, get_common_name))
+ 
+  rockfish_sorted <- rockfish %>%
+    arrange(desc(total_count)) %>%
+    select(CommonName, total_count)
+  flextable(rockfish_sorted, word_wrap = FALSE)
   
 ############## Bin Information ############################
 ## try to create 5 bins of time per site. 
