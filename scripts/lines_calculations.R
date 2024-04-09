@@ -181,7 +181,7 @@ BinBottom <- merged_df %>%
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE)
   )
-BinBottom <- BinBottom %>% mutate(100*(Ratio = profilelength / chainlength))
+BinBottom <- BinBottom %>% mutate(Ratio = 100*(profilelength / chainlength))
 
 binlines <- bininfo %>% select("BinID")
 binlines <- left_join(binlines, BinBottom, by = "BinID")
@@ -195,7 +195,7 @@ SiteBottom <- merged_df %>%
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE)
   )
-SiteBottom <- SiteBottom %>% mutate(100*(Ratio = profilelength / chainlength))
+SiteBottom <- SiteBottom %>% mutate(Ratio = 100*(profilelength / chainlength))
 
 
 sitelines <- siteinfo %>% select("Site_ID")
