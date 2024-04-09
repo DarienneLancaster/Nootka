@@ -674,8 +674,10 @@ for (i in 1:length(pulled_indices)) {
   
   # subtract the duration pulled from the following time after the resume
   following_time <- which(ROV$Site_ID == site_id & ROV$Time > ROV$Time[resume_index])
+
   ROV$Time[following_time] <- ROV$Time[following_time] - duration
-}
+
+  ROV$Time[following_time] <- ROV$Time[following_indices] - duration
 
 
 # Measure the total duration for each of the sites
