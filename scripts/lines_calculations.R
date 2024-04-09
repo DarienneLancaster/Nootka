@@ -181,7 +181,7 @@ BinBottom <- merged_df %>%
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE)
   )
-BinBottom <- BinBottom %>% mutate(Ratio = chainlength / profilelength)
+BinBottom <- BinBottom %>% mutate(100*(Ratio = profilelength / chainlength))
 
 binlines <- bininfo %>% select("BinID")
 binlines <- left_join(binlines, BinBottom, by = "BinID")
@@ -195,7 +195,7 @@ SiteBottom <- merged_df %>%
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE)
   )
-SiteBottom <- SiteBottom %>% mutate(Ratio = chainlength / profilelength)
+SiteBottom <- SiteBottom %>% mutate(100*(Ratio = profilelength / chainlength))
 
 
 sitelines <- siteinfo %>% select("Site_ID")
@@ -336,7 +336,7 @@ SiteDeadzone <- combined_df %>%
   )
 sitelines <- left_join(sitelines, SiteDeadzone, by = "Site_ID")
 
-view(sitelines)
+
 
 save(sitelines, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
 save(binlines, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
