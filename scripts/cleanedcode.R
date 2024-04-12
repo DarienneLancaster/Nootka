@@ -14,12 +14,12 @@ lp("xlsx")
 
 #### Set Working Directory #### 
 
-setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 
 #### Create siteinfo Data frame #### 
 
-load("nootkadata.Rdata")
+load("odata/nootkadata.Rdata")
 siteinfo <- unique(nootkadata[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal")])
 
 
@@ -203,6 +203,7 @@ siteinfo <- merge(siteinfo, FOVvolume, by = "Site_ID", all.x = TRUE)
 # load in depth and temperature data 
 DT <- read.csv("odata/StarDT.csv")
 colnames(DT)[which(names(DT) == "Temp..C.")] <- "Temp"
+#colnames(DT)[which(names(DT) == "Temp.Â.C.")] <- "Temp"
 #colnames(DT)[which(names(DT) == "ï..Number")] <- "Number"
 
 # remove depths < 10m, ascending data, and blank data 
@@ -351,7 +352,7 @@ siteinfo <- merge(siteinfo, summary_fishschool_pivoted, by = "Site_ID", all.x = 
 
 #### Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
-# filter out any groups of fish over 10 
+# filter out any groups of fish less than 10 
 nonschooling <- ROV %>% 
               filter(Number < 10, Number!= "NA") 
 
