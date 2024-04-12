@@ -14,12 +14,16 @@ lp("xlsx")
 
 #### Set Working Directory #### 
 
-setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1")
+#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1")
 
 #### 100x15 #### 
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-Full15_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x15"
+#Hutton path
+#Full15_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x15"
+
+#Darienne path
+#Full15_path <- "E:/Biosonic_ROV_2023/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x15"
 
 # get a list of file names 
 file_names <- list.files(Full15_path)
@@ -65,7 +69,11 @@ full15_df <- full15_df %>%
 
 #### 100x10 #### 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-Full10_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x10"
+#Hutton path
+#Full10_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x10"
+
+#Darienne path
+#Full10_path <- "E:/Biosonic_ROV_2023/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x10"
 
 # get a list of file names 
 file_names <- list.files(Full10_path)
@@ -112,8 +120,9 @@ full10_df <- full10_df %>%
 
 #### 100x5 #### 
 ## now lets do this for the 100x5 
-Full5_path <-  "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x5"
-
+#Full5_path <-  "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x5"
+#Darienne path
+#Full5_path <- "E:/Biosonic_ROV_2023/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x5"
 # get a list of file names 
 file_names <- list.files(Full5_path)
 
@@ -169,8 +178,10 @@ view(full_df)
 ## for loop 
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-Bin5_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x5"
+#Bin5_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x5"
 
+#Darienne path
+#Bin5_path <- "E:/Biosonic_ROV_2023/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x5"
 # get a list of file names 
 file_names <- list.files(Bin5_path)
 
@@ -229,8 +240,11 @@ bin5_df <- bin5_df %>%
 #### 20X10 #### 
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-Bin10_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x10"
+#Hutton path
+#Bin10_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x10"
 
+#Darienne path
+#Bin10_path <- "E:/Biosonic_ROV_2023/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x10"
 # get a list of file names 
 file_names <- list.files(Bin10_path)
 
@@ -288,7 +302,12 @@ bin10_df <- bin10_df %>%
 #### 20X15 #### 
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-Bin15_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x15"
+#Hutton path
+#Bin15_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x15"
+
+
+#Darienne path
+#Bin15_path <- "E:/Biosonic_ROV_2023/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x15"
 
 # get a list of file names 
 file_names <- list.files(Bin15_path)
@@ -355,5 +374,8 @@ bin_df <- merge(bin_df, bin5_df, by = c("Site_ID", "Interval", "BinID"))
 view(bin_df)
 
 
-save(bin_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
-save(full_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
+#save(bin_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
+#save(full_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
+save(bin_df, file = "wdata/bin_df.RData")
+save(full_df, file = "wdata/full_df.RData")
+
