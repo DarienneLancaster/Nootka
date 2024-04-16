@@ -95,7 +95,6 @@ ggplot(site_complete, aes(x = AbundanceNonSchooling, y = CumulativeArea )) +
   labs(x = "abundance of non-schooling fish", y = "deadzone area") +
   theme_minimal()
 
-site_complete$c
 # STD slope vs non schooling fish abundance
 ggplot(site_complete, aes(x = AbundanceNonSchooling, y = Std_Dev_Slope )) +
   geom_point() +
@@ -117,6 +116,13 @@ ggplot(site_complete, aes(x = AbundanceNonSchooling, y = ChainDiff )) +
   labs(x = "abundance of non-schooling fish", y = "ChainDiff") +
   theme_minimal()
 
+# Chain length difference vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = NASC_15 )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "NASC_15") +
+  theme_minimal()
+
 site_complete <- site_complete %>%
   filter(Sv_mean_15 >= -110)
 
@@ -126,6 +132,11 @@ ggplot(site_complete, aes(x = Sv_mean_15, y = TotalAbundance)) +
   labs(x = "Sv_mean_15", y = "Total Abundance") +
   theme_minimal()
 
+lm_rug_Bfish<-lm(AbundanceNonSchooling ~ Std_Dev_Slope, site_complete)
+summary(lm_rug_Bfish)
+
+lm_dz_Bfish<-lm(AbundanceNonSchooling ~ CumulativeArea, site_complete)
+summary(lm_dz_Bfish)
 
 # the Standard deviation of slope does impact the number of schooling fish 
 ggplot(site_complete, aes(x = Std_Dev_Slope, y = total_number_schoolingfish)) +
