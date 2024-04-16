@@ -19,7 +19,7 @@ lp("xlsx")
 
 #### Create siteinfo Data frame #### 
 
-load("odata/nootkadata.Rdata")
+load("wdata/nootkadata.Rdata")
 siteinfo <- unique(nootkadata[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal")])
 
 
@@ -185,8 +185,8 @@ siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
 # load in data 
 FOV<-read.csv("odata/FOV.csv")
 #when I load in FOV file it gives weird name for Site_ID
-#FOV<-FOV%>%
- # rename(Site_ID=ï..Site_ID)
+# FOV<-FOV%>%
+#   rename(Site_ID=ï..Site_ID)
 
 # fill in sites with no calculate FOV with the average 
 FOVmean <- FOV %>% 
@@ -476,7 +476,7 @@ get_common_name <- function(full_name) {
   }
 }
 
-RockFish <- mutate(rockfish, CommonName = sapply(data$FullName, get_common_name))
+RockFish <- mutate(rockfish, CommonName = sapply(rockfish$FullName, get_common_name))
 
 
 
@@ -522,7 +522,7 @@ subareasebastes$Abundance <- mapply(get.sebastes.abundance,
                                  xx = subareasebastes$Subarea, ss = subareasebastes$FullName)
 subareasebastes <- reshape(subareasebastes, v.names = "Abundance", idvar = "Subarea", timevar = "FullName", direction = "wide")
 subareasebastes[is.na(subareasebastes)] <- 0
-sebastesabundance <- function(x) {apply(subareasebastes[, 2:11], 1, sum)}
+sebastesabundance <- function(x) {apply(subareasebastes[, 2:10], 1, sum)}
 subareasebastes$RFAbundance <- mapply(sebastesabundance, x = 2)
 
 # find rockfish species richness per subarea 
@@ -534,8 +534,8 @@ Subareadata <- merge(subarea_counts, subarea1, by = "Subarea", all.x = TRUE)
 Subareadata <- merge(Subareadata, RF, by = "Subarea", all.x = TRUE)
   View(Subareadata)
   
-  flextable(subarea_table, col_keys = c("Subarea", "TotalSites"))
-  flextable(subarea_table)
+  flextable(Subareadata, col_keys = c("Subarea", "TotalSites"))
+  flextable(Subareadata)
   
 # calculate total sites in each subarea 
   subarea_table <- Subareadata %>%
@@ -648,7 +648,7 @@ flextable(subarea_table)
   rockfish_sorted <- rockfish %>%
     arrange(desc(total_count)) %>%
     select(CommonName, total_count)
-  flextable(rockfish_sorted, word_wrap = FALSE)
+  flextable(rockfish_sorted)
   
 ############## Bin Information ############################
 ## try to create 5 bins of time per site. 
@@ -663,7 +663,7 @@ resume_indices <- which(ROV$Notes == "resume")
 for (i in 1:length(pulled_indices)) {
   # figure out what Site_ID have pulls 
   site_id <- ROV$Site_ID[pulled_indices[i]]
-  
+}
   # match them with the resume 
   resume_index <- resume_indices[resume_indices > pulled_indices[i]][1]
   
@@ -917,8 +917,8 @@ nonschooling <- select(NSbinwide, c("BinID", "AbundanceNonSchooling", "SRNonScho
 bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
 
 # Save 
-save(bininfo, file = "bininfo.RData")
+save(bininfo, file = "wdata/bininfo.RData")
 write.csv(bininfo,"wdata/bininfo.csv")
 
-save(siteinfo, file = "siteinfo.Rdata")
+save(siteinfo, file = "wdata/siteinfo.Rdata")
 
