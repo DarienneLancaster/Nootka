@@ -1,5 +1,16 @@
 # By Hutton Noth 
 # March 14th, 2024
+#### Load Packages #### 
+lp<-function(pck){
+  if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
+}
+lp("tidyverse")
+lp("lubridate")
+lp("dplyr")
+lp("ggplot2")
+lp("flextable")
+lp("xlsx")
+
 # load in dataframes 
 load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
 load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
@@ -46,17 +57,19 @@ ggplot(site_complete, aes(x = TopSub, y = RFAbundance, fill = TopSub)) +
   labs(x = "Substrate Type", y = "Rockfish Abundance") +
   theme_minimal()
 
+# Substrate classification vs RF species Richness 
 ggplot(site_complete, aes(x = TopSub, y = RFSpeciesRichness, fill = TopSub)) +
   geom_boxplot() +
   labs(x = "Substrate Type", y = "Rockfish Species richness") +
   scale_fill_manual(values = c("hard" = "gray80", "soft" = "gray50")) +
-  labs(y = "Rockfish Species Richness", x = "", fill = "") +
+  labs(y = "Rockfish Species Richness", x = "Substrate Classification", fill = "") +
   theme_minimal()
+
 ggplot(site_complete, aes(x = TopSub, y = SpeciesRichness, fill = TopSub)) +
   geom_boxplot() +
 #  labs(x = "Substrate Type", y = "Species richness") +
   scale_fill_manual(values = c("hard" = "gray80", "soft" = "gray50")) +
-  labs(y = "Species Richness", x = "", fill = "") +
+  labs(y = "Species Richness", x = "Substrate Classification", fill = "") +
   theme_minimal()
 
 
@@ -148,7 +161,7 @@ ggplot(site_complete, aes(x = number_FS, y = AbundanceNonSchooling)) +
 ggplot(site_complete, aes(x = Ratio, y = CumulativeArea)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +
-  labs(x = "Rugosity", y = "Cumulative Area") +
+  labs(x = "Rugosity", y = "Cumulative Area of deadzone") +
   theme_minimal()
 
 site_complete <- site_complete %>%
