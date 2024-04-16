@@ -12,12 +12,19 @@ lp("flextable")
 lp("xlsx")
 
 # load in dataframes 
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/siteinfo.RData")
+# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
+# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
+# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
+# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
+# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
+# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/siteinfo.RData")
+
+load("wdata/full_lines.RData")
+load("wdata/bin_lines.RData")
+load("wdata/bin_df.RData")
+load("wdata/full_df.RData")
+load("wdata/bininfo.RData")
+load("wdata/siteinfo.RData")
 
 # merge the site dataframes 
 merged_site <- left_join(siteinfo, sitelines, by = "Site_ID")
@@ -164,6 +171,48 @@ ggplot(site_complete, aes(x = Ratio, y = CumulativeArea)) +
   labs(x = "Rugosity", y = "Cumulative Area of deadzone") +
   theme_minimal()
 
+# deadzone vs rockfish abundance (looks like there's a big outlier here)
+ggplot(site_complete, aes(x = RFAbundance, y = CumulativeArea )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance rockfish", y = "deadzone area") +
+  theme_minimal()
+
+# deadzone vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = CumulativeArea )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "deadzone area") +
+  theme_minimal()
+
+# STD slope vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = Std_Dev_Slope )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "Std_Dev_Slope") +
+  theme_minimal()
+
+# Chain ratio vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = Ratio )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "ChainRatio") +
+  theme_minimal()
+
+# Chain length difference vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = ChainDiff )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "ChainDiff") +
+  theme_minimal()
+
+# Chain length difference vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = NASC_15 )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "NASC_15") +
+  theme_minimal()
+
 site_complete <- site_complete %>%
   filter(Sv_mean_15 >= -110)
 
@@ -173,6 +222,11 @@ ggplot(site_complete, aes(x = Sv_mean_15, y = TotalAbundance)) +
   labs(x = "Sv_mean_15", y = "Total Abundance") +
   theme_minimal()
 
+lm_rug_Bfish<-lm(AbundanceNonSchooling ~ Std_Dev_Slope, site_complete)
+summary(lm_rug_Bfish)
+
+lm_dz_Bfish<-lm(AbundanceNonSchooling ~ CumulativeArea, site_complete)
+summary(lm_dz_Bfish)
 
 # the Standard deviation of slope does impact the number of schooling fish 
 ggplot(site_complete, aes(x = Std_Dev_Slope, y = total_number_schoolingfish)) +
