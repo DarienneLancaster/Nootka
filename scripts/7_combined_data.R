@@ -81,6 +81,42 @@ ggplot(site_complete, aes(x = Ratio, y = CumulativeArea)) +
   labs(x = "Rugosity", y = "Cumulative Area") +
   theme_minimal()
 
+# deadzone vs rockfish abundance (looks like there's a big outlier here)
+ggplot(site_complete, aes(x = RFAbundance, y = CumulativeArea )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance rockfish", y = "deadzone area") +
+  theme_minimal()
+
+# deadzone vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = CumulativeArea )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "deadzone area") +
+  theme_minimal()
+
+site_complete$c
+# STD slope vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = Std_Dev_Slope )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "Std_Dev_Slope") +
+  theme_minimal()
+
+# Chain ratio vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = Ratio )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "ChainRatio") +
+  theme_minimal()
+
+# Chain length difference vs non schooling fish abundance
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = ChainDiff )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance of non-schooling fish", y = "ChainDiff") +
+  theme_minimal()
+
 site_complete <- site_complete %>%
   filter(Sv_mean_15 >= -110)
 
