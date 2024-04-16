@@ -154,6 +154,8 @@ get.abundance.species <- function(xx, ss){
   return(sum(ROVFish$Number[keep]))
 }
 
+##
+
 ## apply function 
 sitespecies$Abundance <- mapply(get.abundance.species, xx = sitespecies$Site_ID, ss = sitespecies$FullName)
 
