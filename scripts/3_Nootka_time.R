@@ -71,7 +71,7 @@ nootkadata <- nootkadata %>%
 
 
 ## Save Nootka data 
-save(nootkadata, file = "nootkadata.Rdata")
+save(nootkadata, file = "wdata/nootkadata.Rdata")
 write.csv(nootkadata,"wdata/nootkadata.csv")
 
 ######################################################################################################################################################
