@@ -1,16 +1,5 @@
 # By Hutton Noth 
 # March 14th, 2024
-#### Load Packages #### 
-lp<-function(pck){
-  if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
-}
-lp("tidyverse")
-lp("lubridate")
-lp("dplyr")
-lp("ggplot2")
-lp("flextable")
-lp("xlsx")
-
 # load in dataframes 
 # load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
 # load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
@@ -33,85 +22,6 @@ site_complete <- site_complete %>% filter(!is.na(TopSub))
 site_complete <- site_complete %>% filter(!is.na(Layer_depth_max))
 site_complete <- site_complete %>% mutate(Average_Slope = abs(Average_Slope))
 site_complete <- site_complete %>% mutate(Layer_depth_min = abs(Layer_depth_min))
-
-## Abundance across sites
-
-ggplot(site_complete, aes(x = Site_ID)) +
-  geom_col(aes(y = TotalAbundance, fill = "Total Abundance"), position = position_nudge(x = -0.2), width = 0.4, color = "black") +
-  geom_col(aes(y = RFAbundance, fill = "Rockfish Abundance"), position = position_nudge(x = 0.2), width = 0.4, color = "black") +
-  scale_fill_manual(values = c("Total Abundance" = "gray70", "Rockfish Abundance" = "gray30")) +
-  labs(y = "Abundance", x = "", fill = "") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-
-siteabundance <- site_complete %>% select(Site_ID, TotalAbundance, RFAbundance)
-siteabundance$percent <- 100*(siteabundance$TotalAbundance / sum(siteabundance$TotalAbundance))
-
-## site species richness distribution 
-ggplot(site_complete, aes(x = Site_ID)) +
-  geom_col(aes(y = SpeciesRichness, fill = "Total Species Richness"), position = position_nudge(x = -0.2), width = 0.4, color = "black") +
-  geom_col(aes(y = RFSpeciesRichness, fill = "Rockfish Species Richness"), position = position_nudge(x = 0.2), width = 0.4, color = "black") +
-  scale_fill_manual(values = c("Total Species Richness" = "gray70", "Rockfish Species Richness" = "gray30")) +
-  labs(y = "Species Richness", x = "", fill = "") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-
-siteSR <- site_complete %>% select(Site_ID, SpeciesRichness, RFSpeciesRichness)
-## substrate vs RF abundance 
-
-ggplot(site_complete, aes(x = TopSub, y = RFAbundance, fill = TopSub)) +
-  geom_boxplot() +
-  labs(x = "Substrate Type", y = "Rockfish Abundance") +
-  theme_minimal()
-
-# Substrate classification vs RF species Richness 
-ggplot(site_complete, aes(x = TopSub, y = RFSpeciesRichness, fill = TopSub)) +
-  geom_boxplot() +
-  labs(x = "Substrate Type", y = "Rockfish Species richness") +
-  scale_fill_manual(values = c("hard" = "gray80", "soft" = "gray50")) +
-  labs(y = "Rockfish Species Richness", x = "Substrate Classification", fill = "") +
-  theme_minimal()
-
-ggplot(site_complete, aes(x = TopSub, y = SpeciesRichness, fill = TopSub)) +
-  geom_boxplot() +
-#  labs(x = "Substrate Type", y = "Species richness") +
-  scale_fill_manual(values = c("hard" = "gray80", "soft" = "gray50")) +
-  labs(y = "Species Richness", x = "Substrate Classification", fill = "") +
-  theme_minimal()
-
-
-##'# deadzonedepth vs substrate type is significant '
-ggplot(site_complete, aes(x = TopSub, y = Average_DZDiff, fill = TopSub)) +
-  geom_boxplot() +
-  labs(x = "Substrate Type", y = "Deadzone Depth") +
-  scale_fill_manual(values = c("hard" = "gray80", "soft" = "gray50")) +
-  labs(y = "Deadzone Depth", x = "Substrate Type", fill = "") +
-  theme_minimal()
-
-ggplot(site_complete, aes(x = Average_Slope, y = RFAbundance)) +
-  geom_point() +
-  geom_smooth(method = "loess", se = FALSE) +  # Add a smoothed line
-  labs(x = "Average Slope", y = "Rockfish Abundance") +
-  theme_minimal()
-
-
-
-
-ggplot(site_complete, aes(x = Average_Slope, y = RFAbundance)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE, color = "blue") +
-  labs(x = "Average Slope", y = "Rockfish Abundance") +
-  theme_minimal()
-
-
-## could be significant 
-ggplot(site_complete, aes(x = Average_DZDiff, y = RFAbundance)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = TRUE, color = "blue") +
-  labs(x = "Deadzone Depth", y = "Rockfish Abundance") +
-  theme_minimal()
-
-
 
 
 # Average Slope vs Rock Fish Abundance 
@@ -168,7 +78,7 @@ ggplot(site_complete, aes(x = number_FS, y = AbundanceNonSchooling)) +
 ggplot(site_complete, aes(x = Ratio, y = CumulativeArea)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +
-  labs(x = "Rugosity", y = "Cumulative Area of deadzone") +
+  labs(x = "Rugosity", y = "Cumulative Area") +
   theme_minimal()
 
 # deadzone vs rockfish abundance (looks like there's a big outlier here)
@@ -261,12 +171,18 @@ ggplot(site_complete, aes(x = Std_Dev_Slope, y = Ratio)) +
   labs(x = "Standard deviation of slope", y = "ratio") +
   theme_minimal()
 
+ggplot(site_complete, aes(x = Std_Dev_Slope, y = ChainDiff)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Standard deviation of slope", y = "ChainDiff") +
+  theme_minimal()
+
 # ratio has a negative measure 
 
 ggplot(site_complete, aes(x = Ratio, y = total_number_schoolingfish)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +
-  labs(x = "Standard deviation of slope", y = "Number of schooling fish") +
+  labs(x = "ratio", y = "Number of schooling fish") +
   theme_minimal()
 
 # Depth vs RF abudance
