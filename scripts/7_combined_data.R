@@ -60,10 +60,10 @@ ggplot(site_complete, aes(x = Ratio, y = TotalAbundance)) +
   theme_minimal()
 
 # Rugosity vs Abundance 
-ggplot(site_complete, aes(x = Ratio, y = SpeciesRichness)) +
+ggplot(site_complete, aes(x = SpeciesRichness, y = Ratio)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +
-  labs(x = "Rugosity", y = "Species Richness") +
+  labs(x = "Species Richness", y = "Rugosity") +
   theme_minimal()
 
 
@@ -74,11 +74,30 @@ ggplot(site_complete, aes(x = number_FS, y = AbundanceNonSchooling)) +
   labs(x = "number of fish schools", y = "abundance of non-schooling fish") +
   theme_minimal()
 
+###this is the best example of how the Ratio vs PaperRatio works (they show complete inverse relationships
+### we definitely want the ratio (chain length/profile length). I think there's an issue with how Average slope is being
+### calculated as well as it shows an unexpected inverse relationship as well - maybe lots of up and downs cancel out the
+# actual true slope we're seeing?)
 # deadzone vs rugosity 
 ggplot(site_complete, aes(x = Ratio, y = CumulativeArea)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +
   labs(x = "Rugosity", y = "Cumulative Area") +
+  theme_minimal()
+
+
+# deadzone vs average Slope
+ggplot(site_complete, aes(x = Average_Slope, y = CumulativeArea)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Average Slope", y = "Cumulative Area") +
+  theme_minimal()
+
+# Average slope vs non-schooling fish
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = Average_Slope)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "AbundanceNonSchooling", y = "Average_Slope") +
   theme_minimal()
 
 # deadzone vs rockfish abundance (looks like there's a big outlier here)
@@ -89,8 +108,9 @@ ggplot(site_complete, aes(x = RFAbundance, y = CumulativeArea )) +
   theme_minimal()
 
 # deadzone vs non schooling fish abundance
-ggplot(site_complete, aes(x = AbundanceNonSchooling, y = CumulativeArea )) +
+ggplot(site_complete, aes(x = AbundanceNonSchooling, y = CumulativeArea, label= Site_ID )) +
   geom_point() +
+  geom_text(hjust=0, vjust=0)+
   geom_smooth(method = "lm", se = TRUE) +
   labs(x = "abundance of non-schooling fish", y = "deadzone area") +
   theme_minimal()
@@ -214,5 +234,34 @@ ggplot(site_complete, aes(x = Layer_depth_min, y = SpeciesRichness)) +
   labs(x = "Depth", y = "Species Richness") +
   theme_minimal()
 
+
+# Depth vs RF abudance
+
+ggplot(site_complete, aes(x = Layer_depth_min, y = RFAbundance)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Depth", y = "Rock Fish Abundance") +
+  theme_minimal()
+
+# Depth vs Total Abundance
+ggplot(site_complete, aes(x = Layer_depth_min, y = TotalAbundance)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Depth", y = "Abundance") +
+  theme_minimal()
+
+# Depth vs RF Species Richness 
+ggplot(site_complete, aes(x = Layer_depth_min, y = RFSpeciesRichness)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Depth", y = "Rock species richness") +
+  theme_minimal()
+
+# Depth vs total Species Richness 
+ggplot(site_complete, aes(x = Layer_depth_min, y = SpeciesRichness)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Depth", y = "Species Richness") +
+  theme_minimal()
 
 

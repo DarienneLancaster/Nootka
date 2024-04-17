@@ -182,7 +182,8 @@ BinBottom <- merged_df %>%
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE)
   )
-BinBottom <- BinBottom %>% mutate(Ratio = 100*(profilelength / chainlength))
+BinBottom <- BinBottom %>% mutate(PaperRatio = 100*(profilelength / chainlength))
+BinBottom <- BinBottom %>% mutate(Ratio = (chainlength/profilelength))
 BinBottom <- BinBottom %>% mutate(ChainDiff = (chainlength-profilelength))
 
 binlines <- bininfo %>% select("BinID")
@@ -197,7 +198,8 @@ SiteBottom <- merged_df %>%
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE)
   )
-SiteBottom <- SiteBottom %>% mutate(Ratio = 100*(profilelength / chainlength))
+SiteBottom <- SiteBottom %>% mutate(PaperRatio = 100*(profilelength / chainlength))
+SiteBottom <- SiteBottom %>% mutate(Ratio = (chainlength/profilelength))
 SiteBottom <- SiteBottom %>% mutate(ChainDiff = (chainlength-profilelength))
 
 
