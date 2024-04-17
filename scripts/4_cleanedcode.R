@@ -185,8 +185,8 @@ siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
 # load in data 
 FOV<-read.csv("odata/FOV.csv")
 #when I load in FOV file it gives weird name for Site_ID
-# FOV<-FOV%>%
-#   rename(Site_ID=ï..Site_ID)
+ FOV<-FOV%>%
+   rename(Site_ID=ï..Site_ID)
 
 # fill in sites with no calculate FOV with the average 
 FOVmean <- FOV %>% 
@@ -203,7 +203,7 @@ siteinfo <- merge(siteinfo, FOVvolume, by = "Site_ID", all.x = TRUE)
 # load in depth and temperature data 
 DT <- read.csv("odata/StarDT.csv")
 colnames(DT)[which(names(DT) == "Temp..C.")] <- "Temp"
-#colnames(DT)[which(names(DT) == "Temp.Â.C.")] <- "Temp"
+colnames(DT)[which(names(DT) == "Temp.Â.C.")] <- "Temp"
 #colnames(DT)[which(names(DT) == "ï..Number")] <- "Number"
 
 # remove depths < 10m, ascending data, and blank data 
@@ -258,12 +258,12 @@ sitespecies <- reshape(sitespecies, v.names = "Abundance", idvar = "Site_ID", ti
 sitespecies[is.na(sitespecies)] <- 0
 
 # function to calculate total abundance 
-TotalAbundance <- function(x) {apply(sitespecies[, 2:22], 1, sum)}
+TotalAbundance <- function(x) {apply(sitespecies[, 2:26], 1, sum)}
 # function to apply it to sitespecies 
 sitespecies$TotalAbundance <- mapply(TotalAbundance, x = 2)
 
 # function to get species richness per site 
-SpeciesRichness <- function(x) {apply(sitespecies[, 2:22 ]> 0, 1, sum)}
+SpeciesRichness <- function(x) {apply(sitespecies[, 2:26 ]> 0, 1, sum)}
 
 # function to apply it to sitespecies 
 sitespecies$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
@@ -352,9 +352,10 @@ siteinfo <- merge(siteinfo, summary_fishschool_pivoted, by = "Site_ID", all.x = 
 
 #### Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
-# filter out any groups of fish less than 10 
+# filter out any groups of fish less than 10 and any non-rocky reef fish like flatfish and ratfish
 nonschooling <- ROV %>% 
-              filter(Number < 10, Number!= "NA") 
+              filter(Number < 10, Number!= "NA") %>%
+              filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae|unknown", Family))
 
 # create outline to apply function 
 sitenonschooling <- unique(nonschooling[, c("Site_ID", "FullName")])
@@ -375,14 +376,15 @@ NSwide[is.na(NSwide)] <- 0
 
 # function to calculate abundance for non-schooling fish 
 nonschoolingabundance <- function(x) {
-  apply(NSwide[, 2:8], 1, sum)
+  apply(NSwide[, 2:15], 1, sum)
 }
+
 
 NSwide$AbundanceNonSchooling <- mapply(nonschoolingabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSwide[, 2:8]> 0, 1, sum)
+  apply(NSwide[, 2:15]> 0, 1, sum)
 }
 NSwide$SRNonSchooling <- mapply(nonschoolspeciesrichness, x = 2)
 
@@ -392,6 +394,49 @@ nonschooling <- select(NSwide, c("Site_ID", "AbundanceNonSchooling", "SRNonSchoo
 # merge this to siteinfo 
 siteinfo <- merge(siteinfo, nonschooling, by = "Site_ID", na.rm = TRUE, all = TRUE)
 
+#### Calculate Mud Fish (ratfish, flatfish, etc...) Abundance and Species Richness #### 
+
+# filter out any groups of fish less than 10 and any non-rocky reef fish like flatfish and ratfish
+mudfish <- ROV %>% 
+  filter(Number < 10, Number!= "NA") %>%
+  filter(!grepl("Scorpaenidae|Hexagrammidae|Cottidae|unknown", Family))
+
+# create outline to apply function 
+sitemudfish <- unique(mudfish[, c("Site_ID", "FullName")])
+
+# create a function 
+get.mudfish <- function(xx, ss){ 
+  keep <- which(mudfish$Site_ID == xx & mudfish$FullName == ss)
+  if (length(keep) == 0) return(0)
+  return(sum(mudfish$Number[keep]))
+}
+
+# apply function 
+sitemudfish$Abundance <- mapply(get.mudfish, xx = sitemudfish$Site_ID, ss = sitemudfish$FullName)
+
+# reshape the dataframe 
+NSwide <- reshape(sitemudfish, v.names = "Abundance", idvar = "Site_ID", timevar = "FullName", direction = "wide")
+NSwide[is.na(NSwide)] <- 0
+
+# function to calculate abundance for non-schooling fish 
+mudfishabundance <- function(x) {
+  apply(NSwide[, 2:10], 1, sum)
+}
+
+
+NSwide$Abundancemudfish <- mapply(mudfishabundance, x = 2)
+
+# function to calculate species richness for non-schooling fish 
+nonschoolspeciesrichness <- function(x) { 
+  apply(NSwide[, 2:10]> 0, 1, sum)
+}
+NSwide$SRmudfish <- mapply(nonschoolspeciesrichness, x = 2)
+
+# subset dataframe 
+mudfish <- select(NSwide, c("Site_ID", "Abundancemudfish", "SRmudfish"))
+
+# merge this to siteinfo 
+siteinfo <- merge(siteinfo, mudfish, by = "Site_ID", na.rm = TRUE, all = TRUE)
 
 #### Calculate Relative Frequency of each Species ##### 
 
@@ -430,7 +475,7 @@ result_table <- species1 %>%
   arrange(desc(total_count)) %>%
   select(FullName, total_count = total_count)
 
-view(result_table)
+#view(result_table)
 
 flextable(result_table) 
 
@@ -457,7 +502,7 @@ result_table1 <- rockfish %>%
   arrange(desc(total_count)) %>%
   select(FullName, total_count = total_count)
 flextable(result_table1)
-View(rockfish)
+#View(rockfish)
 
 get_common_name <- function(full_name) {
   common_names <- c("Copper Rockfish", "Puget Sound Rockfish", "Widow Rockfish", 
@@ -502,12 +547,12 @@ subareaspecies$Abundance <- mapply(get.abundance, xx = subareaspecies$Subarea, s
 speciesinsubarea <- subareaspecies %>%  select(Subarea, FullName, Abundance)
 subareaspecies <- reshape(subareaspecies, v.names = "Abundance", idvar = "Subarea", timevar = "FullName", direction = "wide")
 subareaspecies[is.na(subareaspecies)] <- 0
-TotalAbundance <- function(x) {apply(subareaspecies[, 2:22], 1, sum)}
+TotalAbundance <- function(x) {apply(subareaspecies[, 2:26], 1, sum)}
 subareaspecies$TotalAbundance <- mapply(TotalAbundance, x = 2)
 sum(subareaspecies$TotalAbundance) # we counted 13658 
 
 # find species richness per subarea 
-SpeciesRichness <- function(x) {apply(subareaspecies[, 2:22 ]> 0, 1, sum)}
+SpeciesRichness <- function(x) {apply(subareaspecies[, 2:26 ]> 0, 1, sum)}
 subareaspecies$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
 Sebastes <-  ROVFish%>% filter(Genus == "Sebastes")
 subarea1 <- select(subareaspecies, c("Subarea", "TotalAbundance", "SpeciesRichness"))
@@ -526,13 +571,13 @@ sebastesabundance <- function(x) {apply(subareasebastes[, 2:10], 1, sum)}
 subareasebastes$RFAbundance <- mapply(sebastesabundance, x = 2)
 
 # find rockfish species richness per subarea 
-RFSpeciesRichness <- function(x) {apply(subareasebastes[, 2:11 ]> 0, 1, sum)}
+RFSpeciesRichness <- function(x) {apply(subareasebastes[, 2:10 ]> 0, 1, sum)}
 subareasebastes$RFSpeciesRichness <- mapply(RFSpeciesRichness, x = 2)
 RF <- select(subareasebastes, c("Subarea", "RFAbundance", "RFSpeciesRichness"))
 
 Subareadata <- merge(subarea_counts, subarea1, by = "Subarea", all.x = TRUE)
 Subareadata <- merge(Subareadata, RF, by = "Subarea", all.x = TRUE)
-  View(Subareadata)
+ # View(Subareadata)
   
   flextable(Subareadata, col_keys = c("Subarea", "TotalSites"))
   flextable(Subareadata)
@@ -666,9 +711,10 @@ for (i in 1:length(pulled_indices)) {
 }
   # match them with the resume 
   resume_index <- resume_indices[resume_indices > pulled_indices[i]][1]
-  
+
   # calculate the duration it was pulled
   duration <- ROV$Time[resume_index] - ROV$Time[pulled_indices[i]]
+
   
   # make time resumed = time pulled
   ROV$Time[resume_index] <- ROV$Time[pulled_indices[i]]
@@ -676,9 +722,10 @@ for (i in 1:length(pulled_indices)) {
   # subtract the duration pulled from the following time after the resume
   following_time <- which(ROV$Site_ID == site_id & ROV$Time > ROV$Time[resume_index])
 
+
   ROV$Time[following_time] <- ROV$Time[following_time] - duration
 
-  ROV$Time[following_time] <- ROV$Time[following_indices] - duration
+  #ROV$Time[following_time] <- ROV$Time[following_indices] - duration
 
 
 # Measure the total duration for each of the sites
@@ -750,12 +797,12 @@ binspecieswide <- binspecies %>%
 binspecieswide[is.na(binspecieswide)] <- 0
 
 # function to calculate total abundance 
-TotalAbundance <- function(x) {apply(binspecieswide[, 2:22], 1, sum)}
+TotalAbundance <- function(x) {apply(binspecieswide[, 2:26], 1, sum)}
 # function to apply it to binspecies 
 binspecieswide$TotalAbundance <- mapply(TotalAbundance, x = 2)
 
 # function to get species richness per site 
-SpeciesRichness <- function(x) {apply(binspecieswide[, 2:22 ]> 0, 1, sum)}
+SpeciesRichness <- function(x) {apply(binspecieswide[, 2:26 ]> 0, 1, sum)}
 
 # function to apply it to binspecies 
 binspecieswide$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
@@ -826,8 +873,8 @@ bininfo <- merge(bininfo, Bin_fishschool, by = "BinID", all.x = TRUE)
 Bin_sum_fishschool <- Bin_sum_fishschool %>%
   mutate(fishschool_type = substr(Notes, 1, 2))
 
-Bin_fishschool_summary <- summary_fishschool %>%
-  group_by(Site_ID, fishschool_type) %>%
+Bin_fishschool_summary <- Bin_sum_fishschool %>%
+  group_by(BinID, fishschool_type) %>%
   summarise(num_FS = n_distinct(Notes),
             sum_SF = sum(Total_Number),
             .groups = "drop")
@@ -838,45 +885,14 @@ Bin_fishschool_pivoted <- Bin_fishschool_summary %>%
               names_prefix = "--",
               names_sep = "")
 Bin_fishschool_pivoted[is.na(Bin_fishschool_pivoted)] <- 0
-siteinfo <- merge(siteinfo, Bin_fishschool_pivoted, by = "Site_ID", all.x = TRUE)
-
-#### Calculate Non-Schooling Fish Abundance and Species Richness #### 
-
-# filter out non-fishschool 
-binfishschool <- BinFish%>%
-  filter(Number > 10) 
-binfishschools <- unique(binfishschool[, c("BinID", "FullName")])
-# remove FS with number = 0 
-get.bin.schoolingfish <- function(xx, ss){ 
-  keep <- which(binfishschool$BinID == xx & binfishschool$FullName == ss)
-  if (length(keep) == 0) return(0)
-  return(sum(binfishschool$Number[keep]))}
-binfishschools$Abundance <- mapply(get.bin.schoolingfish, 
-                                xx = binfishschools$BinID, ss = binfishschools$FullName)
-unique(binfishschools$FullName)
-# transform the data to wide 
-binfishschoolswide <- binfishschools %>%
-  pivot_wider(names_from = FullName, values_from = Abundance, values_fill = 0)
-
-View(binfishschoolswide)
-# calculate total number of schooling fish per bin
-schoolingfish <- function(x) {apply(binfishschoolswide[, 2:9], 1, sum)}
-# apply the function 
-binfishschoolswide$SFCount <- mapply(schoolingfish, x = 2)
-
-## Count number of fish schools 
-numberFS <- function(x) { 
-  apply(binfishschoolswide[, 2:9]> 0, 1, sum)
-}
-
-binfishschoolswide$NumberFS <- mapply(numberFS, x = 2)
-
+bininfo <- merge(bininfo, Bin_fishschool_pivoted, by = "BinID", all.x = TRUE)
 
 #### Bin level Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
 # filter out any groups of fish over 10 
 nonschooling <- BinFish %>% 
-  filter( Number < 10)
+  filter( Number < 10, Number!= "NA")%>%
+  filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae|unknown", Family))
 
 # create outline to apply function 
 binnonschooling <- unique(nonschooling[, c("BinID", "FullName")])
@@ -899,14 +915,14 @@ ncol(NSbinwide)
 
 # function to calculate abundance for non-schooling fish 
 nonschoolingabundance <- function(x) {
-  apply(NSbinwide[, 2:24], 1, sum)
+  apply(NSbinwide[, 2:15], 1, sum)
 }
 
 NSbinwide$AbundanceNonSchooling <- mapply(nonschoolingabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSbinwide[, 2:24]> 0, 1, sum)
+  apply(NSbinwide[, 2:15]> 0, 1, sum)
 }
 NSbinwide$SRNonSchooling <- mapply(nonschoolspeciesrichness, x = 2)
 
@@ -916,9 +932,55 @@ nonschooling <- select(NSbinwide, c("BinID", "AbundanceNonSchooling", "SRNonScho
 # merge this to siteinfo 
 bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
 
+#### Bin level Calculate  mud Fish Abundance and Species Richness #### 
+
+# filter out any groups of fish over 10 
+mudfish <- BinFish %>% 
+  filter( Number < 10, Number!= "NA")%>%
+  filter(!grepl("Scorpaenidae|Hexagrammidae|Cottidae|unknown", Family))
+
+# create outline to apply function 
+binmudfish <- unique(mudfish[, c("BinID", "FullName")])
+
+# create a function 
+get.mudfish <- function(xx, ss){ 
+  keep <- which(mudfish$BinID == xx & mudfish$FullName == ss)
+  if (length(keep) == 0) return(0)
+  return(sum(mudfish$Number[keep]))
+}
+
+# apply function 
+binmudfish$Abundance <- mapply(get.mudfish, xx = binmudfish$BinID, ss = binmudfish$FullName)
+
+# reshape the dataframe 
+NSbinwide <- binmudfish %>%
+  pivot_wider(names_from = FullName, values_from = Abundance, values_fill = 0)
+NSbinwide[is.na(NSbinwide)] <- 0
+ncol(NSbinwide)
+
+# function to calculate abundance for non-schooling fish 
+mudfishabundance <- function(x) {
+  apply(NSbinwide[, 2:10], 1, sum)
+}
+
+NSbinwide$Abundancemudfish <- mapply(mudfishabundance, x = 2)
+
+# function to calculate species richness for non-schooling fish 
+nonschoolspeciesrichness <- function(x) { 
+  apply(NSbinwide[, 2:10]> 0, 1, sum)
+}
+NSbinwide$SRmudfish <- mapply(nonschoolspeciesrichness, x = 2)
+
+# subset dataframe 
+mudfish <- select(NSbinwide, c("BinID", "Abundancemudfish", "SRmudfish"))
+
+# merge this to siteinfo 
+bininfo <- merge(bininfo, mudfish, by = "BinID", na.rm = TRUE, all = TRUE)
+
 # Save 
 save(bininfo, file = "wdata/bininfo.RData")
-write.csv(bininfo,"wdata/bininfo.csv")
+write.csv(bininfo,"wdata/bininfo.csv", row.names = FALSE)
 
 save(siteinfo, file = "wdata/siteinfo.Rdata")
+write.csv(siteinfo,"wdata/siteinfo.csv", row.names = FALSE)
 
