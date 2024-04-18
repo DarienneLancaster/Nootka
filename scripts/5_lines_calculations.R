@@ -47,7 +47,7 @@ NS07$DepthDifference <- c(NA, NS07$Depth[-1] - NS07$Depth[-nrow(NS07)])
 NS07$Slope <- sapply(1:nrow(NS07), function(i) {
   ifelse(is.na(NS07$GreatCircleDistance[i]) || is.na(NS07$DepthDifference[i]),
          NA,
-         (180.0/pi) * atan(NS07$GreatCircleDistance[i] / NS07$DepthDifference[i]))
+         (180.0/pi) * atan(NS07$DepthDifference[i]/NS07$GreatCircleDistance[i]))
 })
 # calculate hypotenuse 
 NS07$Hypotenuse <- sqrt(NS07$GreatCircleDistance^2 + NS07$DepthDifference^2)
@@ -63,10 +63,15 @@ NS07$CumulativeHypo <- cumsum(NS07$Hypotenuse)
 # Label the bins to be 20m segments of the great circle distance 
 # definte the bin width
 bin_width <- 20
+slope_width <-5
 
 # create a column for the bins and label them based on where they fit in 20m intervals
 NS07 <- NS07 %>%
   mutate(Bin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + bin_width, bin_width), labels = FALSE))
+
+# create a column for slope bin annd same them based on what part of the 5m segment it falls in 
+NS07 <- NS07 %>%
+  mutate(SlopeBin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + slope_width, slope_width), labels = FALSE))
 
 ####  Lets attempt a for loop #### 
 # create a list of all the file names we need to pull through the code 
@@ -136,7 +141,7 @@ for (i in 1:nrow(file_df)) {
   file$Slope <- sapply(1:nrow(file), function(j) {
     ifelse(is.na(file$GreatCircleDistance[j]) || is.na(file$DepthDifference[j]),
            NA,
-           (180.0/pi) * atan(file$GreatCircleDistance[j] / file$DepthDifference[j]))
+           (180.0/pi) * atan(file$DepthDifference[j]/file$GreatCircleDistance[j]))
   })
   
   # calculate the hypotenuse 
@@ -152,10 +157,15 @@ for (i in 1:nrow(file_df)) {
   
   # set bin width to 20 
   bin_width <- 20
+  slope_width <- 5
   
   # create a column for bin annd same them based on what part of the 20m segement it falls in 
   file <- file %>%
     mutate(Bin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + bin_width, bin_width), labels = FALSE))
+  
+  # create a column for slope bin annd same them based on what part of the 5m segment it falls in 
+  file <- file %>%
+    mutate(SlopeBin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + slope_width, slope_width), labels = FALSE))
   
   # create a df what has all the data from each file in it 
   merged_df <- rbind(merged_df, file)
@@ -174,10 +184,81 @@ merged_df <-merged_df %>%
 load("wdata/bininfo.RData")
 
 #### lets calculate different variables for each of the bin level 
+
+#first make a column that changes negative slope values to positive
+merged_df$noneg_slope<-abs(merged_df$Slope)
+#also try a column that makes all negative slope values NA
+merged_df<-merged_df %>% mutate(negna_slope = (Slope = replace(Slope, which(Slope<0), NA)))
+
+#calculate average slope over 5m slope bins
+# create slopebinID s 
+merged_df$SlopeID <- paste(merged_df$Site_ID, merged_df$SlopeBin, sep = "_")
+
+#calculate slope in 5m bins using only start and end Lat/Long for each 5m bin
+BEslope<-merged_df%>%
+  group_by(SlopeID)%>%
+  slice(c(1,n()))
+
+# Function to calculate the great circle distance between two points 
+calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
+  distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
+  return(distance)
+}
+
+# calculate GCD on start and end 5m bin coordinates only
+BEslope$GreatCircleDistance[2:(nrow(BEslope))] <- sapply(2:(nrow(BEslope)), function(i) {
+  lat1 <- BEslope$Latitude[i - 1]
+  lon1 <- BEslope$Longitude[i - 1]
+  lat2 <- BEslope$Latitude[i]
+  lon2 <- BEslope$Longitude[i]
+  ifelse((BEslope$SlopeID[i]) != (BEslope$SlopeID[i -1]),
+         NA,
+  calc_great_circle_distance(lat1, lon1, lat2, lon2))
+})
+
+
+## Calculate difference in depth
+
+BEslope$DepthDifference[2:(nrow(BEslope))] <- sapply(2:(nrow(BEslope)), function(i) {
+  ifelse((BEslope$SlopeID[i]) != (BEslope$SlopeID[i -1]),
+         NA,
+         (BEslope$Depth[i-1] - BEslope$Depth[i]))
+})
+
+
+# Calculate 5m Slope 
+BEslope$Slope5m <- sapply(1:nrow(BEslope), function(i) {
+  ifelse(is.na(BEslope$GreatCircleDistance[i]) || is.na(BEslope$DepthDifference[i]),
+         NA,
+         (180.0/pi) * atan(BEslope$DepthDifference[i]/BEslope$GreatCircleDistance[i]))
+})
+
+#average 5m slope bins for full sites
+Ave5mSlopeSite<- BEslope%>%
+  group_by(Site_ID)%>%
+  filter(!is.na(Slope5m))%>%
+  mutate(Slope5m =abs(Slope5m))%>%
+  summarise(Bin5m_Ave_Slope_Site = mean(Slope5m))
+
+#average 5m slope bins for 20m bins
+Ave5mSlopeBin<- BEslope%>%
+  group_by(BinID)%>%
+  filter(!is.na(Slope5m))%>%
+  mutate(Slope5m =abs(Slope5m))%>%
+  summarise(Bin5m_Ave_Slope_Bin = mean(Slope5m))
+
+#join 5m slope averages for site and bin to full dataframe
+
+merged_df<-left_join(merged_df, Ave5mSlopeSite, by= "Site_ID")
+merged_df<-left_join(merged_df, Ave5mSlopeBin, by= "BinID")
+
 BinBottom <- merged_df %>%
   group_by(BinID) %>%
   summarize(
     Average_Slope = mean(Slope, na.rm = TRUE),
+    Average_5m_slope = mean(Bin5m_Ave_Slope_Bin, na.rm = TRUE),
+    Average_noneg_slope = mean(noneg_slope, na.rm = TRUE),
+    Average_negna_slope = mean(negna_slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE)
@@ -190,10 +271,19 @@ binlines <- bininfo %>% select("BinID")
 binlines <- left_join(binlines, BinBottom, by = "BinID")
 
 # Lets calculate site level variables 
+
+#first make a column that changes negative slope values to positive
+merged_df$noneg_slope<-abs(merged_df$Slope)
+#also try a column that makes all negative slope values NA
+merged_df<-merged_df %>% mutate(negna_slope = (Slope = replace(Slope, which(Slope<0), NA)))
+
 SiteBottom <- merged_df %>%
   group_by(Site_ID) %>%
   summarize(
     Average_Slope = mean(Slope, na.rm = TRUE),
+    Average_5m_slope = mean(Bin5m_Ave_Slope_Site, na.rm = TRUE),
+    Average_noneg_slope = mean(noneg_slope, na.rm = TRUE),
+    Average_negna_slope = mean(negna_slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE)
