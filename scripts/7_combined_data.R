@@ -26,9 +26,18 @@ site_complete <- site_complete %>% mutate(Layer_depth_min = abs(Layer_depth_min)
 # merge the bin dataframes 
 merged_bin <- left_join(bininfo, binlines, by = "BinID")
 bin_complete <- left_join(merged_bin, bin_df, by = "BinID")
+
+#remove unwanted sites and make nas 0
+bin_complete<- bin_complete%>% 
+  mutate(across(where(is.numeric), ~replace_na(., 0)))%>%
+  filter(Site_ID.x !="NS01", Site_ID.x != "NS02", Site_ID.x != "NS03", Site_ID.x != "NS04",
+         Site_ID.x != "NS05", Site_ID.x != "NS06", Site_ID.x != "NS08", Site_ID.x != "NS18")
+
+
 #create column for bin number
 bin_complete<- bin_complete%>% separate(BinID, into = c("site","bin_num"), sep = "_", remove = FALSE )%>%
   dplyr::select(-c(site))
+
 # adjust these for bin column names
 # bin_complete <- bin_complete %>% filter(!is.na(TopSub))
 # bin_complete <- bin_complete %>% filter(!is.na(Layer_depth_max))
@@ -136,19 +145,34 @@ ggplot(site_complete, aes(x = AbundanceNonSchooling, y = Average_5m_slope)) +
   labs(x = "AbundanceNonSchooling", y = "Average_Slope") +
   theme_minimal()
 
-bin_complete$Depth_mean_5
-
-ggplot(bin_complete, aes(x = Depth_mean_5, y = AbundanceNonSchooling) +
+# Average slope vs non-schooling fish
+ggplot(bin_complete, aes(x = AbundanceNonSchooling, y = Average_5m_slope, color=bin_num)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +
-  labs(x = "avg_depth", y = "nonschoolin") +
+  labs(x = "AbundanceNonSchooling", y = "Average_Slope") +
+  theme_minimal()
+
+bin_complete$Depth_mean_5
+
+ggplot(bin_complete, aes(x = AbundanceNonSchooling, y = Depth_mean_5, color = bin_num)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "nonschoolin", y = "avg_depth") +
   theme_minimal()
 
 # deadzone vs rockfish abundance (looks like there's a big outlier here)
-ggplot(site_complete, aes(x = AbundanceNonSchooling, y = CumulativeArea )) +
+ggplot(bin_complete, aes(x = AbundanceNonSchooling, y = CumulativeArea )) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +
   labs(x = "abundance non schooling", y = "deadzone area") +
+  theme_minimal()
+
+bin_complete$total_number_schoolingfish
+# deadzone vs rockfish abundance (looks like there's a big outlier here)
+ggplot(bin_complete, aes(x = AbundanceNonSchooling, y = number_FS, color = bin_num )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "abundance non schooling", y = "total schooling fish") +
   theme_minimal()
 
 # deadzone vs non schooling fish abundance
