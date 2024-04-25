@@ -23,9 +23,16 @@ site_complete <- site_complete %>% filter(!is.na(Layer_depth_max))
 site_complete <- site_complete %>% mutate(Average_Slope = abs(Average_Slope))
 site_complete <- site_complete %>% mutate(Layer_depth_min = abs(Layer_depth_min))
 
+#remove unwanted sites and make nas 0
+site_complete<- site_complete%>% 
+  mutate(across(where(is.numeric), ~replace_na(., 0)))%>%
+  filter(Site_ID !="NS01", Site_ID != "NS02", Site_ID != "NS03", Site_ID != "NS04",
+         Site_ID != "NS06", Site_ID != "NS08", Site_ID != "NS18")
+
 # merge the bin dataframes 
 merged_bin <- left_join(bininfo, binlines, by = "BinID")
 bin_complete <- left_join(merged_bin, bin_df, by = "BinID")
+
 
 #remove unwanted sites and make nas 0
 bin_complete<- bin_complete%>% 
@@ -50,6 +57,20 @@ ggplot(bin_complete, aes(x = Average_5m_slope, y = AbundanceNonSchooling, color 
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +  
   labs(x = "Average Slope", y = "AbundanceNonSchooling") +
+  theme_minimal()
+
+# Bin Average Slope vs nonschooling fish Abundance 
+ggplot(bin_complete, aes(x = Average_Depth, y = AbundanceNonSchooling, color = bin_num)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  labs(x = "Average Depth", y = "AbundanceNonSchooling") +
+  theme_minimal()
+
+# Site Average Slope vs nonschooling fish Abundance 
+ggplot(site_complete, aes(x = Average_Depth, y = AbundanceNonSchooling)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  labs(x = "Average Depth", y = "AbundanceNonSchooling") +
   theme_minimal()
 
 
