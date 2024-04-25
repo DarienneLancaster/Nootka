@@ -185,8 +185,8 @@ siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
 # load in data 
 FOV<-read.csv("odata/FOV.csv")
 #when I load in FOV file it gives weird name for Site_ID
- FOV<-FOV%>%
-   rename(Site_ID=ï..Site_ID)
+ # FOV<-FOV%>%
+ #   rename(Site_ID=ï..Site_ID)
 
 # fill in sites with no calculate FOV with the average 
 FOVmean <- FOV %>% 
