@@ -199,6 +199,8 @@ BEslope<-merged_df%>%
   group_by(SlopeID)%>%
   slice(c(1,n()))
 
+
+
 # Function to calculate the great circle distance between two points 
 calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
   distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
@@ -247,6 +249,7 @@ Ave5mSlopeBin<- BEslope%>%
   mutate(Slope5m =abs(Slope5m))%>%
   summarise(Bin5m_Ave_Slope_Bin = mean(Slope5m))
 
+
 #join 5m slope averages for site and bin to full dataframe
 
 merged_df<-left_join(merged_df, Ave5mSlopeSite, by= "Site_ID")
@@ -261,7 +264,9 @@ BinBottom <- merged_df %>%
     Average_negna_slope = mean(negna_slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
-    chainlength = sum(Hypotenuse, na.rm = TRUE)
+    chainlength = sum(Hypotenuse, na.rm = TRUE),
+    Average_Depth = mean(Depth, na.rm = TRUE),
+    SD_Depth = sd(Depth, na.rm = TRUE),
   )
 BinBottom <- BinBottom %>% mutate(PaperRatio = 100*(profilelength / chainlength))
 BinBottom <- BinBottom %>% mutate(Ratio = (chainlength/profilelength))
@@ -286,7 +291,9 @@ SiteBottom <- merged_df %>%
     Average_negna_slope = mean(negna_slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
     profilelength = sum(GreatCircleDistance, na.rm = TRUE),
-    chainlength = sum(Hypotenuse, na.rm = TRUE)
+    chainlength = sum(Hypotenuse, na.rm = TRUE),
+    Average_Depth = mean(Depth, na.rm = TRUE),
+    SD_Depth = sd(Depth, na.rm = TRUE),
   )
 SiteBottom <- SiteBottom %>% mutate(PaperRatio = 100*(profilelength / chainlength))
 SiteBottom <- SiteBottom %>% mutate(Ratio = (chainlength/profilelength))
@@ -439,3 +446,37 @@ sitelines <- left_join(sitelines, SiteDeadzone, by = "Site_ID")
 save(sitelines, file = "wdata/full_lines.RData")
 save(binlines, file = "wdata/bin_lines.RData")
 
+####checking if acoustic data depth range matches ROV data depth range
+#calculate start and end depth for each transect and each bin
+BEdepth_site<-merged_df%>%
+  group_by(Site_ID)%>%
+  slice(c(1,n()))%>%
+  select(Site_ID, Depth)%>%
+  mutate(unique_ID = row_number())%>%
+  mutate(Site_ID_unique = paste0(Site_ID, "_", unique_ID)) %>%
+  select(-unique_ID)
+
+#calculate start and end depth for each transect and each bin
+BEdepth_bin<-merged_df%>%
+  group_by(BinID)%>%
+  slice(c(1,n()))%>%
+  select(BinID, Depth)
+
+EVdata <-read.csv("odata/NootkaROV_20240301_finalDL.csv",  skip=4, stringsAsFactors = FALSE)
+# create a column for Site_ID by pulling the first 4 letters from filename 
+EVdata$Site_ID <- substr(EVdata$Filename, 1, 4)
+
+BEdepth_siteEV<-EVdata%>%
+  filter(Notes!="Start", Notes!="End")%>%
+  group_by(Site_ID)%>%
+  slice(c(1,n()))%>%
+  select(Site_ID, Depth.1)%>%
+  rename(Depth_ROV = Depth.1)%>%
+  mutate(unique_ID = row_number())%>%
+  mutate(Site_ID_unique = paste0(Site_ID, "_", unique_ID)) %>%
+  select(-unique_ID)
+
+#convert ft to meters
+BEdepth_siteEV$Depth_ROV<-BEdepth_siteEV$Depth_ROV/3.281
+
+AVdepth<-left_join(BEdepth_site, BEdepth_siteEV, "Site_ID_unique")
