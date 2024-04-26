@@ -28,7 +28,7 @@ siteinfo <- unique(nootkadata[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Lon
 # skipping the first 4 rows of data / removing empty rows (strings)
 #ROV<-read.csv("odata/ROVcomplete.csv", skip=4, stringsAsFactors = FALSE)
 
-ROV <-read.csv("odata/NootkaROV_20240301_finalDL.csv",  skip=4, stringsAsFactors = FALSE)
+ROV <-read.csv("odata/NootkaROV_20240426_finalDL_NS42noGPSused.csv",  skip=4, stringsAsFactors = FALSE)
 # remove unnecessary columns 
 ROV = select(ROV, -4:-21)
 ROV = select(ROV, -"Code")
@@ -355,7 +355,7 @@ siteinfo <- merge(siteinfo, summary_fishschool_pivoted, by = "Site_ID", all.x = 
 # filter out any groups of fish less than 10 and any non-rocky reef fish like flatfish and ratfish
 nonschooling <- ROV %>% 
               filter(Number < 10, Number!= "NA") %>%
-              filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae|unknown", Family))
+              filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae", Family))
 
 # create outline to apply function 
 sitenonschooling <- unique(nonschooling[, c("Site_ID", "FullName")])
@@ -376,7 +376,7 @@ NSwide[is.na(NSwide)] <- 0
 
 # function to calculate abundance for non-schooling fish 
 nonschoolingabundance <- function(x) {
-  apply(NSwide[, 2:15], 1, sum)
+  apply(NSwide[, 2:14], 1, sum)
 }
 
 
@@ -384,7 +384,7 @@ NSwide$AbundanceNonSchooling <- mapply(nonschoolingabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSwide[, 2:15]> 0, 1, sum)
+  apply(NSwide[, 2:14]> 0, 1, sum)
 }
 NSwide$SRNonSchooling <- mapply(nonschoolspeciesrichness, x = 2)
 
@@ -892,7 +892,7 @@ bininfo <- merge(bininfo, Bin_fishschool_pivoted, by = "BinID", all.x = TRUE)
 # filter out any groups of fish over 10 
 nonschooling <- BinFish %>% 
   filter( Number < 10, Number!= "NA")%>%
-  filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae|unknown", Family))
+  filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae", Family))
 
 # create outline to apply function 
 binnonschooling <- unique(nonschooling[, c("BinID", "FullName")])
@@ -915,14 +915,14 @@ ncol(NSbinwide)
 
 # function to calculate abundance for non-schooling fish 
 nonschoolingabundance <- function(x) {
-  apply(NSbinwide[, 2:15], 1, sum)
+  apply(NSbinwide[, 2:14], 1, sum)
 }
 
 NSbinwide$AbundanceNonSchooling <- mapply(nonschoolingabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSbinwide[, 2:15]> 0, 1, sum)
+  apply(NSbinwide[, 2:14]> 0, 1, sum)
 }
 NSbinwide$SRNonSchooling <- mapply(nonschoolspeciesrichness, x = 2)
 
