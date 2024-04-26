@@ -480,3 +480,4 @@ BEdepth_siteEV<-EVdata%>%
 BEdepth_siteEV$Depth_ROV<-BEdepth_siteEV$Depth_ROV/3.281
 
 AVdepth<-left_join(BEdepth_site, BEdepth_siteEV, "Site_ID_unique")
+

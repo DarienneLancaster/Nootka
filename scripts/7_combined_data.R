@@ -37,6 +37,7 @@ bin_complete <- left_join(merged_bin, bin_df, by = "BinID")
 #remove unwanted sites and make nas 0
 bin_complete<- bin_complete%>% 
   mutate(across(where(is.numeric), ~replace_na(., 0)))%>%
+  mutate(Average_Depth = ifelse(Average_Depth == 0, NA, Average_Depth))%>%
   filter(Site_ID.x !="NS01", Site_ID.x != "NS02", Site_ID.x != "NS03", Site_ID.x != "NS04",
          Site_ID.x != "NS05", Site_ID.x != "NS06", Site_ID.x != "NS08", Site_ID.x != "NS18")
 
@@ -59,14 +60,14 @@ ggplot(bin_complete, aes(x = Average_5m_slope, y = AbundanceNonSchooling, color 
   labs(x = "Average Slope", y = "AbundanceNonSchooling") +
   theme_minimal()
 
-# Bin Average Slope vs nonschooling fish Abundance 
+# Bin Average Depth vs nonschooling fish Abundance 
 ggplot(bin_complete, aes(x = Average_Depth, y = AbundanceNonSchooling, color = bin_num)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +  
   labs(x = "Average Depth", y = "AbundanceNonSchooling") +
   theme_minimal()
 
-# Site Average Slope vs nonschooling fish Abundance 
+# Site Average Depth vs nonschooling fish Abundance 
 ggplot(site_complete, aes(x = Average_Depth, y = AbundanceNonSchooling)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +  
@@ -74,26 +75,13 @@ ggplot(site_complete, aes(x = Average_Depth, y = AbundanceNonSchooling)) +
   theme_minimal()
 
 
-# Bin Average Slope vs nonschooling fish Abundance 
+# Bin Average Slope vs total_number_schoolingfish
 ggplot(bin_complete, aes(x = Average_5m_slope, y = total_number_schoolingfish)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +  
-  labs(x = "Average Slope", y = "AbundanceNonSchooling") +
+  labs(x = "Average Slope", y = "total_number_schoolingfish") +
   theme_minimal()
 
-# Bin Average Slope vs nonschooling fish Abundance 
-ggplot(bin_complete, aes(x = Average_5m_slope, y = total_number_schoolingfish)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = TRUE) +  
-  labs(x = "Average Slope", y = "AbundanceNonSchooling") +
-  theme_minimal()
-
-# Average Slope vs Rock Fish Abundance 
-ggplot(site_complete, aes(x = Average_5m_slope, y = AbundanceNonSchooling, color = TopSub)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = TRUE) +  
-  labs(x = "Average Slope", y = "Rock Fish Abundance", color = "TopSub") +
-  theme_minimal()
 
 # Rugosity vs Rockfish Species Richness 
 ggplot(site_complete, aes(x = Ratio, y = RFSpeciesRichness)) +
