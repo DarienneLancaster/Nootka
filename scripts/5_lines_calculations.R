@@ -159,6 +159,7 @@ for (i in 1:nrow(file_df)) {
   bin_width <- 20
   slope_width <- 5
   
+  
   # create a column for bin annd same them based on what part of the 20m segement it falls in 
   file <- file %>%
     mutate(Bin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + bin_width, bin_width), labels = FALSE))
@@ -199,8 +200,6 @@ BEslope<-merged_df%>%
   group_by(SlopeID)%>%
   slice(c(1,n()))
 
-
-
 # Function to calculate the great circle distance between two points 
 calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
   distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
@@ -226,6 +225,7 @@ BEslope$DepthDifference[2:(nrow(BEslope))] <- sapply(2:(nrow(BEslope)), function
          NA,
          (BEslope$Depth[i-1] - BEslope$Depth[i]))
 })
+
 
 
 # Calculate 5m Slope 
@@ -255,6 +255,41 @@ Ave5mSlopeBin<- BEslope%>%
 merged_df<-left_join(merged_df, Ave5mSlopeSite, by= "Site_ID")
 merged_df<-left_join(merged_df, Ave5mSlopeBin, by= "BinID")
 
+#calculate slope in 20m bins using only start and end Lat/Long for each 5m bin
+BEslope20<-merged_df%>%
+  group_by(BinID)%>%
+  slice(c(1,n()))
+
+# calculate GCD on start and end 20m bin coordinates only
+BEslope20$GreatCircleDistance[2:(nrow(BEslope20))] <- sapply(2:(nrow(BEslope20)), function(i) {
+  lat1 <- BEslope20$Latitude[i - 1]
+  lon1 <- BEslope20$Longitude[i - 1]
+  lat2 <- BEslope20$Latitude[i]
+  lon2 <- BEslope20$Longitude[i]
+  ifelse((BEslope20$BinID[i]) != (BEslope20$BinID[i -1]),
+         NA,
+         calc_great_circle_distance(lat1, lon1, lat2, lon2))
+})
+
+## Calculate difference in depth 20m bins
+
+BEslope20$DepthDifference[2:(nrow(BEslope20))] <- sapply(2:(nrow(BEslope20)), function(i) {
+  ifelse((BEslope20$BinID[i]) != (BEslope20$BinID[i -1]),
+         NA,
+         (BEslope20$Depth[i-1] - BEslope20$Depth[i]))
+})
+
+# calculate the hypotenuse 
+BEslope20$Hypotenuse <- sqrt(BEslope20$GreatCircleDistance^2 + BEslope20$DepthDifference^2)
+
+#GCD 20m bins 
+BEslope20<- BEslope20%>%
+  group_by(BinID)%>%
+  filter(!is.na(GreatCircleDistance))%>%
+  rename(Hypotenuse20=Hypotenuse)%>%
+  rename(GreatCircleDistance20=GreatCircleDistance)%>%
+  dplyr::select(c(Hypotenuse20,GreatCircleDistance20,Site_ID,BinID))
+
 BinBottom <- merged_df %>%
   group_by(BinID) %>%
   summarize(
@@ -263,17 +298,30 @@ BinBottom <- merged_df %>%
     Average_noneg_slope = mean(noneg_slope, na.rm = TRUE),
     Average_negna_slope = mean(negna_slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
-    profilelength = sum(GreatCircleDistance, na.rm = TRUE),
+    # profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE),
     Average_Depth = mean(Depth, na.rm = TRUE),
     SD_Depth = sd(Depth, na.rm = TRUE),
   )
-BinBottom <- BinBottom %>% mutate(PaperRatio = 100*(profilelength / chainlength)) #this is the original formula used in rugosity paper that uses a set length of chain, this doesn't work for our method
-BinBottom <- BinBottom %>% mutate(Ratio = (chainlength/profilelength)) #this is a ratio adapted to our length over 100m method (this is the one we want to use)
-BinBottom <- BinBottom %>% mutate(ChainDiff = (chainlength-profilelength)) #this is a simpler version that just subtracts 100m transect from full bottom line length
 
 binlines <- bininfo %>% dplyr::select("BinID")
 binlines <- left_join(binlines, BinBottom, by = "BinID")
+
+#merge 20m hypotenuse(total distance traveled) and GreatCircleDistance20 (better proxy for total linear distance than summing all Great Circle Distances) with binlines
+BEslope20bin<- BEslope20%>%
+  dplyr::select(c(Hypotenuse20, GreatCircleDistance20,BinID))
+
+binlines<-left_join(binlines, BEslope20bin, by = "BinID")
+
+#remove random extra chunk from NS06_1
+binlines<-binlines%>%
+  slice(-26)
+
+
+binlines <- binlines %>% mutate(PaperRatio = 100*(GreatCircleDistance20 / chainlength)) #this is the original formula used in rugosity paper that uses a set length of chain, this doesn't work for our method
+binlines <- binlines %>% mutate(Ratio = (chainlength/GreatCircleDistance20)) #this is a ratio adapted to our length over 100m method (this is the one we want to use)
+binlines <- binlines %>% mutate(ChainDiff = (chainlength-GreatCircleDistance20)) #this is a simpler version that just subtracts 100m transect from full bottom line length
+
 
 # Lets calculate site level variables 
 
@@ -302,6 +350,18 @@ SiteBottom <- SiteBottom %>% mutate(ChainDiff = (chainlength-profilelength))
 
 sitelines <- siteinfo %>% dplyr::select("Site_ID")
 sitelines <- left_join(sitelines, SiteBottom, by = "Site_ID")
+
+#merge full hypotenuse(total distance traveled) with sitelines
+BEslope20site<- BEslope20%>%
+  dplyr::select(c(Hypotenuse20,BinID,Site_ID))
+
+BEslope20site <- BEslope20site %>%
+  group_by(Site_ID) %>%
+  summarize(
+    totaldist = sum(Hypotenuse20, na.rm = TRUE),
+  )
+
+sitelinesT<-left_join(sitelines, BEslope20site, by = "Site_ID")
 
 
 # #### Deadzone for-loop for Large, 1m, and Manual deadzones ####
