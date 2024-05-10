@@ -308,7 +308,7 @@ full10_MAN_df <- full10_MAN_df %>%
   dplyr::select(-c(4,5))
 
 full10_allDZ_df<-left_join(full10_MAN_df, full10_1m_df, by="Site_ID")
-full10_allDZ_df<-left_join(full10_allDZ_df, full10LG_df, by= "Site_ID")
+full10_allDZ_df<-left_join(full10_allDZ_df, full10_LG_df, by= "Site_ID")
 
 ###############################################################################
 ########pull 100X5 from LG DZ files#######################################################################
