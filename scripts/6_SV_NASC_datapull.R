@@ -1,6 +1,9 @@
 # By: Hutton Noth 
 # Date: Feb 20th, 2024 
 
+#Adjustements by: Darienne Lancaster
+#April 20, 2024
+
 #### Load Packages #### 
 lp<-function(pck){
   if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
@@ -454,6 +457,7 @@ Bin5_LG_df <- Bin5_LG_df %>%
 
 full5_allDZ_df<-left_join(Bin5_LG_df, full5_1m_df, by="Site_ID")
 full5_allDZ_df<-left_join(full5_allDZ_df, full5_LG_df, by= "Site_ID")
+#create full site dataframe with all deadzone values (Large, manual, 1m) for all rockfish zones (15,10,5)
 siteNASC<-left_join(full5_allDZ_df, full10_allDZ_df, by= "Site_ID")
 siteNASC<-left_join(siteNASC, full15_allDZ_df, by= "Site_ID")
 
@@ -515,19 +519,136 @@ for (i in 1:nrow(file_df)) {
 ## lets add in the BinID 
 bin5_df$BinID <- paste(bin5_df$Site_ID, bin5_df$Interval, sep = "_")
 bin5_df <- bin5_df %>%
-  rename(Sv_mean_5 = Sv_mean,
-         NASC_5 = NASC,
-         Depth_mean_5 = Depth_mean,
-         Layer_depth_min_5 = Layer_depth_min,
-         Layer_depth_max_5 = Layer_depth_max)
+  rename(Sv_mean_5_LG = Sv_mean,
+         NASC_5_LG = NASC,
+         Depth_mean_5_LG = Depth_mean,
+         Layer_depth_min_5_LG = Layer_depth_min,
+         Layer_depth_max_5_LG = Layer_depth_max)%>%
+  dplyr::select(-c(5,6))
 
 
-##########pull 20X10 from Large DZ #### 
+
+##########pull 20X5 from 1m DZ #### 
+Bin5_1m_path <- "odata/Transect 1/20x5/1m"
+# get a list of file names 
+file_names <- list.files(Bin5_1m_path)
+
+# select only the csv files 
+csv_files <- file_names[grep("\\.csv$", file_names)]
+
+# make it into a dataframe
+file_df <- data.frame(file_name = csv_files)
+
+# create a column in the dataframe for site ID 
+file_df$Site_ID <- substr(file_df$file_name, 1, 4)
+
+
+Bin5_1m_df <- data.frame()
+
+# loop each row in the file_df that contains al the names of files of interest
+for (i in 1:nrow(file_df)) {
+  # set the file name and site ID 
+  file_name <- file_df$file_name[i]
+  site_id <- file_df$Site_ID[i]
+  
+  # pull in files from our st pathway 
+  file <- read.csv(file.path(Bin5_1m_path, file_name), na.strings = c("", "NA"))
+  
+  # clean and subset the data to keep only what we need 
+  file <- file %>%
+    dplyr::select("Interval", "Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+  
+  # make sure there is 5 intervals for ever site - fill empty bins with NA values 
+  intervals <- 1:5
+  if (!all(intervals %in% file$Interval)) {
+    missing_intervals <- setdiff(intervals, unique(file$Interval))
+    missing_data <- data.frame(Interval = missing_intervals)
+    file <- merge(file, missing_data, all = TRUE)
+  }
+  
+  # order the data by the interval number 
+  file <- file[order(file$Interval), ]
+  
+  # write column with containing the site_IDs 
+  file$Site_ID <- site_id
+  
+  # create a df what has all the data from each file in it 
+  Bin5_1m_df <- rbind(Bin5_1m_df, file)
+}
+## lets add in the BinID 
+Bin5_1m_df$BinID <- paste(Bin5_1m_df$Site_ID, Bin5_1m_df$Interval, sep = "_")
+Bin5_1m_df <- Bin5_1m_df %>%
+  rename(Sv_mean_5_1m = Sv_mean,
+         NASC_5_1m = NASC,
+         Depth_mean_5_1m = Depth_mean,
+         Layer_depth_min_5_1m = Layer_depth_min,
+         Layer_depth_max_5_1m = Layer_depth_max)%>%
+  dplyr::select(-c(5,6))
+
+##########pull 20X5 from Manual DZ #### 
+Bin5_MAN_path <- "odata/Transect 1/20x5/ManualDZ"
+# get a list of file names 
+file_names <- list.files(Bin5_MAN_path)
+
+# select only the csv files 
+csv_files <- file_names[grep("\\.csv$", file_names)]
+
+# make it into a dataframe
+file_df <- data.frame(file_name = csv_files)
+
+# create a column in the dataframe for site ID 
+file_df$Site_ID <- substr(file_df$file_name, 1, 4)
+
+
+Bin5_MAN_df <- data.frame()
+
+# loop each row in the file_df that contains al the names of files of interest
+for (i in 1:nrow(file_df)) {
+  # set the file name and site ID 
+  file_name <- file_df$file_name[i]
+  site_id <- file_df$Site_ID[i]
+  
+  # pull in files from our st pathway 
+  file <- read.csv(file.path(Bin5_MAN_path, file_name), na.strings = c("", "NA"))
+  
+  # clean and subset the data to keep only what we need 
+  file <- file %>%
+    dplyr::select("Interval", "Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+  
+  # make sure there is 5 intervals for ever site - fill empty bins with NA values 
+  intervals <- 1:5
+  if (!all(intervals %in% file$Interval)) {
+    missing_intervals <- setdiff(intervals, unique(file$Interval))
+    missing_data <- data.frame(Interval = missing_intervals)
+    file <- merge(file, missing_data, all = TRUE)
+  }
+  
+  # order the data by the interval number 
+  file <- file[order(file$Interval), ]
+  
+  # write column with containing the site_IDs 
+  file$Site_ID <- site_id
+  
+  # create a df what has all the data from each file in it 
+  Bin5_MAN_df <- rbind(Bin5_MAN_df, file)
+}
+## lets add in the BinID 
+Bin5_MAN_df$BinID <- paste(Bin5_MAN_df$Site_ID, Bin5_MAN_df$Interval, sep = "_")
+Bin5_MAN_df <- Bin5_MAN_df %>%
+  rename(Sv_mean_5_MAN = Sv_mean,
+         NASC_5_MAN = NASC,
+         Depth_mean_5_MAN = Depth_mean,
+         Layer_depth_min_5_MAN = Layer_depth_min,
+         Layer_depth_max_5_MAN = Layer_depth_max)%>%
+  dplyr::select(-c(5,6))
+
+
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
 #Hutton path
 #Bin10_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x10"
 
+##########pull 20X10 from Large DZ #### 
 Bin10_path <- "odata/Transect 1/20x10"
 # get a list of file names 
 file_names <- list.files(Bin10_path)
@@ -577,19 +698,134 @@ for (i in 1:nrow(file_df)) {
 ## lets add in the BinID 
 bin10_df$BinID <- paste(bin10_df$Site_ID, bin10_df$Interval, sep = "_")
 bin10_df <- bin10_df %>%
-  rename(Sv_mean_10 = Sv_mean,
-         NASC_10 = NASC,
-         Depth_mean_10 = Depth_mean, 
-         Layer_depth_min_10 = Layer_depth_min,
-         Layer_depth_max_10 = Layer_depth_max)
-bin10totals<-bin10_df%>%
-  count(Site_ID)
+  rename(Sv_mean_10_LG = Sv_mean,
+         NASC_10_LG = NASC,
+         Depth_mean_10_LG = Depth_mean, 
+         Layer_depth_min_10_LG = Layer_depth_min,
+         Layer_depth_max_10_LG = Layer_depth_max)%>%
+  dplyr::select(-c(5,6))
 
-##########pull 20X15 from Large DZ #### 
+
+##########pull 20X10 from 1m DZ #### 
+Bin10_1m_path <- "odata/Transect 1/20x10/1m"
+# get a list of file names 
+file_names <- list.files(Bin10_1m_path)
+
+# select only the csv files 
+csv_files <- file_names[grep("\\.csv$", file_names)]
+
+# make it into a dataframe
+file_df <- data.frame(file_name = csv_files)
+
+# create a column in the dataframe for site ID 
+file_df$Site_ID <- substr(file_df$file_name, 1, 4)
+
+
+Bin10_1m_df <- data.frame()
+
+# loop each row in the file_df that contains al the names of files of interest
+for (i in 1:nrow(file_df)) {
+  # set the file name and site ID 
+  file_name <- file_df$file_name[i]
+  site_id <- file_df$Site_ID[i]
+  
+  # pull in files from our st pathway 
+  file <- read.csv(file.path(Bin10_1m_path, file_name), na.strings = c("", "NA"))
+  
+  # clean and subset the data to keep only what we need 
+  file <- file %>%
+    dplyr::select("Interval", "Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+  
+  # make sure there is 5 intervals for ever site - fill empty bins with NA values 
+  intervals <- 1:5
+  if (!all(intervals %in% file$Interval)) {
+    missing_intervals <- setdiff(intervals, unique(file$Interval))
+    missing_data <- data.frame(Interval = missing_intervals)
+    file <- merge(file, missing_data, all = TRUE)
+  }
+  
+  # order the data by the interval number 
+  file <- file[order(file$Interval), ]
+  
+  # write column with containing the site_IDs 
+  file$Site_ID <- site_id
+  
+  # create a df what has all the data from each file in it 
+  Bin10_1m_df <- rbind(Bin10_1m_df, file)
+}
+## lets add in the BinID 
+Bin10_1m_df$BinID <- paste(Bin10_1m_df$Site_ID, Bin10_1m_df$Interval, sep = "_")
+Bin10_1m_df <- Bin10_1m_df %>%
+  rename(Sv_mean_10_1m = Sv_mean,
+         NASC_10_1m = NASC,
+         Depth_mean_10_1m = Depth_mean, 
+         Layer_depth_min_10_1m = Layer_depth_min,
+         Layer_depth_max_10_1m = Layer_depth_max)%>%
+  dplyr::select(-c(5,6))
+
+
+##########pull 20X10 from Manual DZ #### 
+Bin10_MAN_path <- "odata/Transect 1/20x10/ManualDZ"
+# get a list of file names 
+file_names <- list.files(Bin10_MAN_path)
+
+# select only the csv files 
+csv_files <- file_names[grep("\\.csv$", file_names)]
+
+# make it into a dataframe
+file_df <- data.frame(file_name = csv_files)
+
+# create a column in the dataframe for site ID 
+file_df$Site_ID <- substr(file_df$file_name, 1, 4)
+
+
+Bin10_MAN_df <- data.frame()
+
+# loop each row in the file_df that contains al the names of files of interest
+for (i in 1:nrow(file_df)) {
+  # set the file name and site ID 
+  file_name <- file_df$file_name[i]
+  site_id <- file_df$Site_ID[i]
+  
+  # pull in files from our st pathway 
+  file <- read.csv(file.path(Bin10_MAN_path, file_name), na.strings = c("", "NA"))
+  
+  # clean and subset the data to keep only what we need 
+  file <- file %>%
+    dplyr::select("Interval", "Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+  
+  # make sure there is 5 intervals for ever site - fill empty bins with NA values 
+  intervals <- 1:5
+  if (!all(intervals %in% file$Interval)) {
+    missing_intervals <- setdiff(intervals, unique(file$Interval))
+    missing_data <- data.frame(Interval = missing_intervals)
+    file <- merge(file, missing_data, all = TRUE)
+  }
+  
+  # order the data by the interval number 
+  file <- file[order(file$Interval), ]
+  
+  # write column with containing the site_IDs 
+  file$Site_ID <- site_id
+  
+  # create a df what has all the data from each file in it 
+  Bin10_MAN_df <- rbind(Bin10_MAN_df, file)
+}
+## lets add in the BinID 
+Bin10_MAN_df$BinID <- paste(Bin10_MAN_df$Site_ID, Bin10_MAN_df$Interval, sep = "_")
+Bin10_MAN_df <- Bin10_MAN_df %>%
+  rename(Sv_mean_10_MAN = Sv_mean,
+         NASC_10_MAN = NASC,
+         Depth_mean_10_MAN = Depth_mean, 
+         Layer_depth_min_10_MAN = Layer_depth_min,
+         Layer_depth_max_10_MAN = Layer_depth_max)%>%
+  dplyr::select(-c(5,6))
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
 #Hutton path
 #Bin15_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x15"
+
+##########pull 20X15 from Large DZ #### 
 
 Bin15_path <- "odata/Transect 1/20x15"
 
@@ -641,25 +877,157 @@ for (i in 1:nrow(file_df)) {
 ## lets add in the BinID 
 bin15_df$BinID <- paste(bin15_df$Site_ID, bin15_df$Interval, sep = "_")
 bin15_df <- bin15_df %>%
-  rename(Sv_mean_15 = Sv_mean,
-         NASC_15 = NASC,
-         Depth_mean_15 = Depth_mean,
-         Layer_depth_min_15 = Layer_depth_min,
-         Layer_depth_max_15 = Layer_depth_max )
+  rename(Sv_mean_15_LG = Sv_mean,
+         NASC_15_LG = NASC,
+         Depth_mean_15_LG = Depth_mean,
+         Layer_depth_min_15_LG = Layer_depth_min,
+         Layer_depth_max_15_LG = Layer_depth_max )%>%
+  dplyr::select(-c(5,6))
+
+##########pull 20X15 from 1m DZ #### 
+
+Bin15_1m_path <- "odata/Transect 1/20x15/1m Deadzone"
+
+# get a list of file names 
+file_names <- list.files(Bin15_1m_path)
+
+# select only the csv files 
+csv_files <- file_names[grep("\\.csv$", file_names)]
+
+# make it into a dataframe
+file_df <- data.frame(file_name = csv_files)
+
+# create a column in the dataframe for site ID 
+file_df$Site_ID <- substr(file_df$file_name, 1, 4)
+
+
+Bin15_1m_df <- data.frame()
+
+# loop each row in the file_df that contains al the names of files of interest
+for (i in 1:nrow(file_df)) {
+  # set the file name and site ID 
+  file_name <- file_df$file_name[i]
+  site_id <- file_df$Site_ID[i]
+  
+  # pull in files from our st pathway 
+  file <- read.csv(file.path(Bin15_1m_path, file_name), na.strings = c("", "NA"))
+  
+  # clean and subset the data to keep only what we need 
+  file <- file %>%
+    dplyr::select("Interval", "Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+  
+  # make sure there is 5 intervals for ever site - fill empty bins with NA values 
+  intervals <- 1:5
+  if (!all(intervals %in% file$Interval)) {
+    missing_intervals <- setdiff(intervals, unique(file$Interval))
+    missing_data <- data.frame(Interval = missing_intervals)
+    file <- merge(file, missing_data, all = TRUE)
+  }
+  
+  # order the data by the interval number 
+  file <- file[order(file$Interval), ]
+  
+  # write column with containing the site_IDs 
+  file$Site_ID <- site_id
+  
+  # create a df what has all the data from each file in it 
+  Bin15_1m_df <- rbind(Bin15_1m_df, file)
+}
+## lets add in the BinID 
+Bin15_1m_df$BinID <- paste(Bin15_1m_df$Site_ID, Bin15_1m_df$Interval, sep = "_")
+Bin15_1m_df <- Bin15_1m_df %>%
+  rename(Sv_mean_15_1m = Sv_mean,
+         NASC_15_1m = NASC,
+         Depth_mean_15_1m = Depth_mean,
+         Layer_depth_min_15_1m = Layer_depth_min,
+         Layer_depth_max_15_1m = Layer_depth_max )%>%
+  dplyr::select(-c(5,6))
+
+##########pull 20X15 from Manual DZ #### 
+
+Bin15_MAN_path <- "odata/Transect 1/20x15/ManualDZ"
+
+# get a list of file names 
+file_names <- list.files(Bin15_MAN_path)
+
+# select only the csv files 
+csv_files <- file_names[grep("\\.csv$", file_names)]
+
+# make it into a dataframe
+file_df <- data.frame(file_name = csv_files)
+
+# create a column in the dataframe for site ID 
+file_df$Site_ID <- substr(file_df$file_name, 1, 4)
+
+
+Bin15_MAN_df <- data.frame()
+
+# loop each row in the file_df that contains al the names of files of interest
+for (i in 1:nrow(file_df)) {
+  # set the file name and site ID 
+  file_name <- file_df$file_name[i]
+  site_id <- file_df$Site_ID[i]
+  
+  # pull in files from our st pathway 
+  file <- read.csv(file.path(Bin15_MAN_path, file_name), na.strings = c("", "NA"))
+  
+  # clean and subset the data to keep only what we need 
+  file <- file %>%
+    dplyr::select("Interval", "Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+  
+  # make sure there is 5 intervals for ever site - fill empty bins with NA values 
+  intervals <- 1:5
+  if (!all(intervals %in% file$Interval)) {
+    missing_intervals <- setdiff(intervals, unique(file$Interval))
+    missing_data <- data.frame(Interval = missing_intervals)
+    file <- merge(file, missing_data, all = TRUE)
+  }
+  
+  # order the data by the interval number 
+  file <- file[order(file$Interval), ]
+  
+  # write column with containing the site_IDs 
+  file$Site_ID <- site_id
+  
+  # create a df what has all the data from each file in it 
+  Bin15_MAN_df <- rbind(Bin15_MAN_df, file)
+}
+## lets add in the BinID 
+Bin15_MAN_df$BinID <- paste(Bin15_MAN_df$Site_ID, Bin15_MAN_df$Interval, sep = "_")
+Bin15_MAN_df <- Bin15_MAN_df %>%
+  rename(Sv_mean_15_MAN = Sv_mean,
+         NASC_15_MAN = NASC,
+         Depth_mean_15_MAN = Depth_mean,
+         Layer_depth_min_15_MAN = Layer_depth_min,
+         Layer_depth_max_15_MAN = Layer_depth_max )%>%
+  dplyr::select(-c(5,6))
 
 
 #### Complete 20m dataframe #### 
 #bin15_df <- bin15_df %>% select("Site_ID", "BinID", "Sv_mean_15","NASC_15","Depth_mean_15","Layer_depth_min","Layer_depth_max")
 #bin10_df <- bin15_df %>% select("Site_ID", "BinID", "Sv_mean_15","NASC_15","Depth_mean_15",
-                                
-names(bin15_df)
-bin_df <- merge(bin15_df, bin10_df, by = c("Site_ID", "Interval", "BinID" ))
-bin_df <- merge(bin_df, bin5_df, by = c("Site_ID", "Interval", "BinID"))
+
+#combine binned data into one dataframe                                
+#15m data
+bin_df1 <- merge(bin15_df, Bin15_1m_df, by = c("Site_ID", "Interval", "BinID" ))
+bin_df2 <- merge(bin_df1, Bin15_MAN_df, by = c("Site_ID", "Interval", "BinID" ))
+#10m data
+bin_df3 <- merge(bin10_df, Bin10_1m_df, by = c("Site_ID", "Interval", "BinID" ))
+bin_df4 <- merge(bin_df3, Bin10_MAN_df, by = c("Site_ID", "Interval", "BinID" ))
+#5m data
+bin_df5 <- merge(bin5_df, Bin5_1m_df, by = c("Site_ID", "Interval", "BinID" ))
+bin_df6 <- merge(bin_df5, Bin5_MAN_df, by = c("Site_ID", "Interval", "BinID" ))
+
+bin_df7 <- merge(bin_df2, bin_df4, by = c("Site_ID", "Interval", "BinID" ))
+binNASC <- merge(bin_df7, bin_df6, by = c("Site_ID", "Interval", "BinID" ))
+
 #view(bin_df)
 
 
 #save(bin_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
 #save(full_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
-save(bin_df, file = "wdata/bin_df.RData")
-save(full_df, file = "wdata/full_df.RData")
+save(binNASC, file = "wdata/binNASC.RData")
+write.csv(binNASCs, "wdata/binNASC.csv")
+save(siteNASC, file = "wdata/siteNASC.RData")
+write.csv(siteNASCs, "wdata/siteNASs.csv")
 
