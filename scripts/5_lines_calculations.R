@@ -1,6 +1,9 @@
 # By: Hutton Noth 
 # Date: Feb 20th, 2024 
 
+#Adjustements by: Darienne Lancaster
+#April 20, 2024
+
 #### Load Packages #### 
 lp<-function(pck){
   if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
@@ -338,30 +341,34 @@ SiteBottom <- merged_df %>%
     Average_noneg_slope = mean(noneg_slope, na.rm = TRUE),
     Average_negna_slope = mean(negna_slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
-    profilelength = sum(GreatCircleDistance, na.rm = TRUE),
+    #profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE),
     Average_Depth = mean(Depth, na.rm = TRUE),
     SD_Depth = sd(Depth, na.rm = TRUE),
   )
-SiteBottom <- SiteBottom %>% mutate(PaperRatio = 100*(profilelength / chainlength))
-SiteBottom <- SiteBottom %>% mutate(Ratio = (chainlength/profilelength))
-SiteBottom <- SiteBottom %>% mutate(ChainDiff = (chainlength-profilelength))
-
-
-sitelines <- siteinfo %>% dplyr::select("Site_ID")
-sitelines <- left_join(sitelines, SiteBottom, by = "Site_ID")
 
 #merge full hypotenuse(total distance traveled) with sitelines
 BEslope20site<- BEslope20%>%
-  dplyr::select(c(Hypotenuse20,BinID,Site_ID))
+  dplyr::select(c(Hypotenuse20,GreatCircleDistance20, BinID,Site_ID))
 
 BEslope20site <- BEslope20site %>%
   group_by(Site_ID) %>%
   summarize(
     totaldist = sum(Hypotenuse20, na.rm = TRUE),
+    GreatCircleDistancefull = sum(GreatCircleDistance20, na.rm = TRUE),
   )
 
-sitelinesT<-left_join(sitelines, BEslope20site, by = "Site_ID")
+
+SiteBottom<-left_join(SiteBottom, BEslope20site, by = "Site_ID")
+
+SiteBottom <- SiteBottom %>% mutate(PaperRatio = 100*(totaldist / chainlength))
+SiteBottom <- SiteBottom %>% mutate(Ratio = (chainlength/totaldist))
+SiteBottom <- SiteBottom %>% mutate(ChainDiff = (chainlength-totaldist))
+
+
+sitelines <- siteinfo %>% dplyr::select("Site_ID")
+sitelines <- left_join(sitelines, SiteBottom, by = "Site_ID")
+
 
 
 # #### Deadzone for-loop for Large, 1m, and Manual deadzones ####
@@ -369,7 +376,7 @@ sitelinesT<-left_join(sitelines, BEslope20site, by = "Site_ID")
 
 ##Large deadzone###
 LGdeadzone_path <- "odata/Transect 1/100mLines/Deadzone"
-LGdeadzone_save_path <- "odata/Transect 1/100mLines/Deadzone/LGRCODED"
+LGdeadzone_save_path <- "odata/Transect 1/100mLines/Deadzone/RCODED"
 
 # list all relevant files 
 LGdeadzone_names <- list.files(LGdeadzone_path)
@@ -766,7 +773,9 @@ sitelines <- left_join(sitelines, Site_MAN_Deadzone, by = "Site_ID")
 # save(binlines, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
 
 save(sitelines, file = "wdata/full_lines.RData")
+write.csv(sitelines, "wdata/sitelines.csv")
 save(binlines, file = "wdata/bin_lines.RData")
+write.csv(binlines, "wdata/binlines.csv")
 
 ####checking if acoustic data depth range matches ROV data depth range
 #calculate start and end depth for each transect and each bin
