@@ -11,6 +11,9 @@ lp("dplyr")
 lp("ggplot2")
 lp("flextable")
 lp("xlsx")
+lp("RColorBrewer")
+
+display.brewer.all()
 
 #### Set Working Directory #### 
 
@@ -50,6 +53,75 @@ ROV$Site_ID <- substr(ROV$Filename, 1, 4)
 ROV<- ROV%>%
   mutate(FullName = paste(Family, Genus, Species, sep = " "))
 
+#summary stats on ROV dataframe
+ROV1<- ROV
+
+AllF<-ROV1%>%
+  group_by(FullName)%>%
+  summarize(Total_Fish = sum(Number, na.rm = TRUE))%>%
+  arrange(desc(Total_Fish))
+
+flextable(AllF)
+
+
+#create new column with species common names
+ROV1$Common<- ifelse(ROV1$Species == "caurinus", "Copper rockfish",
+                   ifelse(ROV1$Species == "maliger", "Quillback rockfish",
+                          ifelse(ROV1$Species == "pinniger", "Canary rockfish",
+                                 ifelse(ROV1$Species == "miniatus", "Vermillion rockfish",
+                                        ifelse(ROV1$Species == "melanops", "Black rockfish",
+                                               ifelse(ROV1$Species == "elongatus", "Lingcod",
+                                                      ifelse(ROV1$Species == "decagrammus", "Kelp greenling",
+                                                             ifelse(ROV1$Species == "emphaeus", "Puget Sound rockfish",
+                                                                    ifelse(ROV1$Species == "flavidus", "Yellowtail rockfish",
+                                                                           ifelse(ROV1$Species == "pictus", "Painted greenling",
+                                                                                  ifelse(ROV1$Species == "armatus", "Staghorn sculpin",
+                                                                                         ifelse(ROV1$Species == "entomelas", "Widow rockfish",
+                                                                                                ifelse(ROV1$Species == "pallasii", "Pacific herring",
+                                                             ifelse(ROV1$Species == "vacca", "Pile Perch", "Unknown"))))))))))))))
+
+AllAdultBen<-ROV1%>%
+  filter(Number < 10, Number!= "NA") %>%
+  filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae", Family))%>%
+  count(Common)%>%
+  arrange(desc(n))
+flextable(AllAdultBen)
+
+#plot species richness and # calling fish coloured by site
+srplot<-ggplot(AllAdultBen, aes(x=Common, y=n))+
+  geom_bar(position="stack", stat="identity", colour = "black", fill="cyan4")+ 
+  theme_bw()+
+  #scale_fill_brewer(palette = "Set2")+
+  # scale_fill_manual("Site", values = c("Danger Rocks" = "cyan4", "Taylor Islet" = "goldenrod2"))+ 
+  
+  #scale_x_discrete(labels = label_wrap_gen(10)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +                                                      # Changing the theme to get rid of the grey background
+  ylab("Benthic Fish (count)") +                                                   # Changing the text of the y axis label
+  xlab("Species")  + 
+  theme(axis.text.x = element_text(size = 12, face = "plain", angle = 75, hjust=1, colour = "black")) 
+print(srplot)
+
+AllSchooling<-ROV1%>%
+  filter(Number > 10, Number!= "NA")%>%
+  group_by(Common)%>%
+  summarize(Total_Schooling = sum(Number, na.rm = TRUE))%>%
+  arrange(desc(Total_Schooling))
+
+flextable(AllSchooling)
+
+#plot species richness and # calling fish coloured by site
+srplot2<-ggplot(AllSchooling, aes(x=Common, y=Total_Schooling))+
+  geom_bar(position="stack", stat="identity", colour = "black", fill="goldenrod2")+ 
+  theme_bw()+
+  #scale_fill_brewer(palette = "Set2")+
+  # scale_fill_manual("Site", values = c("Danger Rocks" = "cyan4", "Taylor Islet" = "goldenrod2"))+ 
+  
+  scale_x_discrete(labels = label_wrap_gen(10)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +                                                      # Changing the theme to get rid of the grey background
+  ylab("Benthic Fish (count)") +                                                   # Changing the text of the y axis label
+  xlab("Species")  + 
+  theme(axis.text.x = element_text(size = 12, face = "plain", angle = 75, hjust=1, colour = "black")) 
+print(srplot2)
 
 
 
