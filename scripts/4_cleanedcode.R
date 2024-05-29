@@ -422,6 +422,42 @@ summary_fishschool_pivoted <- summary_fishschool_summary %>%
 summary_fishschool_pivoted[is.na(summary_fishschool_pivoted)] <- 0
 siteinfo <- merge(siteinfo, summary_fishschool_pivoted, by = "Site_ID", all.x = TRUE)
 
+#### Calculate Non-Herring Fish School Abundance and Number  #### 
+
+# filter out non-fishschool, herring,  and blank data
+fishschool <- ROV %>%
+  filter(Number > 10, Number!= "NA", FullName != "Clupeidae Clupea pallasii") 
+
+# code to calculate fish schools 
+summary_fishschool <- fishschool %>%
+  group_by(Site_ID, Notes) %>%
+  summarise(Total_Number = sum(Number, na.rm = TRUE), .groups = "drop")
+
+site_NoHfishschool <- summary_fishschool %>%
+  group_by(Site_ID) %>%
+  summarise(total_number_NoHschoolingfish = sum(Total_Number),
+            number_FSNoH = n_distinct(Notes))
+
+siteinfo <- merge(siteinfo, site_NoHfishschool, by = "Site_ID", all.x = TRUE)
+
+## now lets do it for each type of fish school 
+summary_fishschool <- summary_fishschool %>%
+  mutate(fishschool_type = substr(Notes, 1, 2))
+
+summary_fishschool_summary <- summary_fishschool %>%
+  group_by(Site_ID, fishschool_type) %>%
+  summarise(num_FSNoH = n_distinct(Notes),
+            sum_SFNoH = sum(Total_Number),
+            .groups = "drop")
+
+summary_NoHfishschool_pivoted <- summary_fishschool_summary %>%
+  pivot_wider(names_from = fishschool_type,
+              values_from = c(num_FSNoH, sum_SFNoH),
+              names_prefix = "--",
+              names_sep = "")
+summary_NoHfishschool_pivoted[is.na(summary_NoHfishschool_pivoted)] <- 0
+siteinfo <- merge(siteinfo, summary_NoHfishschool_pivoted, by = "Site_ID", all.x = TRUE)
+
 #### Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
 # filter out any groups of fish less than 10 and any non-rocky reef fish like flatfish and ratfish
@@ -958,6 +994,42 @@ Bin_fishschool_pivoted <- Bin_fishschool_summary %>%
               names_sep = "")
 Bin_fishschool_pivoted[is.na(Bin_fishschool_pivoted)] <- 0
 bininfo <- merge(bininfo, Bin_fishschool_pivoted, by = "BinID", all.x = TRUE)
+
+#### Bin level Calculate Non-Herring Fish School Abundance and Number #### 
+
+# filter out non-fishschool  and blank data
+fishschoolbin <- BinFish %>%
+  filter(Number > 10, Number!= "NA",FullName != "Clupeidae Clupea pallasii") 
+
+# code to calculate fish schools 
+Bin_sum_fishschool <- fishschoolbin %>%
+  group_by(BinID, Notes) %>%
+  summarise(Total_Number = sum(Number, na.rm = TRUE), .groups = "drop")
+
+Bin_NoHfishschool <- Bin_sum_fishschool %>%
+  group_by(BinID) %>%
+  summarise(total_number_NoHschoolingfish = sum(Total_Number),
+            number_FSNoH = n_distinct(Notes))
+
+bininfo <- merge(bininfo, Bin_NoHfishschool, by = "BinID", all.x = TRUE)
+
+## now lets do it for each type of fish school 
+Bin_sum_fishschool <- Bin_sum_fishschool %>%
+  mutate(fishschool_type = substr(Notes, 1, 2))
+
+Bin_fishschool_summary <- Bin_sum_fishschool %>%
+  group_by(BinID, fishschool_type) %>%
+  summarise(num_FSNoH = n_distinct(Notes),
+            sum_SFNoH = sum(Total_Number),
+            .groups = "drop")
+
+Bin_NoHfishschool_pivoted <- Bin_fishschool_summary %>%
+  pivot_wider(names_from = fishschool_type,
+              values_from = c(num_FSNoH, sum_SFNoH),
+              names_prefix = "--",
+              names_sep = "")
+Bin_NoHfishschool_pivoted[is.na(Bin_NoHfishschool_pivoted)] <- 0
+bininfo <- merge(bininfo, Bin_NoHfishschool_pivoted, by = "BinID", all.x = TRUE)
 
 #### Bin level Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
