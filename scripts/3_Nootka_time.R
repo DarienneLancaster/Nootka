@@ -120,7 +120,7 @@ summary_stats_depth %>% pivot_longer(everything(), names_to = "Statistic", value
 
 # Transform data to long format
 nootkadata_long <- nootkadata %>%
-  select(T1_duration, T2_duration, T3_duration, site_duration, T2_T1_duration) %>%
+  dplyr::select(T1_duration, T2_duration, T3_duration, site_duration, T2_T1_duration) %>%
   pivot_longer(everything(), names_to = "Duration_Type", values_to = "Value")
 
 # Create boxplot
