@@ -25,9 +25,10 @@ lp("performance")
 install.packages("GGally")
 library(GGally)
 
-#load site dataframe (this needs to be updated with missing sites once reexported)
+#load site dataframe 
 load("wdata/site_DE.RData")
 str(site_DE)
+#create total fish abundance (schooling and benthics) column with herring counts excluded
 site_DE$TotAbunNoH<-site_DE$total_number_NoHschoolingfish+site_DE$AbundanceNonSchooling
 
 ####looking at basic linear relationships between different NASC values####
@@ -50,7 +51,7 @@ site_DEsr$total_number_schoolingfish_s<-as.numeric(log(site_DEsr$total_number_sc
 site_DEsr$NASC_10_1m_s<-as.numeric(log(site_DEsr$NASC_10_1m+1))
 str(site_DEsr)
 
-#relationship between benthic fish abundancae and log of schooling fish (with herring removed - not expected to be correlated with benthics)
+#relationship between benthic fish abundance and log of schooling fish (with herring removed - not expected to be correlated with benthics)
 #BvS - benthics vs. schooling fish
 BvS<-ggplot(site_DEsr, aes(x=total_number_NoHschoolingfish_s, y=AbundanceNonSchooling))+
   geom_point()+
@@ -105,7 +106,7 @@ correlation_coefficient <- cor(site_DE$NASC_10_1m, site_DE$AbundanceNonSchooling
 correlation_coefficient
 #relatively strong correlation (NASC10_1m is highest correlation (5m not bad, 15 is less))
 
-#Deadzone area seems to be highlycorrelated with RF species richness (Ratio and StDevofSlope is also correlated)
+#Deadzone area seems to be moderately correlated with RF species richness (Ratio and StDevofSlope is also correlated)
 NASC1m<-ggplot(site_DE, aes(x=Cumulative_LG_DZ_Area , y=RFSpeciesRichness))+
   geom_point()+
   geom_smooth(method="lm", se=FALSE)
@@ -207,7 +208,7 @@ ggpairs(site_explan2,
         lower = list(continuous = "smooth"))
 
 #cumulativearea (e.g. deadzone size) and Std deviation of slope/Ratio (E.g. rugosity) are highly collinear with average slope
-#(Do not use rugosity metrics in modelas deadzone size seems to get at this as well and is less collinear with slope)
+#(Do not use rugosity metrics in model as deadzone size seems to get at this as well and is less collinear with slope)
 str(TF)
 
 TFstd<-TF%>%
@@ -368,17 +369,30 @@ explaineddeviance<- 100*(((M1)$null.deviance-(M1)$deviance)/(M1)$null.deviance)
 #get value for explained deviance (also known as pseudo Rsquared)
 explaineddeviance
 
-###check overdispersion with chi-squared test
-chisq_test <- chisq.test(TFstd$TotAbunNoH)
-print(chisq_test)
+###check overdispersion with ratio of residual deviance to degrees of freedom
 
+# Extract the residual deviance and degrees of freedom
+residual_deviance <- M1$deviance
+df <- M1$df.residual
+
+# Calculate the ratio of residual deviance to residual degrees of freedom
+ratio <- residual_deviance / df
+
+# Compare the ratio to 1 to check for overdispersion
+if (ratio > 1) {
+  cat("Overdispersion present: Residual deviance / df =", ratio, "\n")
+} else {
+  cat("No overdispersion: Residual deviance / df =", ratio, "\n")
+}
+
+#can also check with this tool
 check_overdispersion(M1)
 
 # Plot the four diagnostic plots 
 par(mfrow = c(2, 2))
 plot(M1)
 
-#data is overdispersed and there are clear patterns
+#data is overdispersed and there are patterns
 #in the diagnostic plots (overdispersion) need to try quasipoisson and then negative binomial then GAM
 
 #try quasi-poisson to deal with overdispersion (all vars and interactions removed stepwise until significant)
@@ -405,9 +419,21 @@ explaineddeviance<- 100*(((M1qp)$null.deviance-(M1qp)$deviance)/(M1qp)$null.devi
 #get value for explained deviance (also known as pseudo Rsquared)
 explaineddeviance
 
-###check overdispersion with chi-squared test
-chisq_test <- chisq.test(TFstd$TotAbunNoH)
-print(chisq_test)
+###check overdispersion with ratio of residual deviance to degrees of freedom
+
+# Extract the residual deviance and degrees of freedom
+residual_deviance <- M1qp$deviance
+df <- M1qp$df.residual
+
+# Calculate the ratio of residual deviance to residual degrees of freedom
+ratio <- residual_deviance / df
+
+# Compare the ratio to 1 to check for overdispersion
+if (ratio > 1) {
+  cat("Overdispersion present: Residual deviance / df =", ratio, "\n")
+} else {
+  cat("No overdispersion: Residual deviance / df =", ratio, "\n")
+}
 
 check_overdispersion(M1qp)
 
@@ -441,9 +467,21 @@ explaineddeviance<- 100*(((M1nb)$null.deviance-(M1nb)$deviance)/(M1nb)$null.devi
 #get value for explained deviance (also known as pseudo Rsquared)
 explaineddeviance
 
-###check overdispersion with chi-squared test
-chisq_test <- chisq.test(TFstd$TotAbunNoH)
-print(chisq_test)
+###check overdispersion with ratio of residual deviance to degrees of freedom
+
+# Extract the residual deviance and degrees of freedom
+residual_deviance <- M1nb$deviance
+df <- M1nb$df.residual
+
+# Calculate the ratio of residual deviance to residual degrees of freedom
+ratio <- residual_deviance / df
+
+# Compare the ratio to 1 to check for overdispersion
+if (ratio > 1) {
+  cat("Overdispersion present: Residual deviance / df =", ratio, "\n")
+} else {
+  cat("No overdispersion: Residual deviance / df =", ratio, "\n")
+}
 
 check_overdispersion(M1nb)
 
