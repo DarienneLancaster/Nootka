@@ -15,7 +15,7 @@ lp("xlsx")
 #### Set Working Directory #### 
 
 #setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1")
-
+setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 #### 100x15 #### 
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
@@ -373,3 +373,143 @@ bin_df <- merge(bin_df, bin5_df, by = c("Site_ID", "Interval", "BinID"))
 save(bin_df, file = "wdata/bin_df.RData")
 save(full_df, file = "wdata/full_df.RData")
 
+
+
+#### Transect 3 ####
+
+Full15_path_t3 <- "odata/Transect 3/100x15"
+
+# get a list of file names 
+file_names_t3 <- list.files(Full15_path_t3)
+
+# select only the csv files 
+csv_files_t3 <- file_names_t3[grep("\\.csv$", file_names_t3)]
+
+# make it into a dataframe
+file_df_t3 <- data.frame(file_name = csv_files_t3)
+
+# create a column in the dataframe for site ID 
+file_df_t3$Site_ID <- substr(file_df_t3$file_name, 1, 4)
+
+full15_df_t3 <- data.frame()
+
+# loop each row in the file_df that contains all the names of files of interest
+for (i in 1:nrow(file_df_t3)) {
+  # set the file name and site ID 
+  file_name <- file_df_t3$file_name[i]
+  site_id <- file_df_t3$Site_ID[i]
+  
+  # pull in files from our specified pathway 
+  file_t3 <- read.csv(file.path(Full15_path_t3, file_name))
+  
+  # clean and subset the data to keep only what we need 
+  file_t3 <- file_t3 %>%
+    select("Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+  
+  # write column with containing the site_IDs 
+  file_t3$Site_ID <- site_id
+  
+  # create a df that has all the data from each file in it 
+  full15_df_t3 <- rbind(full15_df_t3, file_t3)
+}
+
+# now lets rename the columns to help us merge them. 
+full15_df_t3 <- full15_df_t3 %>%
+  rename(Sv_mean_15_t3 = Sv_mean,
+         NASC_15_t3 = NASC,
+         Depth_mean_15_t3 = Depth_mean)
+
+
+
+#### 100x10 #### 
+## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
+#Hutton path
+#Full10_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x10"
+Full10_path_t3 <- "odata/Transect 3/100x10"
+
+# get a list of file names 
+file_names_t3 <- list.files(Full10_path_t3)
+
+# select only the csv files 
+csv_files_t3 <- file_names_t3[grep("\\.csv$", file_names_t3)]
+
+# make it into a dataframe
+file_df_t3 <- data.frame(file_name = csv_files_t3)
+
+# create a column in the dataframe for site ID 
+file_df_t3$Site_ID <- substr(file_df_t3$file_name, 1, 4)
+
+full10_df_t3 <- data.frame()
+
+# loop each row in the file_df that contains all the names of files of interest
+for (i in 1:nrow(file_df_t3)) {
+  # set the file name and site ID 
+  file_name <- file_df_t3$file_name[i]
+  site_id <- file_df_t3$Site_ID[i]
+  
+  # pull in files from our specified pathway 
+  file_t3 <- read.csv(file.path(Full10_path_t3, file_name))
+  
+  # clean and subset the data to keep only what we need 
+  file_t3 <- file_t3 %>%
+    select("Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+  
+  # write column with containing the site_IDs 
+  file_t3$Site_ID <- site_id
+  
+  # create a df that has all the data from each file in it 
+  full10_df_t3 <- rbind(full10_df_t3, file_t3)
+}
+
+# now lets rename the columns to help us merge them. 
+full10_df_t3 <- full10_df_t3 %>%
+  rename(Sv_mean_10_t3 = Sv_mean,
+         NASC_10_t3 = NASC,
+         Depth_mean_10_t3 = Depth_mean)
+
+#### 100x5 #### 
+Full5_path_t3 <- "odata/Transect 3/100x5"
+
+# get a list of file names 
+file_names_t3 <- list.files(Full5_path_t3)
+
+# select only the csv files 
+csv_files_t3 <- file_names_t3[grep("\\.csv$", file_names_t3)]
+
+# make it into a dataframe
+file_df_t3 <- data.frame(file_name = csv_files_t3)
+
+# create a column in the dataframe for site ID 
+file_df_t3$Site_ID <- substr(file_df_t3$file_name, 1, 4)
+
+full5_df_t3 <- data.frame()
+
+# loop each row in the file_df that contains all the names of files of interest
+for (i in 1:nrow(file_df_t3)) {
+  # set the file name and site ID 
+  file_name <- file_df_t3$file_name[i]
+  site_id <- file_df_t3$Site_ID[i]
+  
+  # pull in files from our specified pathway 
+  file_t3 <- read.csv(file.path(Full5_path_t3, file_name))
+  
+  # clean and subset the data to keep only what we need 
+  file_t3 <- file_t3 %>%
+    select("Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+  
+  # write column with containing the site_IDs 
+  file_t3$Site_ID <- site_id
+  
+  # create a df that has all the data from each file in it 
+  full5_df_t3 <- rbind(full5_df_t3, file_t3)
+}
+
+# now lets rename the columns to help us merge them. 
+full5_df_t3 <- full5_df_t3 %>%
+  rename(Sv_mean_5_t3 = Sv_mean,
+         NASC_5_t3 = NASC,
+         Depth_mean_5_t3 = Depth_mean)
+
+#### Complete 100m dataframe #### 
+full_df_t3 <- merge(full15_df_t3, full10_df_t3, by = c("Layer_depth_min", "Layer_depth_max", "Site_ID" ))
+full_df_t3 <- merge(full_df_t3, full5_df_t3, by = c( "Layer_depth_min", "Layer_depth_max", "Site_ID" ))
