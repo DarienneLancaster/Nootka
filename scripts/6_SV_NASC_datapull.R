@@ -376,7 +376,7 @@ save(full_df, file = "wdata/full_df.RData")
 
 
 #### Transect 3 ####
-
+#### 100x15 ####
 Full15_path_t3 <- "odata/Transect 3/100x15"
 
 # get a list of file names 
@@ -513,3 +513,6 @@ full5_df_t3 <- full5_df_t3 %>%
 #### Complete 100m dataframe #### 
 full_df_t3 <- merge(full15_df_t3, full10_df_t3, by = c("Layer_depth_min", "Layer_depth_max", "Site_ID" ))
 full_df_t3 <- merge(full_df_t3, full5_df_t3, by = c( "Layer_depth_min", "Layer_depth_max", "Site_ID" ))
+
+
+save(full_df_t3, file = "wdata/full_df_t3.RData")
