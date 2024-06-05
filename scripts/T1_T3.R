@@ -22,6 +22,15 @@ csv_files_T1 <- list.files(T1_path, pattern = "\\.csv$", full.names = TRUE)
 csv_files_T3 <- list.files(T3_path, pattern = "\\.csv$", full.names = TRUE)
 
 # dataframe with the pathways, Site_ID 
+# Set pathways for the for loop to pull from for file name 
+T1_path <- "odata/Transect 1/100mLines/Bottom"
+T3_path <- "odata/Transect 3/Bottom Lines"
+
+# list csv only but with the full pathways 
+csv_files_T1 <- list.files(T1_path, pattern = "\\.csv$", full.names = TRUE)
+csv_files_T3 <- list.files(T3_path, pattern = "\\.csv$", full.names = TRUE)
+
+# dataframe with the pathways, Site_ID 
 files_T1 <- data.frame(
   file_path = csv_files_T1,
   Site_ID = substr(basename(csv_files_T1), 1, 4),
@@ -32,6 +41,17 @@ files_T3 <- data.frame(
   Site_ID = substr(basename(csv_files_T3), 1, 4),
   stringsAsFactors = FALSE
 )
+
+# combine the new dataframes by site_ID for both T1 and T3
+merged_files <- merge(files_T1, files_T3, by = "Site_ID", suffixes = c("_T1", "_T3"))
+
+# create a new dataframe for the results 
+t1_t3_distance_results <- data.frame(Site_ID = character(), T1T3_mean_dist = numeric(), T1T3_SD_Dist = numeric(), stringsAsFactors = FALSE)
+
+# change the projection from lat and long
+crs_original <- CRS("+proj=longlat +datum=WGS84")
+# define the zone we are in for utm (nootka is predominately 9 but kind of on the border of 10)
+utm_zone <- CRS("+proj=utm +zone=9 +datum=WGS84")
 
 # combine the new dataframes by site_ID for both T1 and T3
 merged_files <- merge(files_T1, files_T3, by = "Site_ID", suffixes = c("_T1", "_T3"))
@@ -88,10 +108,14 @@ for (i in 1:nrow(merged_files)) {
   
   # let create a dataframe that we can plot 
   plot_data <- data.frame(
-    Longitude = c(file_T1$Longitude[1:n_points], file_T3$Longitude[1:n_points]), # n_points are making the number of rows of data to plot
+    Longitude = c(file_T1$Longitude[1:n_points], file_T3$Longitude[1:n_points]),
     Latitude = c(file_T1$Latitude[1:n_points], file_T3$Latitude[1:n_points]),
     Transect = rep(c("T1", "T3"), each = n_points))
   
+  plot <- ggplot(plot_data, aes(x = Longitude, y = Latitude, color = Transect)) +
+    geom_path() +
+    ggtitle(paste("Site ID:", site_id)) +
+    theme_classic()
   # Save tthe plots to our working directory 
   ggsave(filename = paste0("plot_", site_id, ".png"), plot = plot)
   
