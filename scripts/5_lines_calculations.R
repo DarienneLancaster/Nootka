@@ -22,7 +22,7 @@ setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Roc
 
 #### Develop a code to replicate Excel document then pull into a for loop #### 
 #NS07 <- read.csv("100mLines/Bottom/NS06_T1_Biosonic_20230811_104843_Bottom_100.line.csv")
-NS07 <- read.csv("odata/NS06_T1_Biosonic_20230811_104843_Bottom_100.line.csv")
+NS07 <- read.csv("odata/Transect 1/100mLines/Bottom/NS06_T1_Biosonic_20230811_104843_Bottom_100.line.csv")
 # Subset or dataframe, remove all columns that are not useful 
 NS07 <- NS07 %>% dplyr::select("Latitude","Longitude","Depth")
 
@@ -814,7 +814,9 @@ AVdepth<-left_join(BEdepth_site, BEdepth_siteEV, "Site_ID_unique")
 
 
 
-#### Transect 3 Bottom Line for loop ####
+
+##################################################################################
+#### Transect 3 Bottom Line forloop ####
 # Lets calculate site level variables 
 
 folder_path_t3 <- "odata/Transect 3/Bottom Lines"

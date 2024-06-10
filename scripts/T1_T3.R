@@ -6,7 +6,7 @@ lp<-function(pck){
 }
 
 
-## Testing to see if we can compare t1 and t3
+#### Testing to see if we can compare t1 and t3 #### 
 
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 lp("geosphere")
@@ -123,5 +123,7 @@ for (i in 1:nrow(merged_files)) {
 
 view(t1_t3_distance_results)
 
+
+#### Method 2: Buffers #### 
 
 

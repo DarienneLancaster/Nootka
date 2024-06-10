@@ -1,12 +1,12 @@
 # By Hutton Noth 
 # March 14th, 2024
 # load in dataframes 
-# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
-# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
-# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
-# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
-# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
-# load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/siteinfo.RData")
+load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
+load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
+load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
+load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
+load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
+load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/siteinfo.RData")
 
 load("wdata/full_lines.RData")
 load("wdata/bin_lines.RData")
@@ -22,22 +22,15 @@ site_complete <- site_complete %>% filter(!is.na(TopSub))
 site_complete <- site_complete %>% filter(!is.na(Layer_depth_max))
 site_complete <- site_complete %>% mutate(Average_Slope = abs(Average_Slope))
 site_complete <- site_complete %>% mutate(Layer_depth_min = abs(Layer_depth_min))
-
-#remove unwanted sites and make nas 0
-site_complete<- site_complete%>% 
-  mutate(across(where(is.numeric), ~replace_na(., 0)))%>%
-  filter(Site_ID !="NS01", Site_ID != "NS02", Site_ID != "NS03", Site_ID != "NS04",
-         Site_ID != "NS06", Site_ID != "NS08", Site_ID != "NS18")
+write.csv(site_complete,"wdata/site_complete.csv", row.names = FALSE)
 
 # merge the bin dataframes 
 merged_bin <- left_join(bininfo, binlines, by = "BinID")
 bin_complete <- left_join(merged_bin, bin_df, by = "BinID")
 
-
 #remove unwanted sites and make nas 0
 bin_complete<- bin_complete%>% 
   mutate(across(where(is.numeric), ~replace_na(., 0)))%>%
-  mutate(Average_Depth = ifelse(Average_Depth == 0, NA, Average_Depth))%>%
   filter(Site_ID.x !="NS01", Site_ID.x != "NS02", Site_ID.x != "NS03", Site_ID.x != "NS04",
          Site_ID.x != "NS05", Site_ID.x != "NS06", Site_ID.x != "NS08", Site_ID.x != "NS18")
 
@@ -60,28 +53,27 @@ ggplot(bin_complete, aes(x = Average_5m_slope, y = AbundanceNonSchooling, color 
   labs(x = "Average Slope", y = "AbundanceNonSchooling") +
   theme_minimal()
 
-# Bin Average Depth vs nonschooling fish Abundance 
-ggplot(bin_complete, aes(x = Average_Depth, y = AbundanceNonSchooling, color = bin_num)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = TRUE) +  
-  labs(x = "Average Depth", y = "AbundanceNonSchooling") +
-  theme_minimal()
 
-# Site Average Depth vs nonschooling fish Abundance 
-ggplot(site_complete, aes(x = Average_Depth, y = AbundanceNonSchooling)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = TRUE) +  
-  labs(x = "Average Depth", y = "AbundanceNonSchooling") +
-  theme_minimal()
-
-
-# Bin Average Slope vs total_number_schoolingfish
+# Bin Average Slope vs nonschooling fish Abundance 
 ggplot(bin_complete, aes(x = Average_5m_slope, y = total_number_schoolingfish)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +  
-  labs(x = "Average Slope", y = "total_number_schoolingfish") +
+  labs(x = "Average Slope", y = "AbundanceNonSchooling") +
   theme_minimal()
 
+# Bin Average Slope vs nonschooling fish Abundance 
+ggplot(bin_complete, aes(x = Average_5m_slope, y = total_number_schoolingfish)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  labs(x = "Average Slope", y = "AbundanceNonSchooling") +
+  theme_minimal()
+
+# Average Slope vs Rock Fish Abundance 
+ggplot(site_complete, aes(x = Average_5m_slope, y = AbundanceNonSchooling, color = TopSub)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  labs(x = "Average Slope", y = "Rock Fish Abundance", color = "TopSub") +
+  theme_minimal()
 
 # Rugosity vs Rockfish Species Richness 
 ggplot(site_complete, aes(x = Ratio, y = RFSpeciesRichness)) +

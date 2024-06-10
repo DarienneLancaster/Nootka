@@ -11,9 +11,6 @@ lp("dplyr")
 lp("ggplot2")
 lp("flextable")
 lp("xlsx")
-lp("RColorBrewer")
-
-display.brewer.all()
 
 #### Set Working Directory #### 
 
@@ -31,10 +28,10 @@ siteinfo <- unique(nootkadata[, c("Site_ID", "Date", "Temp", "Lat_Decimal", "Lon
 # skipping the first 4 rows of data / removing empty rows (strings)
 #ROV<-read.csv("odata/ROVcomplete.csv", skip=4, stringsAsFactors = FALSE)
 
-ROV <-read.csv("odata/NootkaROV_20240426_finalDL_NS42noGPSused.csv",  skip=4, stringsAsFactors = FALSE)
+ROV <-read.csv("odata/NootkaROV_20240301_finalDL.csv",  skip=4, stringsAsFactors = FALSE)
 # remove unnecessary columns 
-ROV = dplyr::select(ROV, -4:-21)
-ROV = dplyr::select(ROV, -"Code")
+ROV = select(ROV, -4:-21)
+ROV = select(ROV, -"Code")
 
 # rename columns 
 colnames(ROV)[which(names(ROV) == "Time..mins.")] <- "Time"
@@ -53,75 +50,6 @@ ROV$Site_ID <- substr(ROV$Filename, 1, 4)
 ROV<- ROV%>%
   mutate(FullName = paste(Family, Genus, Species, sep = " "))
 
-#summary stats on ROV dataframe
-ROV1<- ROV
-
-AllF<-ROV1%>%
-  group_by(FullName)%>%
-  summarize(Total_Fish = sum(Number, na.rm = TRUE))%>%
-  arrange(desc(Total_Fish))
-
-flextable(AllF)
-
-
-#create new column with species common names
-ROV1$Common<- ifelse(ROV1$Species == "caurinus", "Copper rockfish",
-                   ifelse(ROV1$Species == "maliger", "Quillback rockfish",
-                          ifelse(ROV1$Species == "pinniger", "Canary rockfish",
-                                 ifelse(ROV1$Species == "miniatus", "Vermillion rockfish",
-                                        ifelse(ROV1$Species == "melanops", "Black rockfish",
-                                               ifelse(ROV1$Species == "elongatus", "Lingcod",
-                                                      ifelse(ROV1$Species == "decagrammus", "Kelp greenling",
-                                                             ifelse(ROV1$Species == "emphaeus", "Puget Sound rockfish",
-                                                                    ifelse(ROV1$Species == "flavidus", "Yellowtail rockfish",
-                                                                           ifelse(ROV1$Species == "pictus", "Painted greenling",
-                                                                                  ifelse(ROV1$Species == "armatus", "Staghorn sculpin",
-                                                                                         ifelse(ROV1$Species == "entomelas", "Widow rockfish",
-                                                                                                ifelse(ROV1$Species == "pallasii", "Pacific herring",
-                                                             ifelse(ROV1$Species == "vacca", "Pile Perch", "Unknown"))))))))))))))
-
-AllAdultBen<-ROV1%>%
-  filter(Number < 10, Number!= "NA") %>%
-  filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae", Family))%>%
-  count(Common)%>%
-  arrange(desc(n))
-flextable(AllAdultBen)
-
-#plot species richness and # calling fish coloured by site
-srplot<-ggplot(AllAdultBen, aes(x=Common, y=n))+
-  geom_bar(position="stack", stat="identity", colour = "black", fill="cyan4")+ 
-  theme_bw()+
-  #scale_fill_brewer(palette = "Set2")+
-  # scale_fill_manual("Site", values = c("Danger Rocks" = "cyan4", "Taylor Islet" = "goldenrod2"))+ 
-  
-  #scale_x_discrete(labels = label_wrap_gen(10)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +                                                      # Changing the theme to get rid of the grey background
-  ylab("Benthic Fish (count)") +                                                   # Changing the text of the y axis label
-  xlab("Species")  + 
-  theme(axis.text.x = element_text(size = 12, face = "plain", angle = 75, hjust=1, colour = "black")) 
-print(srplot)
-
-AllSchooling<-ROV1%>%
-  filter(Number > 10, Number!= "NA")%>%
-  group_by(Common)%>%
-  summarize(Total_Schooling = sum(Number, na.rm = TRUE))%>%
-  arrange(desc(Total_Schooling))
-
-flextable(AllSchooling)
-
-#plot species richness and # calling fish coloured by site
-srplot2<-ggplot(AllSchooling, aes(x=Common, y=Total_Schooling))+
-  geom_bar(position="stack", stat="identity", colour = "black", fill="goldenrod2")+ 
-  theme_bw()+
-  #scale_fill_brewer(palette = "Set2")+
-  # scale_fill_manual("Site", values = c("Danger Rocks" = "cyan4", "Taylor Islet" = "goldenrod2"))+ 
-  
-  scale_x_discrete(labels = label_wrap_gen(10)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +                                                      # Changing the theme to get rid of the grey background
-  ylab("Benthic Fish (count)") +                                                   # Changing the text of the y axis label
-  xlab("Species")  + 
-  theme(axis.text.x = element_text(size = 12, face = "plain", angle = 75, hjust=1, colour = "black")) 
-print(srplot2)
 
 
 
@@ -146,7 +74,7 @@ siteinfo <- merge(siteinfo, subarea, by = "Site_ID", all.x = TRUE)
 # subset subslope information 
 SubSlope <- ROV %>%
   filter(Activity=="Attracted" | Notes == "End") %>%
-  dplyr::select(Site_ID, Time, Depth, Sub_Slope, Notes)
+  select(Site_ID, Time, Depth, Sub_Slope, Notes)
 
 # create a new column with just substrate information  
 SubSlope$Sub <- substr(SubSlope$Sub_Slope, 1, 1)
@@ -159,7 +87,7 @@ SubSlope <- SubSlope %>%
 # create new dataset called duration time 
 SubDuration <- SubSlope %>% 
   arrange(Site_ID, Time) %>% 
-  dplyr::select(Site_ID, Time, Notes, Sub) %>%
+  select(Site_ID, Time, Notes, Sub) %>%
   group_by(Site_ID) %>%
   # calculate the duration at each substrate type 
   mutate(SubDuration = Time - lead(Time)) %>% ungroup()
@@ -179,7 +107,7 @@ SubDuration <- SubDuration %>%
   mutate(Proportion = SubDuration / SiteDuration)
 
 # clean up data 
-SubDuration <- SubDuration %>% dplyr::select(- Notes) %>% 
+SubDuration <- SubDuration %>% select(- Notes) %>% 
   filter(!is.na(SubDuration)) %>%
   mutate(Percent = round(Proportion * 100))
 ## this code combined together Sub of a certain type so we can see the dominate slope
@@ -203,7 +131,7 @@ SubSlope$Slope <- substr(SubSlope$Sub_Slope, 3, 4)
 # Slope Duration 
 SlopeDuration <- SubSlope %>% 
   arrange(Site_ID, Time) %>% 
-  dplyr::select(Site_ID, Time, Notes, Slope) %>%
+  select(Site_ID, Time, Notes, Slope) %>%
   group_by(Site_ID) %>%
   # calculate the duration at each substrate type 
   mutate(SlopeDuration = Time - lead(Time)) %>% ungroup()
@@ -223,7 +151,7 @@ SlopeDuration <- SlopeDuration %>%
   mutate(Proportion = SlopeDuration / SiteDuration)
 
 # clean up data 
-SlopeDuration <- SlopeDuration %>% dplyr::select(- Notes) %>% 
+SlopeDuration <- SlopeDuration %>% select(- Notes) %>% 
   filter(!is.na(SlopeDuration)) %>% 
   mutate(Percent = round(Proportion * 100))
 
@@ -244,10 +172,10 @@ DominateSlope <- SlopeDuration %>%
 
 # add these to the siteinfo data frame 
 DominateSub$TopSub <- DominateSub$Sub
-DomSub <- DominateSub %>% dplyr::select("Site_ID", "TopSub", "SubPercent")
+DomSub <- DominateSub %>% select("Site_ID", "TopSub", "SubPercent")
 
 DominateSlope$TopSlope <- DominateSlope$Slope
-DomSlope <- DominateSlope %>% dplyr::select("Site_ID", "TopSlope", "SlopePercent")
+DomSlope <- DominateSlope %>% select("Site_ID", "TopSlope", "SlopePercent")
 
 siteinfo <- merge(siteinfo, DomSub, by = "Site_ID", all.x = TRUE)
 siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
@@ -255,16 +183,16 @@ siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
 
 #### Field of View - Volume of water surveyed #### 
 # load in data 
-FOV<-read.csv("odata/FOV20240510.csv")
+FOV<-read.csv("odata/FOV.csv")
 #when I load in FOV file it gives weird name for Site_ID
- # FOV<-FOV%>%
- #   rename(Site_ID=ï..Site_ID)
+# FOV<-FOV%>%
+ #  rename(Site_ID=ï..Site_ID)
 
 # fill in sites with no calculate FOV with the average 
 FOVmean <- FOV %>% 
   mutate_at(vars(Width, SD, SE, Height, Area, Volume), ~ifelse(is.na(.x), mean(.x, na.rm = TRUE), .x))
 
-FOVvolume <- FOVmean %>% dplyr::select(Site_ID, Volume)
+FOVvolume <- FOVmean %>% select(Site_ID, Volume)
 
 ## now lets add the volume surveyed into site ID 
 siteinfo <- merge(siteinfo, FOVvolume, by = "Site_ID", all.x = TRUE)
@@ -301,7 +229,7 @@ average_depth_bottom <- DT %>%
 siteinfo <- merge(siteinfo, average_temp_descend, by ="Site_ID", all.x = TRUE)
 siteinfo <- merge(siteinfo, average_depth_bottom, by = "Site_ID", all.x = TRUE)
 
-tempdepth <- dplyr::select(siteinfo, "Site_ID", "avg_temp", "avg_depth")
+tempdepth <- select(siteinfo, "Site_ID", "avg_temp", "avg_depth")
 
 #### FUNCTIONS - ABUNDANCE / SPECIES RICHNESS ####  
 
@@ -341,7 +269,7 @@ SpeciesRichness <- function(x) {apply(sitespecies[, 2:26 ]> 0, 1, sum)}
 sitespecies$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
 
 # add these to siteinfo 
-subsitespecies <- dplyr::select(sitespecies, c("Site_ID", "TotalAbundance", "SpeciesRichness"))
+subsitespecies <- select(sitespecies, c("Site_ID", "TotalAbundance", "SpeciesRichness"))
 siteinfo <- merge(siteinfo, subsitespecies, by = "Site_ID", all.x = TRUE)
 siteinfo <- siteinfo %>% mutate(SpeciesRichness = ifelse(is.na(SpeciesRichness), 0, SpeciesRichness),
                                 TotalAbundance = ifelse(is.na(TotalAbundance), 0, TotalAbundance))
@@ -381,7 +309,7 @@ RFSpeciesRichness <- function(x) {apply(sitesebastes[, 2:10 ]> 0, 1, sum)}
 sitesebastes$RFSpeciesRichness <- mapply(RFSpeciesRichness, x = 2)
 
 ## add to siteinfo 
-RF <- dplyr::select(sitesebastes, c("Site_ID", "RFAbundance", "RFSpeciesRichness"))
+RF <- select(sitesebastes, c("Site_ID", "RFAbundance", "RFSpeciesRichness"))
 siteinfo <- merge(siteinfo, RF, by = "Site_ID", all.x = TRUE)
 siteinfo <- siteinfo %>% mutate(RFAbundance = ifelse(is.na(RFAbundance), 0, RFAbundance),
                                 RFSpeciesRichness = ifelse(is.na(RFSpeciesRichness), 0, RFSpeciesRichness))
@@ -422,48 +350,12 @@ summary_fishschool_pivoted <- summary_fishschool_summary %>%
 summary_fishschool_pivoted[is.na(summary_fishschool_pivoted)] <- 0
 siteinfo <- merge(siteinfo, summary_fishschool_pivoted, by = "Site_ID", all.x = TRUE)
 
-#### Calculate Non-Herring Fish School Abundance and Number  #### 
-
-# filter out non-fishschool, herring,  and blank data
-fishschool <- ROV %>%
-  filter(Number > 10, Number!= "NA", FullName != "Clupeidae Clupea pallasii") 
-
-# code to calculate fish schools 
-summary_fishschool <- fishschool %>%
-  group_by(Site_ID, Notes) %>%
-  summarise(Total_Number = sum(Number, na.rm = TRUE), .groups = "drop")
-
-site_NoHfishschool <- summary_fishschool %>%
-  group_by(Site_ID) %>%
-  summarise(total_number_NoHschoolingfish = sum(Total_Number),
-            number_FSNoH = n_distinct(Notes))
-
-siteinfo <- merge(siteinfo, site_NoHfishschool, by = "Site_ID", all.x = TRUE)
-
-## now lets do it for each type of fish school 
-summary_fishschool <- summary_fishschool %>%
-  mutate(fishschool_type = substr(Notes, 1, 2))
-
-summary_fishschool_summary <- summary_fishschool %>%
-  group_by(Site_ID, fishschool_type) %>%
-  summarise(num_FSNoH = n_distinct(Notes),
-            sum_SFNoH = sum(Total_Number),
-            .groups = "drop")
-
-summary_NoHfishschool_pivoted <- summary_fishschool_summary %>%
-  pivot_wider(names_from = fishschool_type,
-              values_from = c(num_FSNoH, sum_SFNoH),
-              names_prefix = "--",
-              names_sep = "")
-summary_NoHfishschool_pivoted[is.na(summary_NoHfishschool_pivoted)] <- 0
-siteinfo <- merge(siteinfo, summary_NoHfishschool_pivoted, by = "Site_ID", all.x = TRUE)
-
 #### Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
 # filter out any groups of fish less than 10 and any non-rocky reef fish like flatfish and ratfish
 nonschooling <- ROV %>% 
               filter(Number < 10, Number!= "NA") %>%
-              filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae", Family))
+              filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae|unknown", Family))
 
 # create outline to apply function 
 sitenonschooling <- unique(nonschooling[, c("Site_ID", "FullName")])
@@ -484,7 +376,7 @@ NSwide[is.na(NSwide)] <- 0
 
 # function to calculate abundance for non-schooling fish 
 nonschoolingabundance <- function(x) {
-  apply(NSwide[, 2:14], 1, sum)
+  apply(NSwide[, 2:15], 1, sum)
 }
 
 
@@ -492,12 +384,12 @@ NSwide$AbundanceNonSchooling <- mapply(nonschoolingabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSwide[, 2:14]> 0, 1, sum)
+  apply(NSwide[, 2:15]> 0, 1, sum)
 }
 NSwide$SRNonSchooling <- mapply(nonschoolspeciesrichness, x = 2)
 
 # subset dataframe 
-nonschooling <- dplyr::select(NSwide, c("Site_ID", "AbundanceNonSchooling", "SRNonSchooling"))
+nonschooling <- select(NSwide, c("Site_ID", "AbundanceNonSchooling", "SRNonSchooling"))
 
 # merge this to siteinfo 
 siteinfo <- merge(siteinfo, nonschooling, by = "Site_ID", na.rm = TRUE, all = TRUE)
@@ -541,7 +433,7 @@ nonschoolspeciesrichness <- function(x) {
 NSwide$SRmudfish <- mapply(nonschoolspeciesrichness, x = 2)
 
 # subset dataframe 
-mudfish <- dplyr::select(NSwide, c("Site_ID", "Abundancemudfish", "SRmudfish"))
+mudfish <- select(NSwide, c("Site_ID", "Abundancemudfish", "SRmudfish"))
 
 # merge this to siteinfo 
 siteinfo <- merge(siteinfo, mudfish, by = "Site_ID", na.rm = TRUE, all = TRUE)
@@ -581,7 +473,7 @@ species1 %>%
 result_table <- species1 %>%
   mutate(name = forcats::fct_reorder(FullName, desc(total_count))) %>%
   arrange(desc(total_count)) %>%
-  dplyr::select(FullName, total_count = total_count)
+  select(FullName, total_count = total_count)
 
 #view(result_table)
 
@@ -608,7 +500,7 @@ flextable(rockfish)
 result_table1 <- rockfish %>%
   mutate(name = forcats::fct_reorder(FullName, desc(total_count))) %>%
   arrange(desc(total_count)) %>%
-  dplyr::select(FullName, total_count = total_count)
+  select(FullName, total_count = total_count)
 flextable(result_table1)
 #View(rockfish)
 
@@ -652,7 +544,7 @@ get.abundance <- function(xx, ss){
   if (length(keep) == 0) return(0)
   return(sum(ROVFish$Number[keep]))}
 subareaspecies$Abundance <- mapply(get.abundance, xx = subareaspecies$Subarea, ss = subareaspecies$FullName)
-speciesinsubarea <- subareaspecies %>%  dplyr::select(Subarea, FullName, Abundance)
+speciesinsubarea <- subareaspecies %>%  select(Subarea, FullName, Abundance)
 subareaspecies <- reshape(subareaspecies, v.names = "Abundance", idvar = "Subarea", timevar = "FullName", direction = "wide")
 subareaspecies[is.na(subareaspecies)] <- 0
 TotalAbundance <- function(x) {apply(subareaspecies[, 2:26], 1, sum)}
@@ -663,7 +555,7 @@ sum(subareaspecies$TotalAbundance) # we counted 13658
 SpeciesRichness <- function(x) {apply(subareaspecies[, 2:26 ]> 0, 1, sum)}
 subareaspecies$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
 Sebastes <-  ROVFish%>% filter(Genus == "Sebastes")
-subarea1 <- dplyr::select(subareaspecies, c("Subarea", "TotalAbundance", "SpeciesRichness"))
+subarea1 <- select(subareaspecies, c("Subarea", "TotalAbundance", "SpeciesRichness"))
 
 # find rockfish abundance per subarea 
 subareasebastes <- unique(Sebastes[, c("Subarea", "FullName")])
@@ -681,7 +573,7 @@ subareasebastes$RFAbundance <- mapply(sebastesabundance, x = 2)
 # find rockfish species richness per subarea 
 RFSpeciesRichness <- function(x) {apply(subareasebastes[, 2:10 ]> 0, 1, sum)}
 subareasebastes$RFSpeciesRichness <- mapply(RFSpeciesRichness, x = 2)
-RF <- dplyr::select(subareasebastes, c("Subarea", "RFAbundance", "RFSpeciesRichness"))
+RF <- select(subareasebastes, c("Subarea", "RFAbundance", "RFSpeciesRichness"))
 
 Subareadata <- merge(subarea_counts, subarea1, by = "Subarea", all.x = TRUE)
 Subareadata <- merge(Subareadata, RF, by = "Subarea", all.x = TRUE)
@@ -694,7 +586,7 @@ Subareadata <- merge(Subareadata, RF, by = "Subarea", all.x = TRUE)
   subarea_table <- Subareadata %>%
   mutate(name = forcats::fct_reorder(Subarea, desc(TotalSites))) %>%
   arrange(desc(TotalSites)) %>% 
-  dplyr::select(- name)
+  select(- name)
 flextable(subarea_table)
 
 # lets make a list of species and counts within each subarea
@@ -713,7 +605,7 @@ flextable(subarea_table)
   subspecies6 <- subspecies6 %>%
     mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
     arrange(desc(count)) %>% 
-    dplyr::select(- Family, - Genus, -Species)
+    select(- Family, - Genus, -Species)
   flextable(subspecies6, col_keys = c("FullName", "count"))
   
   # Subarea 8 
@@ -730,7 +622,7 @@ flextable(subarea_table)
   subspecies8 <- subspecies8 %>%
     mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
     arrange(desc(count)) %>% 
-    dplyr::select(- Family, - Genus, -Species)
+    select(- Family, - Genus, -Species)
   flextable(subspecies8, col_keys = c("FullName", "count"))
   
   # Subarea 4
@@ -746,7 +638,7 @@ flextable(subarea_table)
   subspecies4 <- subspecies4 %>%
     mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
     arrange(desc(count)) %>% 
-    dplyr::select(- Family, - Genus, -Species)
+    select(- Family, - Genus, -Species)
   flextable(subspecies4, col_keys = c("FullName", "count"))
   
   # Subarea 15 
@@ -762,7 +654,7 @@ flextable(subarea_table)
   subspecies15 <- subspecies15 %>%
     mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
     arrange(desc(count)) %>% 
-    dplyr::select(- Family, - Genus, -Species)
+    select(- Family, - Genus, -Species)
   flextable(subspecies15, col_keys = c("FullName", "count"))
   
   # Subarea 5
@@ -778,7 +670,7 @@ flextable(subarea_table)
   subspecies5 <- subspecies5 %>%
     mutate(name = forcats::fct_reorder(FullName, desc(count))) %>%
     arrange(desc(count)) %>% 
-    dplyr::select(- Family, - Genus, -Species)
+    select(- Family, - Genus, -Species)
   flextable(subspecies5, col_keys = c("FullName", "count"))
 
   get_common_name <- function(full_name) {
@@ -800,7 +692,7 @@ flextable(subarea_table)
  
   rockfish_sorted <- rockfish %>%
     arrange(desc(total_count)) %>%
-    dplyr::select(CommonName, total_count)
+    select(CommonName, total_count)
   flextable(rockfish_sorted)
   
 ############## Bin Information ############################
@@ -859,7 +751,7 @@ create_bins <- function(data) {
         TRUE ~ 5
       )
     ) %>%
-    dplyr::select(-Min_Time)
+    select(-Min_Time)
 }
 
 # Apply the function 
@@ -868,12 +760,12 @@ durationdata <- create_bins(durationdata)
 
 ##### Run calculations to get Bin level data ##### 
 # Create bin level dataframe 
-bininfo <- siteinfo %>% dplyr::select("Site_ID")
-bininfo2 <- siteinfo %>% dplyr::select("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal", "avg_temp", "avg_depth", "Volume")
+bininfo <- siteinfo %>% select("Site_ID")
+bininfo2 <- siteinfo %>% select("Site_ID", "Date", "Temp", "Lat_Decimal", "Long_Decimal", "avg_temp", "avg_depth", "Volume")
 bininfo2$Volume <- bininfo2$Volume / 5
 bininfo <- bininfo %>%
   # expand each Site_ID to have 5 different BinID 
-  tidyr::expand(Site_ID, BinID = 1:5) %>%
+  expand(Site_ID, BinID = 1:5) %>%
   # name the BinID by pasting Site_ID_BinID (1-5)
   mutate(BinID = paste0(Site_ID, "_", BinID)) %>%
   # add all other site data 
@@ -916,7 +808,7 @@ SpeciesRichness <- function(x) {apply(binspecieswide[, 2:26 ]> 0, 1, sum)}
 binspecieswide$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
 
 ## add to bininfo
-bin <- dplyr::select(binspecieswide, c("BinID", "TotalAbundance", "SpeciesRichness"))
+bin <- select(binspecieswide, c("BinID", "TotalAbundance", "SpeciesRichness"))
 bin <- bin %>% replace(is.na(.), 0)
 bininfo <- merge(bininfo, bin, by = "BinID", all.x = TRUE)
 
@@ -956,7 +848,7 @@ RFSpeciesRichness <- function(x) {apply(binsebastes[, 2:10 ]> 0, 1, sum)}
 binsebastes$RFSpeciesRichness <- mapply(RFSpeciesRichness, x = 2)
 
 ## add to siteinfo 
-binRF <- dplyr::select(binsebastes, c("BinID", "RFAbundance", "RFSpeciesRichness"))
+binRF <- select(binsebastes, c("BinID", "RFAbundance", "RFSpeciesRichness"))
 bininfo <- merge(bininfo, binRF, by = "BinID", all.x = TRUE)
 
 #### Bin level Calculate Fish School Abundance and Number #### 
@@ -995,48 +887,12 @@ Bin_fishschool_pivoted <- Bin_fishschool_summary %>%
 Bin_fishschool_pivoted[is.na(Bin_fishschool_pivoted)] <- 0
 bininfo <- merge(bininfo, Bin_fishschool_pivoted, by = "BinID", all.x = TRUE)
 
-#### Bin level Calculate Non-Herring Fish School Abundance and Number #### 
-
-# filter out non-fishschool  and blank data
-fishschoolbin <- BinFish %>%
-  filter(Number > 10, Number!= "NA",FullName != "Clupeidae Clupea pallasii") 
-
-# code to calculate fish schools 
-Bin_sum_fishschool <- fishschoolbin %>%
-  group_by(BinID, Notes) %>%
-  summarise(Total_Number = sum(Number, na.rm = TRUE), .groups = "drop")
-
-Bin_NoHfishschool <- Bin_sum_fishschool %>%
-  group_by(BinID) %>%
-  summarise(total_number_NoHschoolingfish = sum(Total_Number),
-            number_FSNoH = n_distinct(Notes))
-
-bininfo <- merge(bininfo, Bin_NoHfishschool, by = "BinID", all.x = TRUE)
-
-## now lets do it for each type of fish school 
-Bin_sum_fishschool <- Bin_sum_fishschool %>%
-  mutate(fishschool_type = substr(Notes, 1, 2))
-
-Bin_fishschool_summary <- Bin_sum_fishschool %>%
-  group_by(BinID, fishschool_type) %>%
-  summarise(num_FSNoH = n_distinct(Notes),
-            sum_SFNoH = sum(Total_Number),
-            .groups = "drop")
-
-Bin_NoHfishschool_pivoted <- Bin_fishschool_summary %>%
-  pivot_wider(names_from = fishschool_type,
-              values_from = c(num_FSNoH, sum_SFNoH),
-              names_prefix = "--",
-              names_sep = "")
-Bin_NoHfishschool_pivoted[is.na(Bin_NoHfishschool_pivoted)] <- 0
-bininfo <- merge(bininfo, Bin_NoHfishschool_pivoted, by = "BinID", all.x = TRUE)
-
 #### Bin level Calculate Non-Schooling Fish Abundance and Species Richness #### 
 
 # filter out any groups of fish over 10 
 nonschooling <- BinFish %>% 
   filter( Number < 10, Number!= "NA")%>%
-  filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae", Family))
+  filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae|unknown", Family))
 
 # create outline to apply function 
 binnonschooling <- unique(nonschooling[, c("BinID", "FullName")])
@@ -1059,19 +915,19 @@ ncol(NSbinwide)
 
 # function to calculate abundance for non-schooling fish 
 nonschoolingabundance <- function(x) {
-  apply(NSbinwide[, 2:14], 1, sum)
+  apply(NSbinwide[, 2:15], 1, sum)
 }
 
 NSbinwide$AbundanceNonSchooling <- mapply(nonschoolingabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSbinwide[, 2:14]> 0, 1, sum)
+  apply(NSbinwide[, 2:15]> 0, 1, sum)
 }
 NSbinwide$SRNonSchooling <- mapply(nonschoolspeciesrichness, x = 2)
 
 # subset dataframe 
-nonschooling <- dplyr::select(NSbinwide, c("BinID", "AbundanceNonSchooling", "SRNonSchooling"))
+nonschooling <- select(NSbinwide, c("BinID", "AbundanceNonSchooling", "SRNonSchooling"))
 
 # merge this to siteinfo 
 bininfo <- merge(bininfo, nonschooling, by = "BinID", na.rm = TRUE, all = TRUE)
@@ -1116,7 +972,7 @@ nonschoolspeciesrichness <- function(x) {
 NSbinwide$SRmudfish <- mapply(nonschoolspeciesrichness, x = 2)
 
 # subset dataframe 
-mudfish <- dplyr::select(NSbinwide, c("BinID", "Abundancemudfish", "SRmudfish"))
+mudfish <- select(NSbinwide, c("BinID", "Abundancemudfish", "SRmudfish"))
 
 # merge this to siteinfo 
 bininfo <- merge(bininfo, mudfish, by = "BinID", na.rm = TRUE, all = TRUE)

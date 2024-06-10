@@ -3,7 +3,7 @@
 
 ## setwd("C:/Users/dlanc/Documents/PhD/R/Nootka") 
 
-#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 ## There is two files we will be working with, one with the Staroddi data 
 ## the other is manual measurements of temp and depth from ROV 
