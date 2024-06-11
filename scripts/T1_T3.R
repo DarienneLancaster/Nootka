@@ -123,6 +123,129 @@ for (i in 1:nrow(merged_files)) {
 }
 
 view(t1_t3_distance_results)
-#### Method 2: Buffers #### 
+
+
+#### Lets test if NASC values significantly vary across our study site ####
+## lets load in neccessary data 
+load("wdata/full_df_t3.RData")
+load("wdata/full10_1m_df.RData")
+load("wdata/full15_1m_df.RData")
+
+## lets pull only the data we need from the larger data frames
+nasct3 <- full_df_t3 %>% select("Site_ID", "NASC_10_t3")
+nasct1 <- full10_1m_df %>% select("Site_ID", "NASC_10_1m")
+
+## merge these data frames 
+nasccomparison <- merge(nasct1, nasct3, by = "Site_ID")
+
+## plot this data
+ggplot(nasccomparison, aes(x = NASC_10_1m, y = NASC_10_t3)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  geom_text(aes(label =Site_ID)) +
+  labs(x = "T1 nasc 10m", y = "T3 nasc 10m") +
+  theme_minimal()
+## we can see some serious outliers, lets see what the t-test says then remove them
+## t-Test - nasc values 
+t_test_result <- t.test(nasccomparison$NASC_10_1m, nasccomparison$NASC_10_t3, paired = TRUE)
+
+print(t_test_result)
+# t-value = -1.5582 this means that the average nasc of t1 is less than t3
+# the p-value is 0.1263 - we can not reject the null hypothese that there is no difference between the two values 
+# the alternative hypothesis states that the true mean difference is not equal to zero 
+# the 95% confidence interval lies between  -4689.6061 and 599.9221 since this interval includes zero it supports the conculsion theres no signficant difference 
+# mean difference is -2044.842 which suggests that NASC_10_1m is lower then NASC_10_t3  
+
+## box plot the data to make sense of the value distribution 
+nasccomparison_long <- nasccomparison %>%
+  pivot_longer(cols = c(NASC_10_1m, NASC_10_t3),
+               names_to = "Transect",
+               values_to = "NASC")
+
+ggplot(nasccomparison_long, aes(x = Transect, y = NASC)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  theme_minimal() +
+  labs(title = "NASC comparison (outliers removed)",
+       y = "NASC Value")
+## this is super skewed by the outliers 
+
+### the Outliers are causing issues, lets retry after removing the noticable ones 
+nascomparison_clean <- nasccomparison %>% 
+  filter(Site_ID != "NS39", Site_ID != "NS44",Site_ID != "NS27", Site_ID != "NS15")
+
+## plot this filtered data 
+ggplot(nascomparison_clean, aes(x = NASC_10_1m, y = NASC_10_t3)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  geom_text(aes(label =Site_ID)) +
+  labs(x = "T1 nasc 10m", y = "T3 nasc 10m") +
+  theme_minimal()
+## we can see its more negativel 
+t_test_Clean_result <- t.test(nascomparison_clean$NASC_10_1m, nascomparison_clean$NASC_10_t3, paired = TRUE)
+
+print(t_test_Clean_result)
+# t-value = -0.17099  indicating the size of the difference relative to the variation in the sample data, so negative means that t1 is slightly less than t3, but very miminally 
+# p-value is 0.8651 we can not reject the null hypothesis that there is any difference between these, removing the outliers even made this weaker
+# alternative hypothesis states that the mean diff is not zero 
+# mean difference is -42.61309
+
+nascomparison_clean_long <- nascomparison_clean %>%
+  pivot_longer(cols = c(NASC_10_1m, NASC_10_t3),
+               names_to = "Transect",
+               values_to = "NASC")
+
+ggplot(nascomparison_clean_long, aes(x = Transect, y = NASC)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  theme_minimal() +
+  labs(title = "NASC comparison (outliers removed)",
+       y = "NASC Value")
+
+### lets try for NASC 15 
+
+nasct3_15 <- full_df_t3 %>% select("Site_ID", "NASC_15_t3")
+nasct1_15 <- full15_1m_df %>% select("Site_ID", "NASC_15_1m")
+
+# merge the dataframes 
+nasccomparison_15 <- merge(nasct1_15, nasct3_15, by = "Site_ID")
+
+# plot this 
+ggplot(nasccomparison_15, aes(x = NASC_15_1m, y = NASC_15_t3)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  geom_text(aes(label =Site_ID)) +
+  labs(x = "T1 NASC 15m", y = "T3 NASC 15m") +
+  theme_minimal()
+
+## the same outliers as before as causing issues
+nascomparison_clean_15 <- nasccomparison_15 %>% 
+  filter(Site_ID != "NS39", Site_ID != "NS44",Site_ID != "NS27", Site_ID != "NS15")
+
+ggplot(nascomparison_clean_15, aes(x = NASC_15_1m, y = NASC_15_t3)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  geom_text(aes(label =Site_ID)) +
+  labs(x = "T1 NASC 15m", y = "T3 NASC 15m", title = "Outliers removed") +
+  theme_classic()
+
+
+## t-Test - nasc values 
+t_test_result_15 <- t.test(nascomparison_clean_15$NASC_15_1m, nascomparison_clean_15$NASC_15_t3, paired = TRUE)
+
+print(t_test_result_15)
+
+nascomparison_clean_15long <-nascomparison_clean_15 %>%
+  pivot_longer(cols = c(NASC_15_1m, NASC_15_t3),
+               names_to = "Transect",
+               values_to = "NASC")
+
+ggplot(nascomparison_clean_15long, aes(x = Transect, y = NASC)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  theme_minimal() +
+  labs(title = "NASC comparison (outliers removed)",
+       y = "NASC Value")
+
 
 

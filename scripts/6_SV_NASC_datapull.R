@@ -1175,3 +1175,7 @@ full_df_t3 <- merge(full_df_t3, full5_df_t3, by = c( "Layer_depth_min", "Layer_d
 
 
 save(full_df_t3, file = "wdata/full_df_t3.RData")
+view(full_df_t3)
+
+
+
