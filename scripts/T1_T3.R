@@ -12,6 +12,7 @@ setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Roc
 lp("geosphere")
 lp("sp")
 lp("spdep")
+lp("ggplot2")
 
 # Set pathways for the for loop to pull from for file name 
 T1_path <- "odata/Transect 1/100mLines/Bottom"
@@ -122,8 +123,6 @@ for (i in 1:nrow(merged_files)) {
 }
 
 view(t1_t3_distance_results)
-
-
 #### Method 2: Buffers #### 
 
 

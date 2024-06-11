@@ -1168,10 +1168,10 @@ full5_df_t3 <- full5_df_t3 %>%
          NASC_5_t3 = NASC,
          Depth_mean_5_t3 = Depth_mean)
 
+
 #### Complete 100m dataframe #### 
 full_df_t3 <- merge(full15_df_t3, full10_df_t3, by = c("Layer_depth_min", "Layer_depth_max", "Site_ID" ))
 full_df_t3 <- merge(full_df_t3, full5_df_t3, by = c( "Layer_depth_min", "Layer_depth_max", "Site_ID" ))
 
 
 save(full_df_t3, file = "wdata/full_df_t3.RData")
-
