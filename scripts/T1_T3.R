@@ -7,8 +7,8 @@ lp<-function(pck){
 
 
 #### Testing to see if we can compare t1 and t3 #### 
-
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+
 lp("geosphere")
 lp("sp")
 lp("spdep")
@@ -249,3 +249,27 @@ ggplot(nascomparison_clean_15long, aes(x = Transect, y = NASC)) +
 
 
 
+### co-linearity test 
+load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/wdata/sitelines.RData")
+
+view(sitelines)
+sitelines$rugosity <- sitelines$chainlength/ sitelines$profilelength
+ggplot(sitelines, aes(x = rugosity, y = Std_Dev_Slope)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  geom_text(aes(label =Site_ID)) +
+  labs(x = "Ratio", y = "SD of slope") +
+  theme_minimal()
+
+ggplot(sitelines, aes(x = Std_Dev_Slope, y = rugosity)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  geom_text(aes(label =Site_ID)) +
+  labs(x = "SD of slope", y = "rugosity") +
+  theme_minimal()
+
+t_test_rug_SDslope <- t.test(sitelines$rugosity, sitelines$Std_Dev_Slope, paired = TRUE)
+
+print(t_test_rug_SDslope)
+
+## the p-value is signficant 

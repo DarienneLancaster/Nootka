@@ -118,6 +118,8 @@ full15_1m_df <- full15_1m_df %>%
          Depth_mean_15_1m = Depth_mean)%>%
   dplyr::select(-c(4,5))
 
+save(full15_1m_df, file = "wdata/full15_1m_df.RData")
+
 ######pull 100X15 from Manual DZ files#####################################################################
 
 Full15_MAN_path <- "odata/Transect 1/100x15/ManualDZ"
@@ -263,6 +265,7 @@ full10_1m_df <- full10_1m_df %>%
          Depth_mean_10_1m = Depth_mean)%>%
   dplyr::select(-c(4,5))
 
+save(full_df_t3, file = "wdata/full10_1m_df.RData")
 #######pull 100X10 from Manual DZ files#######################################################################
 
 Full10_MAN_path <- "odata/Transect 1/100x10/ManualDZ"
@@ -1025,7 +1028,7 @@ binNASC <- merge(bin_df7, bin_df6, by = c("Site_ID", "Interval", "BinID" ))
 
 
 #save(bin_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
-#save(full_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
+save(full_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
 save(binNASC, file = "wdata/binNASC.RData")
 write.csv(binNASC, "wdata/binNASC.csv")
 save(siteNASC, file = "wdata/siteNASC.RData")
@@ -1176,6 +1179,4 @@ full_df_t3 <- merge(full_df_t3, full5_df_t3, by = c( "Layer_depth_min", "Layer_d
 
 save(full_df_t3, file = "wdata/full_df_t3.RData")
 view(full_df_t3)
-
-
 
