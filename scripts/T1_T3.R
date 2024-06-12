@@ -13,6 +13,8 @@ lp("geosphere")
 lp("sp")
 lp("spdep")
 lp("ggplot2")
+lp("dplyr")
+lp("irr")
 
 # Set pathways for the for loop to pull from for file name 
 T1_path <- "odata/Transect 1/100mLines/Bottom"
@@ -118,11 +120,11 @@ for (i in 1:nrow(merged_files)) {
     ggtitle(paste("Site ID:", site_id)) +
     theme_classic()
   # Save tthe plots to our working directory 
-  ggsave(filename = paste0("plot_", site_id, ".png"), plot = plot)
+# ggsave(filename = paste0("plot_", site_id, ".png"), plot = plot)
   
 }
 
-view(t1_t3_distance_results)
+View(t1_t3_distance_results)
 
 
 #### Lets test if NASC values significantly vary across our study site ####
@@ -247,29 +249,74 @@ ggplot(nascomparison_clean_15long, aes(x = Transect, y = NASC)) +
   labs(title = "NASC comparison (outliers removed)",
        y = "NASC Value")
 
+# lets now filter to test the same thing on sites that are only less than 10m away from eachother 
 
+close_sites <- t1_t3_distance_results %>% 
+  filter(T1T3_mean_dist < 10)
 
-### co-linearity test 
+# let combine the NASC values to this site just for close site ID 
+nasc_close <- merge(close_sites, nasccomparison, by = "Site_ID")
+
+## now lets run a t-test 
+t_test_nasc_close_lessthan10 <- t.test(nasc_close$NASC_10_1m, nasc_close$NASC_10_t3, paired = TRUE)
+# Results still show no significance, t value = -1.028, p-value - 0.3308 
+# CI overlapping 0
+
+### lets test the relationship between rugosity and standard deviation of the slope 
+# we assume that as the value of rugosity increases that the standard deviation the slope does too 
 load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/wdata/sitelines.RData")
 
-view(sitelines)
-sitelines$rugosity <- sitelines$chainlength/ sitelines$profilelength
-ggplot(sitelines, aes(x = rugosity, y = Std_Dev_Slope)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = TRUE) +  
-  geom_text(aes(label =Site_ID)) +
-  labs(x = "Ratio", y = "SD of slope") +
-  theme_minimal()
 
-ggplot(sitelines, aes(x = Std_Dev_Slope, y = rugosity)) +
+sitelines$rugosity <- sitelines$chainlength/ sitelines$profilelength
+## lets graph this 
+ggplot(sitelines, aes(x = Std_Dev_Slope, y = Ratio)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +  
   geom_text(aes(label =Site_ID)) +
   labs(x = "SD of slope", y = "rugosity") +
   theme_minimal()
+ggplot(sitelines, aes(x = Ratio, y = Std_Dev_Slope)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+ # geom_text(aes(label =Site_ID)) +
+  labs(x = "SD of slope", y = "rugosity") +
+  theme_minimal()
 
-t_test_rug_SDslope <- t.test(sitelines$rugosity, sitelines$Std_Dev_Slope, paired = TRUE)
-
+## there doesn't appear to be any relationsip 
+t_test_rug_SDslope <- t.test(sitelines$Ratio, sitelines$Std_Dev_Slope, paired = TRUE)
 print(t_test_rug_SDslope)
+# the P-value is significant but this is because the values aren't standardized so
+# there obviously will be a difference between these values. 
 
-## the p-value is signficant 
+# lets try another measure of testing linearity - pearson correlation coefficent 
+pearson <- cor(sitelines$Ratio, sitelines$Std_Dev_Slope, method = "pearson", use = "complete.obs")
+# correlation coefficent is 0.866312 which means very high correlation coefficent 
+
+spearman_correlation <- cor(sitelines$Ratio, sitelines$Std_Dev_Slope, method = "spearman", use = "complete.obs")
+# spearman value of 0.8945 also a very strong monotonic relationship 
+
+## lets standardize the variables and these things again. 
+sitelines$standardized_Ratio <- scale(sitelines$Ratio)
+sitelines$standardized_Std_Dev_Slope <- scale(sitelines$Std_Dev_Slope)
+
+## lets look at the standardized variables
+ggplot(sitelines, aes(x = standardized_Std_Dev_Slope, y = standardized_Ratio)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +  
+  geom_text(aes(label =Site_ID)) +
+  labs(x = "SD of slope", y = "rugosity") +
+  theme_minimal()
+## there still doesn't appear to be a linear relationship 
+
+t_test_standardized_surface <- t.test(sitelines$standardized_Std_Dev_Slope, sitelines$standardized_Ratio, paired = TRUE)
+# so there is no significant difference between the standard deviation of the slope and the ratio when standardized 
+
+# lets try the other measures of relationships 
+standardized_spearman <- cor(sitelines$standardized_Std_Dev_Slope, sitelines$standardized_Ratio, method = "spearman", use = "complete.obs")
+standardized_pearson <- cor(sitelines$standardized_Std_Dev_Slope, sitelines$standardized_Ratio, method = "pearson", use = "complete.obs")
+## same result with standardized values showing a very strong relationship 
+
+## lets try an icc test 
+icc_result_standardized <- icc(data.frame(sitelines$standardized_Ratio, sitelines$standardized_Std_Dev_Slope), model = "twoway", type = "agreement", unit = "single")
+## the standardized ICC shows a strong relationship 
+icc_result <- icc(data.frame(sitelines$Ratio, sitelines$Std_Dev_Slope), model = "twoway", type = "agreement", unit = "single")
