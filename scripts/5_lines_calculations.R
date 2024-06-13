@@ -341,11 +341,14 @@ SiteBottom <- merged_df %>%
     Average_noneg_slope = mean(noneg_slope, na.rm = TRUE),
     Average_negna_slope = mean(negna_slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
-    #profilelength = sum(GreatCircleDistance, na.rm = TRUE),
+    profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE),
     Average_Depth = mean(Depth, na.rm = TRUE),
     SD_Depth = sd(Depth, na.rm = TRUE),
+    Layer_depth_min = min(Depth, na.rm = TRUE), 
+    Layer_depth_max = max(Depth, na.rm = TRUE)
   )
+
 
 #merge full hypotenuse(total distance traveled) with sitelines
 BEslope20site<- BEslope20%>%
@@ -772,10 +775,10 @@ sitelines <- left_join(sitelines, Site_MAN_Deadzone, by = "Site_ID")
 
 # save(binlines, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
 
-save(sitelines, file = "wdata/full_lines.RData")
+
 save(sitelines, file = "wdata/sitelines.RData")
 write.csv(sitelines, "wdata/sitelines.csv")
-save(binlines, file = "wdata/bin_lines.RData")
+save(binlines, file = "wdata/binlines.RData")
 write.csv(binlines, "wdata/binlines.csv")
 
 ####checking if acoustic data depth range matches ROV data depth range

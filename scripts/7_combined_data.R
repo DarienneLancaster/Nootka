@@ -1,15 +1,19 @@
 # By Hutton Noth 
 # March 14th, 2024
-# load in dataframes 
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
-load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/siteinfo.RData")
+## Packages 
+lp<-function(pck){
+  if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
+}
+lp("tidyverse")
+lp("dplyr")
+lp("ggplot2")
 
-load("wdata/full_lines.RData")
-load("wdata/bin_lines.RData")
+# load in dataframes 
+setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+
+
+load("wdata/sitelines.RData")
+load("wdata/binlines.RData")
 load("wdata/binNASC.RData")
 load("wdata/siteNASC.RData")
 load("wdata/bininfo.RData")
@@ -19,14 +23,14 @@ load("wdata/siteinfo.RData")
 merged_site <- left_join(siteinfo, sitelines, by = "Site_ID")
 site_complete <- left_join(merged_site, siteNASC, by = "Site_ID")
 site_complete <- site_complete %>% filter(!is.na(TopSub))
-#site_complete <- site_complete %>% filter(!is.na(Layer_depth_max))
+site_complete <- site_complete %>% filter(!is.na(Layer_depth_max))
 site_complete <- site_complete %>% mutate(Average_Slope = abs(Average_Slope))
 site_complete <- site_complete %>% mutate(Layer_depth_min = abs(Layer_depth_min))
 write.csv(site_complete,"wdata/site_complete.csv", row.names = FALSE)
 
 # merge the bin dataframes 
 merged_bin <- left_join(bininfo, binlines, by = "BinID")
-bin_complete <- left_join(merged_bin, bin_df, by = "BinID")
+bin_complete <- left_join(merged_bin, binNASC, by = "BinID")
 
 #remove unwanted sites and make nas 0
 bin_complete<- bin_complete%>% 
