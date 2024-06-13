@@ -17,7 +17,7 @@ lp("xlsx")
 
 #### Set Working Directory #### 
 
-#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1")
+
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 #### 100x15 #### 
 
@@ -265,7 +265,7 @@ full10_1m_df <- full10_1m_df %>%
          Depth_mean_10_1m = Depth_mean)%>%
   dplyr::select(-c(4,5))
 
-save(full_df_t3, file = "wdata/full10_1m_df.RData")
+save(full10_1m_df, file = "wdata/full10_1m_df.RData")
 #######pull 100X10 from Manual DZ files#######################################################################
 
 Full10_MAN_path <- "odata/Transect 1/100x10/ManualDZ"
@@ -1028,7 +1028,7 @@ binNASC <- merge(bin_df7, bin_df6, by = c("Site_ID", "Interval", "BinID" ))
 
 
 #save(bin_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
-save(full_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
+#save(full_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
 save(binNASC, file = "wdata/binNASC.RData")
 write.csv(binNASC, "wdata/binNASC.csv")
 save(siteNASC, file = "wdata/siteNASC.RData")

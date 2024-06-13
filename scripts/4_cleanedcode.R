@@ -984,3 +984,4 @@ write.csv(bininfo,"wdata/bininfo.csv", row.names = FALSE)
 save(siteinfo, file = "wdata/siteinfo.Rdata")
 write.csv(siteinfo,"wdata/siteinfo.csv", row.names = FALSE)
 
+

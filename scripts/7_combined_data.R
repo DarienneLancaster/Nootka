@@ -10,16 +10,16 @@ load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rock
 
 load("wdata/full_lines.RData")
 load("wdata/bin_lines.RData")
-load("wdata/bin_df.RData")
-load("wdata/full_df.RData")
+load("wdata/binNASC.RData")
+load("wdata/siteNASC.RData")
 load("wdata/bininfo.RData")
 load("wdata/siteinfo.RData")
 
 # merge the site dataframes 
 merged_site <- left_join(siteinfo, sitelines, by = "Site_ID")
-site_complete <- left_join(merged_site, full_df, by = "Site_ID")
+site_complete <- left_join(merged_site, siteNASC, by = "Site_ID")
 site_complete <- site_complete %>% filter(!is.na(TopSub))
-site_complete <- site_complete %>% filter(!is.na(Layer_depth_max))
+#site_complete <- site_complete %>% filter(!is.na(Layer_depth_max))
 site_complete <- site_complete %>% mutate(Average_Slope = abs(Average_Slope))
 site_complete <- site_complete %>% mutate(Layer_depth_min = abs(Layer_depth_min))
 write.csv(site_complete,"wdata/site_complete.csv", row.names = FALSE)

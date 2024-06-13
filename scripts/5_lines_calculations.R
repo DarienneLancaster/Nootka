@@ -769,7 +769,7 @@ Site_MAN_Deadzone <- combined_df_LG_1m_MAN %>%
   )
 sitelines <- left_join(sitelines, Site_MAN_Deadzone, by = "Site_ID")
 
-save(sitelines, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
+
 # save(binlines, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
 
 save(sitelines, file = "wdata/full_lines.RData")
