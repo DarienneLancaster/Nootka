@@ -19,63 +19,6 @@ lp("xlsx")
 
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
-
-#### Develop a code to replicate Excel document then pull into a for loop #### 
-#NS07 <- read.csv("100mLines/Bottom/NS06_T1_Biosonic_20230811_104843_Bottom_100.line.csv")
-NS07 <- read.csv("odata/Transect 1/100mLines/Bottom/NS06_T1_Biosonic_20230811_104843_Bottom_100.line.csv")
-# Subset or dataframe, remove all columns that are not useful 
-NS07 <- NS07 %>% dplyr::select("Latitude","Longitude","Depth")
-
-# Fill in a column 
-NS07 <- NS07 %>% mutate(Site_ID = "NS07")
-# Function to calculate the great circle distance between two points 
-calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
-  distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
-  return(distance)
-}
-
-# Apply to data 
-NS07$GreatCircleDistance[2:(nrow(NS07))] <- sapply(2:(nrow(NS07)), function(i) {
-  lat1 <- NS07$Latitude[i - 1]
-  lon1 <- NS07$Longitude[i - 1]
-  lat2 <- NS07$Latitude[i]
-  lon2 <- NS07$Longitude[i]
-  calc_great_circle_distance(lat1, lon1, lat2, lon2)
-})
-
-## Calculate difference in depth 
-NS07$DepthDifference <- c(NA, NS07$Depth[-1] - NS07$Depth[-nrow(NS07)])
-
-# Calculate Slope 
-NS07$Slope <- sapply(1:nrow(NS07), function(i) {
-  ifelse(is.na(NS07$GreatCircleDistance[i]) || is.na(NS07$DepthDifference[i]),
-         NA,
-         (180.0/pi) * atan(NS07$DepthDifference[i]/NS07$GreatCircleDistance[i]))
-})
-# calculate hypotenuse 
-NS07$Hypotenuse <- sqrt(NS07$GreatCircleDistance^2 + NS07$DepthDifference^2)
-
-# Calculate the cumulative sum of great circle distance 
-NS07$GreatCircleDistance[is.na(NS07$GreatCircleDistance)] <- 0
-NS07$CumulativeGCD <- cumsum(NS07$GreatCircleDistance)
-
-# do the same for the Hypotenuse
-NS07$Hypotenuse[is.na(NS07$Hypotenuse)] <- 0
-NS07$CumulativeHypo <- cumsum(NS07$Hypotenuse)
-
-# Label the bins to be 20m segments of the great circle distance 
-# definte the bin width
-bin_width <- 20
-slope_width <-5
-
-# create a column for the bins and label them based on where they fit in 20m intervals
-NS07 <- NS07 %>%
-  mutate(Bin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + bin_width, bin_width), labels = FALSE))
-
-# create a column for slope bin annd same them based on what part of the 5m segment it falls in 
-NS07 <- NS07 %>%
-  mutate(SlopeBin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + slope_width, slope_width), labels = FALSE))
-
 ####  Lets attempt a for loop #### 
 # create a list of all the file names we need to pull through the code 
 # specify the path on the computer to the folder with the files you want to run through the code
@@ -301,10 +244,12 @@ BinBottom <- merged_df %>%
     Average_noneg_slope = mean(noneg_slope, na.rm = TRUE),
     Average_negna_slope = mean(negna_slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
-    # profilelength = sum(GreatCircleDistance, na.rm = TRUE),
+    profilelength = sum(GreatCircleDistance, na.rm = TRUE),
     chainlength = sum(Hypotenuse, na.rm = TRUE),
     Average_Depth = mean(Depth, na.rm = TRUE),
     SD_Depth = sd(Depth, na.rm = TRUE),
+    Layer_depth_min = min(Depth, na.rm = TRUE), 
+    Layer_depth_max = max(Depth, na.rm = TRUE)
   )
 
 binlines <- bininfo %>% dplyr::select("BinID")

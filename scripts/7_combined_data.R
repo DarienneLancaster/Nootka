@@ -44,10 +44,10 @@ bin_complete<- bin_complete%>% separate(BinID, into = c("site","bin_num"), sep =
   dplyr::select(-c(site))
 
 # adjust these for bin column names
-# bin_complete <- bin_complete %>% filter(!is.na(TopSub))
-# bin_complete <- bin_complete %>% filter(!is.na(Layer_depth_max))
-# bin_complete <- bin_complete %>% mutate(Average_Slope = abs(Average_Slope))
-# bin_complete <- bin_complete %>% mutate(Layer_depth_min = abs(Layer_depth_min))
+#bin_complete <- bin_complete %>% filter(!is.na(TopSub))
+bin_complete <- bin_complete %>% filter(!is.na(Layer_depth_max))
+bin_complete <- bin_complete %>% mutate(Average_Slope = abs(Average_Slope))
+bin_complete <- bin_complete %>% mutate(Layer_depth_min = abs(Layer_depth_min))
 
 
 # Bin Average Slope vs nonschooling fish Abundance 
