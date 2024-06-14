@@ -87,7 +87,7 @@ bin_DE<- bin_complete%>%
   # dplyr::select(c(BinID,bin_num, Site_ID.x,total_number_schoolingfish, number_FS,
   #                 AbundanceNonSchooling,Average_5m_slope,Std_Dev_Slope, CumulativeArea, Sv_mean_15))
   dplyr::select(c(Site_ID,BinID,Interval,TotalAbundance,AbundanceNonSchooling,number_FS, total_number_schoolingfish, 
-                  total_number_NoHschoolingfish,TotPel,TotBen,
+                 # total_number_NoHschoolingfish,TotPel,TotBen,
                   Average_5m_slope,Std_Dev_Slope, Ratio, 
                   Cumulative_LG_DZ_Area, 
                   NASC_5_MAN,NASC_10_MAN,NASC_15_MAN,

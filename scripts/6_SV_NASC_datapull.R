@@ -19,11 +19,6 @@ lp("xlsx")
 
 
 setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
-#### 100x15 #### 
-
-## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-#Hutton path
-#Full15_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x15"
 
 ######pull 100X15 from Large DZ files####################################################################
 

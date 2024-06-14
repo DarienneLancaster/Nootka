@@ -50,13 +50,6 @@ ROV$Site_ID <- substr(ROV$Filename, 1, 4)
 ROV<- ROV%>%
   mutate(FullName = paste(Family, Genus, Species, sep = " "))
 
-
-
-
-
-
-
-
 ############## Site information ###########################
 #### Subarea for each site #### 
 
@@ -179,6 +172,7 @@ DomSlope <- DominateSlope %>% select("Site_ID", "TopSlope", "SlopePercent")
 
 siteinfo <- merge(siteinfo, DomSub, by = "Site_ID", all.x = TRUE)
 siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
+
 
 
 #### Field of View - Volume of water surveyed #### 
@@ -695,7 +689,10 @@ flextable(subarea_table)
     select(CommonName, total_count)
   flextable(rockfish_sorted)
   
-############## Bin Information ############################
+
+  
+  
+  ############## Bin Information ############################
 ## try to create 5 bins of time per site. 
 
 ## remove the times that the ROv gets pulled from the time from aanotations
@@ -985,3 +982,124 @@ save(siteinfo, file = "wdata/siteinfo.Rdata")
 write.csv(siteinfo,"wdata/siteinfo.csv", row.names = FALSE)
 
 
+
+
+#### Bin substrate and slope - proportion at each bin ####
+bininfo
+## we need to expand the bins to include all Bin_ID's 
+setbins <- bininfo %>% select(BinID, Site_ID)
+
+## expand the dataset to include all BinIDs 
+setbins <- rbind(setbins, durationdata, by = c("Site_ID", "Bin_ID"))
+
+durationdata$Bin_ID <- paste(durationdata$Site_ID, "_", durationdata$Bin)
+
+# subset subslope information 
+BinSubSlope <- durationdata %>%
+  filter(Activity=="Attracted" | Notes == "End") %>%
+  select(Time, Depth, Sub_Slope, Notes, Bin_ID)
+
+# create a new column with just substrate information  
+BinSubSlope$Sub <- substr(BinSubSlope$Sub_Slope, 1, 1)
+
+# rename all sand and mud to soft and all other substrate to be labeled as hard substrate 
+BinSubSlope <- BinSubSlope %>%
+  mutate(Sub = ifelse(Sub %in% c("S", "M"), "soft",
+                      ifelse(Sub %in% c("C", "R", "P", "B"), "hard", Sub)))
+
+# create new dataset called duration time 
+BinSubDuration <- BinSubSlope %>% 
+  select(- "Site_ID") %>%
+  arrange(Bin_ID, Time) %>% 
+  select(Bin_ID, Time, Notes, Sub) %>%
+  group_by(Bin_ID) %>%
+  # calculate the duration at each substrate type 
+  mutate(SubDuration = Time - lead(Time)) %>% ungroup()
+# make values positive 
+SubDuration$SubDuration <- abs(SubDuration$SubDuration)
+
+# now calculate the total time at each site
+SubDuration <- SubDuration %>%
+  group_by(Site_ID) %>%
+  mutate(SiteDuration = ifelse(Notes == "End", 
+                               last(Time) - first(Time), 
+                               NA_real_)) %>%
+  group_by(Site_ID) %>%
+  mutate(SiteDuration = last(SiteDuration)) %>%
+  ungroup() %>%
+  # add a column called proportion that ca
+  mutate(Proportion = SubDuration / SiteDuration)
+
+# clean up data 
+SubDuration <- SubDuration %>% select(- Notes) %>% 
+  filter(!is.na(SubDuration)) %>%
+  mutate(Percent = round(Proportion * 100))
+## this code combined together Sub of a certain type so we can see the dominate slope
+SubDuration <- SubDuration %>%
+  group_by(Site_ID, Sub, SiteDuration) %>%
+  summarize(
+    Time = sum(Time),
+    SubDuration = sum(SubDuration),
+    SubProportion = sum(Proportion),
+    SubPercent = sum(Percent),
+    .groups = "drop"  
+  )
+
+DominateSub <- SubDuration %>%
+  group_by(Site_ID) %>%
+  top_n(1, SubPercent) %>%
+  ungroup()
+
+# Slope calculations 
+SubSlope$Slope <- substr(SubSlope$Sub_Slope, 3, 4)
+# Slope Duration 
+SlopeDuration <- SubSlope %>% 
+  arrange(Site_ID, Time) %>% 
+  select(Site_ID, Time, Notes, Slope) %>%
+  group_by(Site_ID) %>%
+  # calculate the duration at each substrate type 
+  mutate(SlopeDuration = Time - lead(Time)) %>% ungroup()
+# make values positive 
+SlopeDuration$SlopeDuration <- abs(SlopeDuration$SlopeDuration)
+
+# now we need to calculate the total time at each site
+SlopeDuration <- SlopeDuration %>%
+  group_by(Site_ID) %>%
+  mutate(SiteDuration = ifelse(Notes == "End", 
+                               last(Time) - first(Time), 
+                               NA_real_)) %>%
+  group_by(Site_ID) %>%
+  mutate(SiteDuration = last(SiteDuration)) %>%
+  ungroup() %>%
+  # add a column called proportion that ca
+  mutate(Proportion = SlopeDuration / SiteDuration)
+
+# clean up data 
+SlopeDuration <- SlopeDuration %>% select(- Notes) %>% 
+  filter(!is.na(SlopeDuration)) %>% 
+  mutate(Percent = round(Proportion * 100))
+
+## this code combined together Slopes of a certain type so we can see the dominate slope
+SlopeDuration <- SlopeDuration %>%
+  group_by(Site_ID, Slope, SiteDuration) %>%
+  summarize(
+    Time = sum(Time),
+    SlopeDuration = sum(SlopeDuration),
+    SlopeProportion = sum(Proportion),
+    SlopePercent = sum(Percent),
+    .groups = "drop"  
+  )
+DominateSlope <- SlopeDuration %>%
+  group_by(Site_ID) %>%
+  top_n(1, SlopePercent) %>%
+  ungroup()
+
+# add these to the siteinfo data frame 
+DominateSub$TopSub <- DominateSub$Sub
+DomSub <- DominateSub %>% select("Site_ID", "TopSub", "SubPercent")
+
+DominateSlope$TopSlope <- DominateSlope$Slope
+DomSlope <- DominateSlope %>% select("Site_ID", "TopSlope", "SlopePercent")
+
+siteinfo <- merge(siteinfo, DomSub, by = "Site_ID", all.x = TRUE)
+siteinfo <- merge(siteinfo, DomSlope, by = "Site_ID", all.x = TRUE)
