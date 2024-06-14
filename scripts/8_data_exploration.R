@@ -30,13 +30,6 @@ load("wdata/siteNASC.RData")
 load("wdata/bininfo.RData")
 load("wdata/siteinfo.RData")
 
-#load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_lines.RData")
-#load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
-#load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
-#load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
-#load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bininfo.RData")
-#load("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/siteinfo.RData")
-
 ################### merge the site dataframes############ 
 merged_site <- left_join(siteinfo, sitelines, by = "Site_ID")
 site_complete <- left_join(merged_site, siteNASC, by = "Site_ID")
@@ -100,7 +93,7 @@ bin_DE<- bin_complete%>%
                   NASC_5_MAN,NASC_10_MAN,NASC_15_MAN,
                   NASC_5_1m,NASC_10_1m,NASC_15_1m, 
                   NASC_5_LG,NASC_10_LG,NASC_15_LG, 
-                  Depth_mean_5_MAN,Volume))
+                  Average_Depth,Volume))
  # dplyr::select(c(AbundanceNonSchooling,Average_5m_slope,Std_Dev_Slope, CumulativeArea, NASC_15, NASC_10, NASC_5, Average_Depth))
 bin_DE$Interval<-as.factor(bin_DE$Interval)
 bin_DE$TotalAbundance<-as.numeric(bin_DE$TotalAbundance)
@@ -128,6 +121,7 @@ correlation_coefficient <- cor(bin_DE$NASC_10_1m, bin_DE$AllFishbyVol)
 correlation_coefficient
 
 str(bin_DE)
+save(bin_DE, file = "wdata/bin_DE.RData")
 ##################site dataframe###################
 #do the same for site
 str(site_complete)
@@ -146,8 +140,8 @@ site_DE<- site_complete%>%
                   Cumulative_LG_DZ_Area, 
                   NASC_5_MAN,NASC_10_MAN,NASC_15_MAN,
                   NASC_5_1m,NASC_10_1m,NASC_15_1m, 
-                  NASC_5_LG,NASC_10_LG,NASC_15LG, 
-                  Depth_mean_5_MAN,Volume))
+                  NASC_5_LG,NASC_10_LG,NASC_15LG, Average_Depth,Volume,
+                  TopSub, SubPercent,TopSlope, SlopePercent))
 
 
 #### need to factor in volume surveyed by ROV FOV (prelim linear model tests seem to show stronger correlations using volume adjusted values than non adjusted)
@@ -160,7 +154,9 @@ site_DE$TotBenbyVol<-site_DE$TotBen/site_DE$Volume
 
 #make all vars numeric
 site_DE<- site_DE%>%
-  mutate_at(vars(2:31), as.numeric)
+  mutate_at(vars(2:25,27:31), as.numeric)
+
+str(site_DE)
 
 mean(site_DE$BenthicbyVol)
 var(site_DE$BenthicbyVol)
