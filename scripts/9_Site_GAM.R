@@ -35,10 +35,12 @@ site_DE$TotAbunNoH<-site_DE$total_number_NoHschoolingfish+site_DE$AbundanceNonSc
 
 #test log transformed response
 site_DEsr<-site_DE
+
 #NS41 and 31 have large NASC outliers from missed semi-pelagic school and missed herring school (I think these should be reexported
 #with missing schools removed as this is a measurement error in the ROV methodology)
-site_DEsr<-site_DEsr%>%
-  filter(Site_ID!="NS41", Site_ID !="NS31")
+
+# site_DEsr<-site_DEsr%>%
+ #  filter(Site_ID!="NS41", Site_ID !="NS31")
 
 #experimenting with log transformed response variables (add +1 to avoid issues with log transforming zero values)
 #in particular schooling fish needs to be log transformed as it is highly variable depending on whether you saw a fish school or not
@@ -49,6 +51,7 @@ site_DEsr$AbundanceNonSchooling_s<-as.numeric(log(site_DEsr$AbundanceNonSchoolin
 site_DEsr$total_number_NoHschoolingfish_s<-as.numeric(log(site_DEsr$total_number_NoHschoolingfish+1))
 site_DEsr$total_number_schoolingfish_s<-as.numeric(log(site_DEsr$total_number_schoolingfish+1))
 site_DEsr$NASC_10_1m_s<-as.numeric(log(site_DEsr$NASC_10_1m+1))
+site_DEsr$TotBen_s<-as.numeric(log(site_DEsr$TotBen+1))
 str(site_DEsr)
 
 #relationship between benthic fish abundance and log of schooling fish (with herring removed - not expected to be correlated with benthics)
@@ -64,13 +67,13 @@ correlation_coefficient
 #moderately correlated but zeros suggest non-linear modelling required
 
 #SvNASC- schools vs NASC
-SvNASC<-ggplot(site_DEsr, aes(x=NASC_10_1m, y=total_number_NoHschoolingfish_s))+
+SvNASC<-ggplot(site_DEsr, aes(x=NASC_10_1m, y=AbundanceNonSchooling))+
   geom_point()+
   geom_smooth(method="lm", se=FALSE)+
 geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
 # geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
 SvNASC
-correlation_coefficient <- cor(site_DEsr$NASC_10_1m, site_DEsr$total_number_schoolingfish_s)
+correlation_coefficient <- cor(site_DEsr$NASC_10_1m, site_DEsr$AbundanceNonSchooling)
 correlation_coefficient
 #moderately correlated but zeros suggest non-linear modelling required
 
@@ -92,11 +95,11 @@ TFnoLOGvNASC<-ggplot(site_DE, aes(x=NASC_10_1m, y=TotAbunNoH))+
   geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3)
 # geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
 TFnoLOGvNASC
-correlation_coefficient <- cor(site_DE$NASC_10_1m, site_DE$TotAbunNoH)
+correlation_coefficient <- cor(site_DEsr$NASC_10_1m, site_DEsr$TotAbunNoH)
 correlation_coefficient
 
 #BvNASC - benthics vs NASC
-BvNASC<-ggplot(site_DEsr, aes(x=NASC_10_1m, y=AbundanceNonSchooling))+
+BvNASC<-ggplot(site_DE, aes(x=NASC_10_1m, y=AbundanceNonSchooling))+
   geom_point()+
   geom_smooth(method="lm", se=FALSE)+
   geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3)
@@ -359,7 +362,7 @@ M1 <- glm(TotAbunNoH ~ offset(LVol) + Average_5m_slope_s + Std_Dev_Slope_s +
             Average_5m_slope_s:Depth_mean_5_MAN_s +
             NASC_10_1m_s:Cumulative_LG_DZ_Area_s +
             Std_Dev_Slope_s:Cumulative_LG_DZ_Area_s +
-            Std_Dev_Slope_s:Average_5m_slope_s,
+            Std_Dev_Slope_s:Average_5m_slope_s, #remove
           family = poisson,  data = TFstd)
 summary(M1)
 
@@ -1176,4 +1179,69 @@ str(TF)
 
 TFt<- TF%>% 
   filter(Site_ID !="NS31", Site_ID != "NS41")
+
+###try simpler GAM with log transformed total fish response ###
+str(site_DEsr)
+site_DEsr$LVol<-log(site_DEsr$Volume)
+
+##try backwards selection with interactions and linear terms
+
+# GAMdzsnr<-gam(TotAbunNoH_s ~ offset(LVol) + 
+#                 NASC_10_1m + Std_Dev_Slope + Cumulative_LG_DZ_Area + Average_5m_slope + Depth_mean_5_MAN +
+#                 s(NASC_10_1m, k = 10, bs="cs")+
+#                 s(Std_Dev_Slope, k = 10, bs="cs")+ 
+#                 s(Cumulative_LG_DZ_Area, by = Std_Dev_Slope, k = 10, bs="cs")+ 
+#                 s(Average_5m_slope, by= Depth_mean_5_MAN,  k = 10, bs="cs") ,
+#               family = negbin(theta = 1, link = "log"),  data = site_DEsr)
+# summary(GAMdzsnr)
+# AIC(GAMdzsnr) #502
+
+GAM1<-gam(AbundanceNonSchooling ~ offset(LVol) + 
+                NASC_10_1m ,
+                #Depth_mean_5_MAN + # not significant
+                #s(Std_Dev_Slope, k = 4)+ 
+                #s(Cumulative_LG_DZ_Area, k = 4)+
+                #s(Average_5m_slope, k = 4) ,
+              family = negbin(theta = 1, link = "log"),  data = site_DEsr)
+summary(GAM1)
+AIC(GAM1) #269
+k.check(GAM1)
+
+#remove depth
+GAM2<-gam(TotAbunNoH_s ~ offset(LVol) + 
+            s(NASC_10_1m, k = 5) +
+            s(Std_Dev_Slope, k = 5)+ 
+            s(Cumulative_LG_DZ_Area, k = 5)+
+            s(Average_5m_slope, k = 5) ,
+          family = negbin(theta = 1, link = "log"),  data = site_DEsr, method = "REML")
+summary(GAM2)
+AIC(GAM2) #217
+k.check(GAM2)
+
+#remove slope
+GAM3<-gam(TotAbunNoH_s ~ offset(LVol) + 
+            s(NASC_10_1m, k = 5) +
+            s(Std_Dev_Slope, k = 5)+ 
+            s(Cumulative_LG_DZ_Area, k = 5),
+          family = negbin(theta = 1, link = "log"),  data = site_DEsr, method = "REML")
+summary(GAM3)
+AIC(GAM3) #215
+
+#remove rugosity
+GAM4<-gam(TotAbunNoH_s ~ offset(LVol) + 
+            s(NASC_10_1m, k = 5) +
+            s(Cumulative_LG_DZ_Area, k = 5),
+          family = negbin(theta = 1, link = "log"),  data = site_DEsr, method = "REML")
+summary(GAM4)
+AIC(GAM4) #215
+
+#remove NASC
+GAM5<-gam(TotAbunNoH_s ~ offset(LVol) + 
+            s(Cumulative_LG_DZ_Area, k = 5),
+          family = negbin(theta = 1, link = "log"),  data = site_DEsr)
+summary(GAM5)
+AIC(GAM5) #214
+
+k.check(GAM3)
+
 
