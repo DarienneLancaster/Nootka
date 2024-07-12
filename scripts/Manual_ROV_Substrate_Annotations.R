@@ -26,8 +26,10 @@ lp("DHARMa")
 install.packages("GGally")
 library(GGally)
 lp("smplot2")  #package that allows you to add correlation stats to graphs
+lp("gridExtra")
 
-#load manual substrate annotations from ROV videos
+
+#####load and process format substrate annotations from ROV videos####
 Srov <-read.csv("odata/Manual_Habitat_Annotations_Nootka_20240708_FINAL.csv",  header = TRUE)
 str(Srov)
 
@@ -199,6 +201,7 @@ str(sitefull_s)
 
 sitefull_s<-sitefull%>%
   mutate(Average_5m_slope_s=scale(Average_5m_slope),
+         Average_20m_slope_s=scale(Average_20m_slope),
          Std_Dev_Slope_s=scale(Std_Dev_Slope),
          Ratio_s=scale(Ratio),
          Cumulative_LG_DZ_Area_s=scale(Cumulative_LG_DZ_Area),
@@ -206,11 +209,12 @@ sitefull_s<-sitefull%>%
          Rugosity_s=scale(Rugosity),
          Slope_s=scale(Slope),
          Depth_s=scale(Depth),
+         Rock_s=scale(Rock),
          Average_Depth_s=scale(Average_Depth))%>%
-  mutate_at(vars(55:63), as.numeric)
+  mutate_at(vars(56:66), as.numeric)
 
 #####site level comparison of habitat variables####
-
+####prelim plots and tests####
 #test relationship between rugosity values
 rug1<-ggplot(sitefull_s, aes(x=Rugosity_s, y=Std_Dev_Slope_s))+
   geom_point()+
@@ -240,7 +244,11 @@ slo
 correlation_coefficient <- cor(sitefull_s$Slope_s, sitefull_s$Average_5m_slope_s)
 correlation_coefficient
 
+
+####spearman correlation and wilcoxon signed rank tests####
 #test rugosity from ROV and Echosounder for significant difference (Spearman rank correlation)
+
+#SD SLOPE vs ROV
 rugSTDROV_spear<-cor.test(sitefull$Rugosity, sitefull$Std_Dev_Slope,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
 print(rugSTDROV_spear)
 #rho = 0.38, p = 0.01 (weak significant positive relationship)
@@ -251,19 +259,12 @@ print(rugSTDROV_spear)
 #  .60-.79 “strong”
 #  .80-1.0 “very strong”
 
+#test for significant difference with wilcoxon signed-rank test for paired/dependent samples
+rugSTDROV_wilcox<-wilcox.test(sitefull_s$Rugosity_s, sitefull_s$Std_Dev_Slope_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
+print(rugSTDROV_wilcox)
+#p=0.65 (not significant so no sign. difference)
 
-# Create ggplot plot
-rugSTDROV <- ggplot(sitefull, aes(x = Rugosity, y = Std_Dev_Slope)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "ROV Rugosity", y = "Echosounder Rugosity (StDevSlope)")+
-  theme_bw()+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-  
-rugSTDROV  
-  
-  
-
+#Chain Length Ratio vs ROV
 rugRatioROV_spear<-cor.test(sitefull$Rugosity, sitefull$Ratio,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
 print(rugRatioROV_spear)
 #rho = 0.48, p = 0.002 (moderate significant positive relationship)
@@ -274,6 +275,12 @@ print(rugRatioROV_spear)
 #  .60-.79 “strong”
 #  .80-1.0 “very strong”
 
+#test for significant difference with wilcoxon signed-rank test for paired/dependent samples
+rugRatioROV_wilcox<-wilcox.test(sitefull_s$Rugosity_s, sitefull_s$Ratio_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
+print(rugRatioROV_wilcox)
+#p=0.76 (not significant so no sign. difference)
+
+#SD SLOPE vs CHain Length Ratio
 rugRatioSTD_spear<-cor.test(sitefull$Std_Dev_Slope, sitefull$Ratio,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
 print(rugRatioSTD_spear)
 #rho = 0.898, p = 8.08e-15 (very strong significant positive relationship)
@@ -283,6 +290,66 @@ print(rugRatioSTD_spear)
 #  .40-.59 “moderate”
 #  .60-.79 “strong”
 #  .80-1.0 “very strong”
+
+#test for significant difference with wilcoxon signed-rank test for paired/dependent samples
+rugRatioSTD_wilcox<-wilcox.test(sitefull_s$Std_Dev_Slope_s, sitefull_s$Ratio_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
+print(rugRatioSTD_wilcox)
+#p=0.93 (not significant so no sign. difference)
+
+# Create ggplot plots of rugosity metrics
+rugSTDROV <- ggplot(sitefull_s, aes(x = Rugosity_s, y = Std_Dev_Slope_s)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Rugosity", y = "Echosounder Rugosity (SD Slope)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+rugSTDROV  
+
+rugRatioROV <- ggplot(sitefull_s, aes(x = Rugosity_s, y = Ratio_s)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Rugosity", y = "Echosounder Rugosity (Chain Length Ratio)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+rugRatioROV  
+
+rugRatioSTD <- ggplot(sitefull_s, aes(x = Ratio_s, y = Std_Dev_Slope_s)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "Echosounder Rugosity (Chain Length Ratio)", y = "Echosounder Rugosity (SD Slope)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+rugRatioSTD
+
+## box plot of RUGOSITY data 
+sitefull_s_subR <- sitefull_s %>%
+  dplyr::select("Site_ID", "Rugosity_s", "Std_Dev_Slope_s", "Ratio_s")
+
+sitefull_s_longR <- sitefull_s_subR %>%
+  rename(
+    "ROV" = Rugosity_s,
+    "Echosounder (SD Slope)" = Std_Dev_Slope_s,
+    "Echosounder (CL Ratio)" = Ratio_s
+  ) %>%
+  pivot_longer(cols = c(ROV, `Echosounder (SD Slope)`, `Echosounder (CL Ratio)`),
+               names_to = "Method",
+               values_to = "Rugosity")
+
+rug_box<-ggplot(sitefull_s_longR, aes(x = Method, y = Rugosity )) +
+  geom_boxplot(color = "gray40") +
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
+        axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
+rug_box
+
+###put all rugosity plots together
+allrug<-grid.arrange(rugSTDROV, rugRatioROV, rugRatioSTD, rug_box, ncol = 2, respect=TRUE)
+
+ggsave("figures/ROV_Echo_Rugosity_spearmancor.png", plot = allrug, width = 25, height = 25, units = "cm")
+
+#######################################################################################################  
+####ROV rock percentage vs SD Slope and Chain Length Ratio metrics####
 
 #test relationship between rock percentage and STD slope
 rugSTDrock_spear<-cor.test(sitefull$Std_Dev_Slope, sitefull$Rock,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
@@ -295,10 +362,15 @@ print(rugSTDrock_spear)
 #  .60-.79 “strong”
 #  .80-1.0 “very strong”
 
+#test for significant difference with wilcoxon signed-rank test for paired/dependent samples
+rugSTDrock_wilcox<-wilcox.test(sitefull_s$Std_Dev_Slope_s, sitefull_s$Rock_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
+print(rugSTDrock_wilcox)
+#p=0.81 (not significant so no sign. difference)
+
 #test relationship between rock percentage and Ratio
 rugRATIOrock_spear<-cor.test(sitefull$Ratio, sitefull$Rock,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
 print(rugRATIOrock_spear)
-#rho = 0.55, p = 0.0006 (moderate significant positive relationship)
+#rho = 0.52, p = 0.0006 (moderate significant positive relationship)
 #interpret results - looking for rho value between - 1 and +1 with significant p value
 # .00-.19 “very weak”
 #  .20-.39 “weak”
@@ -306,26 +378,60 @@ print(rugRATIOrock_spear)
 #  .60-.79 “strong”
 #  .80-1.0 “very strong”
 
+#test for significant difference with wilcoxon signed-rank test for paired/dependent samples
+rugRATIOrock_wilcox<-wilcox.test(sitefull_s$Ratio_s, sitefull_s$Rock_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
+print(rugRATIOrock_wilcox)
+#p=0.81 (not significant so no sign. difference)
 
-## box plot the data to make sense of the value distribution 
-sitefull_s_subR <- sitefull_s %>%
-  dplyr::select("Site_ID", "Rugosity_s", "Std_Dev_Slope_s", "Ratio_s")
+####plot rock vs rugosity metrics
+rugSTDrock <- ggplot(sitefull_s, aes(x = Rock, y = Std_Dev_Slope_s)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Rock (%)", y = "Echosounder Rugosity (SD Slope)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+rugSTDrock
 
-sitefull_s_longR <- sitefull_s_subR %>%
-  pivot_longer(cols = c(Rugosity_s, Std_Dev_Slope_s, Ratio_s),
+rugRATIOrock <- ggplot(sitefull_s, aes(x = Rock, y = Ratio_s)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Rock (%)", y = "Echosounder Rugosity (CL Ratio)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+rugRATIOrock
+
+## box plot the ROCK data to make sense of the value distribution 
+sitefull_s_subRock <- sitefull_s %>%
+  dplyr::select("Site_ID", "Rock_s", "Std_Dev_Slope_s", "Ratio_s")
+
+sitefull_s_longRock <- sitefull_s_subRock %>%
+  rename(
+    "ROV" = Rock_s,
+    "Echosounder (SD Slope)" = Std_Dev_Slope_s,
+    "Echosounder (CL Ratio)" = Ratio_s
+  ) %>%
+  pivot_longer(cols = c(ROV, `Echosounder (SD Slope)`, `Echosounder (CL Ratio)`),
                names_to = "Method",
-               values_to = "Rugosity")
+               values_to = "Rock")
 
-ggplot(sitefull_s_longR, aes(x = Method, y = Rugosity )) +
-  geom_boxplot() +
+rock_box<-ggplot(sitefull_s_longRock, aes(x = Method, y = Rock )) +
+  geom_boxplot(color = "gray40") +
   geom_jitter(width = 0.2, alpha = 0.6) +
-  theme_minimal() +
-  labs(title = "ROV vs Echosounder Rugosity",
-       y = "Rugosity Scaled")
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
+        axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
+rock_box
 
-#test slope from ROV and Echosounder for significant difference (Spearman rank correlation)
-slope_spear<-cor.test(sitefull$Slope, sitefull$Average_5m_slope,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
-print(slope_spear)
+allrock<-grid.arrange(rugRATIOrock, rugSTDrock, rock_box, ncol = 2, respect=TRUE)
+allrock
+ggsave("figures/ROV_Echo_Rock_spearmancor.png", plot = allrock, width = 25, height = 25, units = "cm")
+
+#############################################
+
+####test slope from ROV and Echosounder for significant difference (Spearman rank correlation)####
+slope5_spear<-cor.test(sitefull$Slope, sitefull$Average_5m_slope,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
+print(slope5_spear)
+#rho = 0.69, p = 0.000001 (moderate significant positive relationship)
 #interpret results - looking for rho value between - 1 and +1 with significant p value
 # .00-.19 “very weak”
 #  .20-.39 “weak”
@@ -333,23 +439,123 @@ print(slope_spear)
 #  .60-.79 “strong”
 #  .80-1.0 “very strong”
 
-## box plot the data to make sense of the value distribution 
+#test for significant difference with wilcoxon signed-rank test for paired/dependent samples
+slope5_wilcox<-wilcox.test(sitefull_s$Slope_s, sitefull_s$Average_5m_slope_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
+print(slope5_wilcox)
+#p=0.4 (not significant so no sign. difference)
+
+#test 20m slope from ROV and Echosounder for significant difference (Spearman rank correlation)
+slope20_spear<-cor.test(sitefull$Slope, sitefull$Average_20m_slope,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
+print(slope20_spear)
+#rho = 0.65, p = 0.000006 (moderate significant positive relationship)
+#interpret results - looking for rho value between - 1 and +1 with significant p value
+# .00-.19 “very weak”
+#  .20-.39 “weak”
+#  .40-.59 “moderate”
+#  .60-.79 “strong”
+#  .80-1.0 “very strong”
+
+#test for significant difference with wilcoxon signed-rank test for paired/dependent samples
+slope20_wilcox<-wilcox.test(sitefull_s$Slope_s, sitefull_s$Average_20m_slope_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
+print(slope20_wilcox)
+#p=0.3 (not significant so no sign. difference)
+
+slope5_s <- ggplot(sitefull_s, aes(x = Slope_s, y = Average_5m_slope_s)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Slope scaled", y = "Echosounder Slope scaled (5m Average)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+slope5_s
+
+
+
+slope20_s <- ggplot(sitefull_s, aes(x = Slope_s, y = Average_20m_slope_s)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Slope scaled", y = "Echosounder Slope scaled (20m Average)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+slope20_s
+
+
+
+## box plot the SLOPE data to make sense of the value distribution 
 sitefull_s_sub <- sitefull_s %>%
-  dplyr::select("Site_ID", "Slope_s", "Average_5m_slope_s")
+  dplyr::select("Site_ID", "Slope_s", "Average_5m_slope_s", "Average_20m_slope_s")
+str(sitefull_s_sub)
 
 sitefull_s_long <- sitefull_s_sub %>%
-  pivot_longer(cols = c(Slope_s, Average_5m_slope_s),
+  rename(
+    "ROV" = Slope_s,
+    "Echosounder (5m)" = Average_5m_slope_s,
+    "Echosounder (20m)" = Average_20m_slope_s
+  ) %>%
+  pivot_longer(cols = c(ROV, `Echosounder (5m)`,`Echosounder (20m)` ),
                names_to = "Method",
                values_to = "Slope")
 
-ggplot(sitefull_s_long, aes(x = Method, y = Slope )) +
-  geom_boxplot() +
+slopebox_s<- ggplot(sitefull_s_long, aes(x = Method, y = Slope )) +
+  geom_boxplot(color = "gray40") +
   geom_jitter(width = 0.2, alpha = 0.6) +
-  theme_minimal() +
-  labs(title = "ROV vs Echosounder Slope",
-       y = "Slope Scaled")
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
+        axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
+slopebox_s
 
-####check relationship between slope and benthic fish abundance
+allslope_s<-grid.arrange(slope5_s, slope20_s, slopebox_s,  ncol = 2, respect=TRUE)
+ggsave("figures/ROV_Echo_Slope_scaled_spearmancor.png", plot = allslope_s, width = 25, height = 25, units = "cm")
+
+
+#### try not scaled ###
+
+slope5 <- ggplot(sitefull, aes(x = Slope, y = Average_5m_slope)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Slope", y = "Echosounder Slope (5m Average)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+slope5
+
+slope20 <- ggplot(sitefull, aes(x = Slope, y = Average_20m_slope)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Slope", y = "Echosounder Slope (20m Average)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+slope20
+
+sitefull_sub <- sitefull_s %>%
+  dplyr::select("Site_ID", "Slope", "Average_5m_slope", "Average_20m_slope")
+str(sitefull_s_sub)
+
+sitefull_long <- sitefull_sub %>%
+  rename(
+    "ROV" = Slope,
+    "Echosounder (5m)" = Average_5m_slope,
+    "Echosounder (20m)" = Average_20m_slope
+  ) %>%
+  pivot_longer(cols = c(ROV, `Echosounder (5m)`,`Echosounder (20m)` ),
+               names_to = "Method",
+               values_to = "Slope")
+
+slopebox<- ggplot(sitefull_long, aes(x = Method, y = Slope )) +
+  geom_boxplot(color = "gray40") +
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
+        axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
+slopebox
+
+allslope<-grid.arrange(slope5, slope20,slopebox,  ncol = 2, respect=TRUE)
+
+ggsave("figures/ROV_Echo_Slope_spearmancor.png", plot = allslope, width = 25, height = 25, units = "cm")
+
+
+
+
+
+####check relationship between slope and benthic fish abundance####
 #decent linear relationship between NASC and benthic fish counts
 BvS<-ggplot(sitefull, aes(x=FOVnVis, y=AbundanceNonSchooling))+
   geom_point()+
@@ -443,6 +649,8 @@ correlation_coefficient <- cor(binfull_s$Slope_s, binfull_s$Average_5m_slope_s)
 correlation_coefficient
 
 #test relationship between rock percentage and Ratio
+
+
 rugROVratio_bin_spear<-cor.test(binfull$Ratio, binfull$Rugosity,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
 print(rugROVratio_bin_spear)
 #rho = 0.30, p = 1.556e-05 (weak significant positive relationship)
@@ -552,6 +760,8 @@ correlation_coefficient <- cor(sitefull$FOVnVis, sitefull$Volume)
 correlation_coefficient
 
 #############################################################
+
+##neg binomial count models have similar results to density models but they have more issues with the residuals (stick with density models)
 #### run neg binom glm on site data from ROV####
 str(sitefull)
 
@@ -559,21 +769,32 @@ sitefull$LFOVnVis<-log(sitefull$FOVnVis)
 sitefull$LVol<-log(sitefull$Volume)
 
 #model with only variables also included in echosounder model
-M1 <- glm.nb(AbundanceNonSchooling ~ offset(LFOVnVis) + Rugosity + Depth+ Slope, #remove
+M1 <- glm.nb(AbundanceNonSchooling ~ offset(LVol) + Rugosity + Depth+ Slope, #remove
              data = sitefull)
 summary(M1)
-AIC(M1)
+AIC(M1) #265 (22% Dev Exp)
 
-M1 <- glm.nb(AbundanceNonSchooling ~ offset(LFOVnVis) + Rugosity +  NASC_10_1m, #remove
+M1 <- glm.nb(AbundanceNonSchooling ~ offset(LVol) + Rugosity + Slope, #remove
              data = sitefull)
 summary(M1)
-AIC(M1)
+AIC(M1) #263 (21% Dev Exp)
+
+M1 <- glm.nb(AbundanceNonSchooling ~ offset(LVol) + Rugosity + Slope +  NASC_10_1m, #remove
+             data = sitefull)
+summary(M1)
+AIC(M1) #260 (30% Dev Exp)
 
 #model with rock (explains more variance - better model)
-M1 <- glm.nb(AbundanceNonSchooling ~ offset(LFOVnVis) + Rugosity + Depth+ Slope +Rock, #remove
+M1 <- glm.nb(AbundanceNonSchooling ~ offset(LVol) + Rugosity + Slope +Rock, #remove
              data = sitefull)
 summary(M1)
+AIC(M1) #257 (34% Dev Exp)
 
+#model with rock (explains more variance - better model)
+M1 <- glm.nb(AbundanceNonSchooling ~ offset(LVol) + Rugosity + Slope +Rock +  NASC_10_1m, #remove
+             data = sitefull)
+summary(M1)
+AIC(M1) #257 (39% Dev Exp)
 
 
 
@@ -741,190 +962,442 @@ ggplot(TF2) +
 r <- simulateResiduals(M1, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
 #check dispersion
 testDispersion(M1)
-
+  
+###############################################################
 ####try density gaussian glm####
 
 #convert benthic count to density
-
 sitefull$Ben<-sitefull$AbundanceNonSchooling/sitefull$Volume
 
-BvS<-ggplot(sitefull, aes(x=NASC_10_1m, y=Ben))+
+#Echo slope vs fish density with quadratic line
+BvS<-ggplot(sitefull, aes(x=Average_5m_slope, y=Ben))+
   geom_point()+
-  geom_smooth(method="lm", se=FALSE)+
+  geom_smooth(method="lm", formula = y ~ poly(x, 2, raw = TRUE),se=FALSE)+ #formula = y ~ poly(x, 2, raw = TRUE) makes line a quadratic
   geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
 # geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
 BvS
-
-BvS<-ggplot(sitefull, aes(x=Cumulative_LG_DZ_Area, y=Ben))+
-  geom_point()+
-  geom_smooth(method="lm", se=FALSE)+
-  geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
-# geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
-BvS
-
-#rugosity and echorugosity with fish count
-ggplot(sitefull_s, aes(x = Rugosity_s , y = Std_Dev_Slope_s, color = AbundanceNonSchooling)) +
-  geom_point() +
-  scale_color_gradient(low = "blue", high = "red") +  # You can adjust colors as per your preference
-  labs(x = "Rugosity", y = "Std_Dev_Slope", color = "AbundanceNonSchooling")+
-  geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3)
 
 #slope with echoslope and fish count
-ggplot(sitefull_s, aes(x = Slope_s , y = Average_5m_slope_s, color = AbundanceNonSchooling)) +
+ggplot(sitefull, aes(x = Slope, y = Average_5m_slope, color = Ben)) +
   geom_point() +
   scale_color_gradient(low = "blue", high = "red") +  # You can adjust colors as per your preference
   labs(x = "SlopeROV", y = "SlopeEcho", color = "AbundanceNonSchooling")+
   geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3)
 
-L1<-lm(Ben~Average_5m_slope + I(Average_5m_slope^2), data = sitefull)
-summary(L1)
+#####Some random tests ####
 
-L2<-lm(Ben~Average_5m_slope , data = sitefull)
-summary(L2)
+# L1<-lm(Ben~Average_5m_slope + I(Average_5m_slope^2), data = sitefull)
+# summary(L1)
+# 
+# L2<-lm(Ben~Average_5m_slope , data = sitefull)
+# summary(L2)
+# 
+# L3<-lm(Ben~ I(Average_5m_slope^2), data = sitefull)
+# summary(L3)
+# 
+# L4 <- glm(Ben ~ NASC_10_1m + Average_5m_slope + I(Average_5m_slope^2) + 
+#             NASC_10_1m:Average_5m_slope , 
+#           family = gaussian,  data = sitefull)
+# summary(L4)
+# 
+# 
+# L4 <- glm(Ben ~ NASC_10_1m + Average_5m_slope + I(Average_5m_slope^2) + 
+#             NASC_10_1m:I(Average_5m_slope^2) , 
+#           family = gaussian,  data = sitefull)
+# summary(L4)
+# 
+# L4 <- glm(Ben ~ NASC_10_1m + I(Average_5m_slope^2) + 
+#             NASC_10_1m:I(Average_5m_slope^2) , 
+#           family = gaussian,  data = sitefull)
+# summary(L4)
+# 
+# L4 <- glm(Ben ~ NASC_10_1m + Average_5m_slope + 
+#             NASC_10_1m:Average_5m_slope , 
+#           family = gaussian,  data = sitefull)
+# summary(L4)
+# #get glm equivalent of R-squared (explained deviance)
+# explaineddeviance<- 100*(((L4)$null.deviance-(L4)$deviance)/(L4)$null.deviance)
+# #get value for explained deviance (also known as pseudo Rsquared)
+# explaineddeviance
+# 
+# # Install and load the visreg package
+# install.packages("visreg")
+# library(visreg)
+# 
+# ###plot model vs observed values for ben and NASC
+# par(mfrow = c(1, 1))
+# # Create visreg plot
+# vis <- visreg(L4, "NASC_10_1m", scale = "response", main = "Effect Plot of NASC_10_1m on Ben")
+# 
+# # Extract predicted values from the visreg object
+# predicted <- vis$fit
+# 
+# # Plot observed points
+# points(sitefull$NASC_10_1m, sitefull$Ben, col = "blue", pch = 16)
+# 
+# ###plot model vs observed values for ben and slope
+# par(mfrow = c(1, 1))
+# # Create visreg plot
+# vis <- visreg(L4, "NASC_10_1m:Average_5m_slope", scale = "response", main = "Effect Plot of Slope on Ben")
+# 
+# # Extract predicted values from the visreg object
+# predicted <- vis$fit
+# 
+# # Plot observed points
+# points(sitefull$Average_5m_slope, sitefull$Ben, col = "blue", pch = 16)
+# 
+# par(mfrow = c(2, 2))
+# plot(L4)
+# 
+# check_overdispersion(D1)
+# 
+# 
+# #####calculate residuals and add to dataframe
+# residuals <- residuals(L4)
+# TF2 <- sitefull %>%
+#   mutate(resid = residuals)
+# 
+# ## plot residuals vs predictors (looking for flat line with lm)
+# 
+# ggplot(TF2) +
+#   geom_point(aes(x = Average_5m_slope,
+#                  y = resid)) +
+#   geom_smooth(aes(x = Average_5m_slope,
+#                   y = resid),
+#               method = "lm")
+# 
+# ggplot(TF2) +
+#   geom_point(aes(x = Std_Dev_Slope,
+#                  y = resid)) +
+#   geom_smooth(aes(x = Std_Dev_Slope,
+#                   y = resid),
+#               method = "lm")
+# 
+# ggplot(TF2) +
+#   geom_point(aes(x = Cumulative_LG_DZ_Area,
+#                  y = resid)) +
+#   geom_smooth(aes(x = Cumulative_LG_DZ_Area,
+#                   y = resid),
+#               method = "lm")
+# 
+# ggplot(TF2) +
+#   geom_point(aes(x = NASC_10_1m,
+#                  y = resid)) +
+#   geom_smooth(aes(x = NASC_10_1m,
+#                   y = resid),
+#               method = "lm")
+# 
+# ggplot(TF2) +
+#   geom_point(aes(x = Average_Depth,
+#                  y = resid)) +
+#   geom_smooth(aes(x = Average_Depth,
+#                   y = resid),
+#               method = "lm")
+# 
+# #check model fit with DHARMa tests
+# r <- simulateResiduals(L4, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
+# #check dispersion
+# testDispersion(D1)
 
-L3<-lm(Ben~ I(Average_5m_slope^2), data = sitefull)
-summary(L3)
 
-L4 <- glm(Ben ~ NASC_10_1m + Average_5m_slope + I(Average_5m_slope^2) + 
-            NASC_10_1m:Average_5m_slope , 
-          family = gaussian,  data = sitefull)
-summary(L4)
+###########################################
+###echosounder density model#####
 
-
-L4 <- glm(Ben ~ NASC_10_1m + Average_5m_slope + I(Average_5m_slope^2) + 
-            NASC_10_1m:I(Average_5m_slope^2) , 
-          family = gaussian,  data = sitefull)
-summary(L4)
-
-L4 <- glm(Ben ~ NASC_10_1m + I(Average_5m_slope^2) + 
-            NASC_10_1m:I(Average_5m_slope^2) , 
-          family = gaussian,  data = sitefull)
-summary(L4)
-
-L4 <- glm(Ben ~ NASC_10_1m + Average_5m_slope + 
-            NASC_10_1m:Average_5m_slope , 
-          family = gaussian,  data = sitefull)
-summary(L4)
-#get glm equivalent of R-squared (explained deviance)
-explaineddeviance<- 100*(((L4)$null.deviance-(L4)$deviance)/(L4)$null.deviance)
-#get value for explained deviance (also known as pseudo Rsquared)
-explaineddeviance
-
-# Install and load the visreg package
-install.packages("visreg")
-library(visreg)
-
-###plot model vs observed values for ben and NASC
-par(mfrow = c(1, 1))
-# Create visreg plot
-vis <- visreg(L4, "NASC_10_1m", scale = "response", main = "Effect Plot of NASC_10_1m on Ben")
-
-# Extract predicted values from the visreg object
-predicted <- vis$fit
-
-# Plot observed points
-points(sitefull$NASC_10_1m, sitefull$Ben, col = "blue", pch = 16)
-
-###plot model vs observed values for ben and slope
-par(mfrow = c(1, 1))
-# Create visreg plot
-vis <- visreg(L4, "NASC_10_1m:Average_5m_slope", scale = "response", main = "Effect Plot of Slope on Ben")
-
-# Extract predicted values from the visreg object
-predicted <- vis$fit
-
-# Plot observed points
-points(sitefull$Average_5m_slope, sitefull$Ben, col = "blue", pch = 16)
-
-par(mfrow = c(2, 2))
-plot(L4)
-
-check_overdispersion(D1)
-
-
-#####calculate residuals and add to dataframe
-residuals <- residuals(L4)
-TF2 <- sitefull %>%
-  mutate(resid = residuals)
-
-## plot residuals vs predictors (looking for flat line with lm)
-
-ggplot(TF2) +
-  geom_point(aes(x = Average_5m_slope,
-                 y = resid)) +
-  geom_smooth(aes(x = Average_5m_slope,
-                  y = resid),
-              method = "lm")
-
-ggplot(TF2) +
-  geom_point(aes(x = Std_Dev_Slope,
-                 y = resid)) +
-  geom_smooth(aes(x = Std_Dev_Slope,
-                  y = resid),
-              method = "lm")
-
-ggplot(TF2) +
-  geom_point(aes(x = Cumulative_LG_DZ_Area,
-                 y = resid)) +
-  geom_smooth(aes(x = Cumulative_LG_DZ_Area,
-                  y = resid),
-              method = "lm")
-
-ggplot(TF2) +
-  geom_point(aes(x = NASC_10_1m,
-                 y = resid)) +
-  geom_smooth(aes(x = NASC_10_1m,
-                  y = resid),
-              method = "lm")
-
-ggplot(TF2) +
-  geom_point(aes(x = Average_Depth,
-                 y = resid)) +
-  geom_smooth(aes(x = Average_Depth,
-                  y = resid),
-              method = "lm")
-
-#check model fit with DHARMa tests
-r <- simulateResiduals(L4, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
-#check dispersion
-testDispersion(D1)
-
-
-###echosounder density model
-#interaction between NASC and slope (NASC positive relationships with fish density, NASC positive relationship with slope, 
-#Slope has parabolic relationship with fish density- increase then decrease)
+#thoughts:
+#interaction between NASC and slope (NASC has a positive relationships with fish density, NASC has a positive relationship with slope, 
+#Slope has slightly parabolic relationship with fish density- increase then decrease)
 
 #deadzone and nasc positive relationship, but deadzone and fish density negative relationship
+
+#
+#Full model with all vars and quadratic for slope
 ###this model has best residual plots and lowest AIC w 54% dev explained
 D1 <- glm(Ben ~ NASC_10_1m + I(Average_5m_slope^2) + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_10_1m:I(Average_5m_slope^2) + NASC_10_1m:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-215 (54% exp dev)
+
+#Full model with all vars and no quadratic for slope
+D1 <- glm(Ben ~ NASC_10_1m + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
             NASC_10_1m:Average_5m_slope + NASC_10_1m:Cumulative_LG_DZ_Area, 
           family = gaussian,  data = sitefull)
 summary(D1)
-AIC(D1) #-215
+AIC(D1) #-215 (55% exp dev)
 
+
+
+##########################################
+#10m model
+####AIC selection on full echo model 10m RFZ WITH quadratic####
+#steps - remove Rugosity (AIC 217), NASC_10_1m:Cumulative_LG_DZ_Area (AIC 218), Average_Depth (AIC 219 - 52%), 
+#Cumulative_LG_DZ_Area (AIC 220, 52%)
+
+#best model based on AIC and keeping all terms included in interaction (slope not significant but must be retained)
+D1 <- glm(Ben ~ NASC_10_1m + I(Average_5m_slope^2) +
+            NASC_10_1m:I(Average_5m_slope^2), 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-220 (52% exp dev)
+
+##############################################
+##AIC selection on full model WITHOUT quadratic##
+#steps - remove Rugosity (AIC 217, 55%), NASC_10_1m:Cumulative_LG_DZ_Area (AIC 219, 55%), Average_Depth (AIC 219 - 53%), 
+#Cumulative_LG_DZ_Area (AIC 220, 52%)
+
+####*FINAL 10m ECHO MODEL* - based on AIC####
+####Do not include slope as quadratic as it does not significantly improve model from slope as simple linear term - they are almost identical####
+D1 <- glm(Ben ~ NASC_10_1m + Average_5m_slope +  
+            NASC_10_1m:Average_5m_slope, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-220 (52% exp dev)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((D1)$null.deviance-(D1)$deviance)/(D1)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+
+par(mfrow = c(2, 2))
+plot(D1)
+
+check_overdispersion(D1)
+
+
+#####calculate residuals and add to dataframe
+residuals <- residuals(D1)
+TF2 <- sitefull %>%
+  mutate(resid = residuals)
+
+## plot residuals vs predictors (looking for flat line with lm)
+
+ggplot(TF2) +
+  geom_point(aes(x = Average_5m_slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_5m_slope,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = Std_Dev_Slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Std_Dev_Slope,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = Cumulative_LG_DZ_Area,
+                 y = resid)) +
+  geom_smooth(aes(x = Cumulative_LG_DZ_Area,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = NASC_10_1m,
+                 y = resid)) +
+  geom_smooth(aes(x = NASC_10_1m,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = Average_Depth,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_Depth,
+                  y = resid),
+              method = "lm")
+
+#check model fit with DHARMa tests
+r <- simulateResiduals(D1, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
+#check dispersion
+testDispersion(D1)
+
+
+#######################################
+#5m model
+#### Echo model with 5m RFZ NASC######
+
+#Full model with all vars and no quadratic for slope (problems with residuals)
+D1 <- glm(Ben ~ NASC_5_1m + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_5_1m:Average_5m_slope + NASC_5_1m:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-205 (42% exp dev)
+
+####*FINAL 5m ECHO MODEL* - based on AIC####
+#### AIC selection steps: remove Std_Dev_Slope  - AIC 207, 42%),  Average_Depth (AIC 208, 40%), Cumulative_LG_DZ_Area (AIC 207, 37%),
+# NASC_5_1m:Cumulative_LG_DZ_Area(AIC 209, 36%)
+####Do not include slope as quadratic as it does not significantly improve model from slope as simple linear term - they are almost identical####
+D1 <- glm(Ben ~ NASC_5_1m + Average_5m_slope +  
+            NASC_5_1m:Average_5m_slope, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-209 (36% exp dev)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((D1)$null.deviance-(D1)$deviance)/(D1)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+
+par(mfrow = c(2, 2))
+plot(D1)
+
+check_overdispersion(D1)
+
+
+#####calculate residuals and add to dataframe
+residuals <- residuals(D1)
+TF2 <- sitefull %>%
+  mutate(resid = residuals)
+
+## plot residuals vs predictors (looking for flat line with lm)
+
+ggplot(TF2) +
+  geom_point(aes(x = Average_5m_slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_5m_slope,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = Std_Dev_Slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Std_Dev_Slope,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = Cumulative_LG_DZ_Area,
+                 y = resid)) +
+  geom_smooth(aes(x = Cumulative_LG_DZ_Area,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = NASC_5_1m,
+                 y = resid)) +
+  geom_smooth(aes(x = NASC_5_1m,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = Average_Depth,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_Depth,
+                  y = resid),
+              method = "lm")
+
+#check model fit with DHARMa tests
+r <- simulateResiduals(D1, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
+#check dispersion
+testDispersion(D1)
+
+
+#######################################################
+#15m model
+#### Echo model with 15m RFZ NASC######
+
+#Full model with all vars and no quadratic for slope 
+D1 <- glm(Ben ~ NASC_15_1m + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_15_1m:Average_5m_slope + NASC_15_1m:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-202 (38% exp dev)
+
+####*FINAL 15m ECHO MODEL* - based on AIC####
+
+#### AIC selection steps: remove Std_Dev_Slope  - AIC 204, 38%),  NASC_5_1m:Cumulative_LG_DZ_Area (AIC 205, 36%), Cumulative_LG_DZ_Area (AIC 205, 32%),
+#Average_Depth (AIC 206, 30%)
+####Do not include slope as quadratic as it does not significantly improve model from slope as simple linear term - they are almost identical####
+D1 <- glm(Ben ~ NASC_15_1m + Average_5m_slope + 
+            NASC_15_1m:Average_5m_slope , 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-206 (30% exp dev)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((D1)$null.deviance-(D1)$deviance)/(D1)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+
+par(mfrow = c(2, 2))
+plot(D1)
+
+check_overdispersion(D1)
+
+
+#####calculate residuals and add to dataframe
+residuals <- residuals(D1)
+TF2 <- sitefull %>%
+  mutate(resid = residuals)
+
+## plot residuals vs predictors (looking for flat line with lm)
+
+ggplot(TF2) +
+  geom_point(aes(x = Average_5m_slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_5m_slope,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = Std_Dev_Slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Std_Dev_Slope,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = Cumulative_LG_DZ_Area,
+                 y = resid)) +
+  geom_smooth(aes(x = Cumulative_LG_DZ_Area,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = NASC_15_1m,
+                 y = resid)) +
+  geom_smooth(aes(x = NASC_15_1m,
+                  y = resid),
+              method = "lm")
+
+ggplot(TF2) +
+  geom_point(aes(x = Average_Depth,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_Depth,
+                  y = resid),
+              method = "lm")
+
+#check model fit with DHARMa tests
+r <- simulateResiduals(D1, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
+#check dispersion
+testDispersion(D1)
+
+
+###################################################################
+####Echo model using only ROV available habitat variables####
 #model copying variables from ROV (no significant predictors and explains 7% of deviation only (ROV model explains 18% - still low))
-D1 <- glm(Ben ~  I(Average_5m_slope^2) + Std_Dev_Slope + Average_Depth, 
+D1 <- glm(Ben ~  Average_5m_slope + Std_Dev_Slope + Average_Depth, 
           family = gaussian,  data = sitefull)
 summary(D1)
-AIC(D1) #-215
+AIC(D1) #-193 (4% Dev exp)
 
-#model selection based on AIC
-#this is the best model based on only keeping significant predictors (still pretty good residual plots and 52% deviance explained )
-sitefull$LNASC10<- log(sitefull$NASC_10_1m+1)
-
-D1 <- glm(Ben ~ LNASC10 + 
-            LNASC10:Average_5m_slope , 
+D1 <- glm(Ben ~  Average_5m_slope  + Average_Depth, 
           family = gaussian,  data = sitefull)
 summary(D1)
-AIC(D1) #-222
+AIC(D1) #-195 (4% Dev exp)
 
-###full model
-# D1 <- glm(Ben ~ 
-#             NASC_10_1m:Average_5m_slope + 
-#             NASC_10_1m 
-#           , #remove
-#           family = gaussian,  data = TF)
+D1 <- glm(Ben ~  Average_5m_slope, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-197 (4% Dev exp)
 
+##THOUGHTS:  when sampling in pre selected rockfish habitat echosounder derived habitat variables
+#are unable to predict benthic rockfish densities without the addition of NASC values. It is likely that if an 
+#echosounder survey was performed across a wider array of habitats without preselecting for rocky reef areas
+# echosounder derived habitat variables would be able to help predict areas of high rockfish density. 
 
 #get glm equivalent of R-squared (explained deviance)
 explaineddeviance<- 100*(((D1)$null.deviance-(D1)$deviance)/(D1)$null.deviance)
@@ -984,24 +1457,59 @@ r <- simulateResiduals(D1, n = 1000, plot = TRUE)  #some issues with resid vs pr
 #check dispersion
 testDispersion(D1)
 
-######density model with ROV data
-#model with rock (issues with residuals)
-D1 <- glm(Ben ~  I(Slope^2) + Rugosity + Depth + Rock +
+#################################################
+
+
+######density model with ROV data#####
+
+#### ROV model - Slope, Rug, Depth only####
+#model using only variables also available from echosounder (best model - 18% dev explained)
+###full model
+D1 <- glm(Ben ~  Slope + Rugosity + Depth,
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-199 (18% Dev Exp)
+
+###AIC selection BEST MODEL (remove Depth)
+D1 <- glm(Ben ~  Slope + Rugosity,
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-201 (17% Dev Exp)
+
+
+
+
+##### ROV model with rock included ####
+D1 <- glm(Ben ~  Slope + Rugosity + Depth + Rock,
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-202 (27% Dev Exp)
+
+#AIC selection (remove depth)  BEST MODEL
+D1 <- glm(Ben ~  Slope + Rugosity+ Rock,
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-204 (27% Dev Exp)
+
+
+
+
+##### ROV/ECHO hybrid model with rock and NASC included ####
+## Full model
+D1 <- glm(Ben ~  Slope + Rugosity + Depth + Rock +NASC_10_1m +
             NASC_10_1m:Slope,
           family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-220 (59% Dev Exp)
 
-#model using only variables also available from echosounder (best model - 18% dev explained)
-D1 <- glm(Ben ~  I(Slope^2) + Rugosity + Depth,
+
+#BEST MODEL (best residuals and simplest - no major diff in AIC) - AIC selection (remove depth - AIC -221 (58%), remove ROck AIC - 220 (54%))  
+D1 <- glm(Ben ~  Slope + Rugosity +NASC_10_1m +
+            NASC_10_1m:Slope,
           family = gaussian,  data = sitefull)
 summary(D1)
-AIC(D1) #-199
+AIC(D1) #-220 (54% Dev Exp)
 
-#model selection with AIC (all significant predictors but start to get issues with residuals)
-D1 <- glm(Ben ~  I(Slope^2) + Rugosity ,
-          family = gaussian,  data = sitefull)
-
-summary(D1)
-AIC(D1) #-201
 
 #get glm equivalent of R-squared (explained deviance)
 explaineddeviance<- 100*(((D1)$null.deviance-(D1)$deviance)/(D1)$null.deviance)
@@ -1056,25 +1564,92 @@ r <- simulateResiduals(D1, n = 1000, plot = TRUE)  #some issues with resid vs pr
 #check dispersion
 testDispersion(D1)
 
-#####
-#full ROV/ECHO hybrid model with NASC included (best model with both ROV and echosounder predictors used - 58% dev explained and nice residuals)
-D1 <- glm(Ben ~ NASC_10_1m + I(Slope^2) + Rugosity + Depth + Rock +
-            NASC_10_1m:Slope,
-          family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-220
 
-#model selection for echo/ROV model (most parsimonious model with only significant predictors)
-D1 <- glm(Ben ~ NASC_10_1m  + Rugosity +  
-            NASC_10_1m:Slope,
+
+#######################################################
+####different deadzone in echo models####
+
+str(sitefull)
+##########################################
+#10m model
+####AIC selection on full echo model 10m RFZ WITH quadratic####
+#steps - remove Rugosity (AIC 217), NASC_10_1m:Cumulative_LG_DZ_Area (AIC 218), Average_Depth (AIC 219 - 52%), 
+#Cumulative_LG_DZ_Area (AIC 220, 52%)
+
+###10m, 5m, MAN DZ##### - not significant with any vars removed
+#Full model with all vars and no quadratic for slope
+D1 <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_10_1m:Average_5m_slope + NASC_10_1m:Cumulative_LG_DZ_Area, 
           family = gaussian,  data = sitefull)
 summary(D1)
-AIC(D1) #-221
+AIC(D1) #-215 (55% exp dev)
+
+###10m MAN DZ##### - not significant with any vars removed
+#Full model with all vars and no quadratic for slope
+D1 <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_10_MAN:Average_5m_slope + NASC_10_MAN:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-212 (51% exp dev)
+
+#AIC selection
+D1 <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Std_Dev_Slope+ Cumulative_LG_DZ_Area +
+            NASC_10_MAN:Average_5m_slope + NASC_10_MAN:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-212 (49% exp dev)
+
+
+D1 <- glm(Ben ~ NASC_10_MAN + Average_5m_slope+ Cumulative_LG_DZ_Area +
+            NASC_10_MAN:Average_5m_slope + NASC_10_MAN:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-212 (46% exp dev)
+
+
+### best model - 40% dev explained (AIC 212 - same as all others)
+D1 <- glm(Ben ~ NASC_10_MAN + Average_5m_slope +
+            NASC_10_MAN:Average_5m_slope, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-212 (40% exp dev)
+
+
+####15m MAN DZ### 
+D1 <- glm(Ben ~ NASC_15_MAN + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_15_MAN:Average_5m_slope + NASC_15_MAN:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-207 (45% exp dev)
+
+#AIC selection
+D1 <- glm(Ben ~ NASC_15_MAN + Average_5m_slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_15_MAN:Average_5m_slope + NASC_15_MAN:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-208 (43% exp dev)
+
+
+D1 <- glm(Ben ~ NASC_15_MAN + Average_5m_slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_15_MAN:Average_5m_slope, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-206 (38% exp dev)
+
+#best model - 34% dev exp, AIC 206 (need to include depth to deal with residuals)
+D1 <- glm(Ben ~ NASC_15_MAN + Average_5m_slope + Average_Depth + 
+            NASC_15_MAN:Average_5m_slope, 
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-206 (34% exp dev)
+
+####5m MAN DZ### 
 
 #get glm equivalent of R-squared (explained deviance)
 explaineddeviance<- 100*(((D1)$null.deviance-(D1)$deviance)/(D1)$null.deviance)
 #get value for explained deviance (also known as pseudo Rsquared)
 explaineddeviance
+
 
 par(mfrow = c(2, 2))
 plot(D1)
@@ -1090,34 +1665,39 @@ TF2 <- sitefull %>%
 ## plot residuals vs predictors (looking for flat line with lm)
 
 ggplot(TF2) +
-  geom_point(aes(x = Slope,
+  geom_point(aes(x = Average_5m_slope,
                  y = resid)) +
-  geom_smooth(aes(x = Slope,
+  geom_smooth(aes(x = Average_5m_slope,
                   y = resid),
               method = "lm")
 
 ggplot(TF2) +
-  geom_point(aes(x = Rugosity,
+  geom_point(aes(x = Std_Dev_Slope,
                  y = resid)) +
-  geom_smooth(aes(x = Rugosity,
+  geom_smooth(aes(x = Std_Dev_Slope,
                   y = resid),
               method = "lm")
 
 ggplot(TF2) +
-  geom_point(aes(x = Depth,
+  geom_point(aes(x = Cumulative_LG_DZ_Area,
                  y = resid)) +
-  geom_smooth(aes(x = Depth,
+  geom_smooth(aes(x = Cumulative_LG_DZ_Area,
                   y = resid),
               method = "lm")
 
 ggplot(TF2) +
-  geom_point(aes(x = NASC_10_1m,
+  geom_point(aes(x = NASC_10_MAN,
                  y = resid)) +
-  geom_smooth(aes(x = NASC_10_1m,
+  geom_smooth(aes(x = NASC_10_MAN,
                   y = resid),
               method = "lm")
 
-
+ggplot(TF2) +
+  geom_point(aes(x = Average_Depth,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_Depth,
+                  y = resid),
+              method = "lm")
 
 #check model fit with DHARMa tests
 r <- simulateResiduals(D1, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
