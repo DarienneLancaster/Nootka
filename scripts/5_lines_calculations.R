@@ -17,7 +17,7 @@ lp("xlsx")
 
 #### Set Working Directory #### 
 
-setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 ####  Lets attempt a for loop #### 
 # create a list of all the file names we need to pull through the code 
@@ -106,7 +106,7 @@ for (i in 1:nrow(file_df)) {
   slope_width <- 5
   
   
-  # create a column for bin annd same them based on what part of the 20m segement it falls in 
+  # create a column for bin annd name them based on what part of the 20m segement it falls in 
   file <- file %>%
     mutate(Bin = cut(CumulativeGCD, breaks = seq(0, max(CumulativeGCD) + bin_width, bin_width), labels = FALSE))
   
@@ -195,16 +195,20 @@ Ave5mSlopeBin<- BEslope%>%
   mutate(Slope5m =abs(Slope5m))%>%
   summarise(Bin5m_Ave_Slope_Bin = mean(Slope5m))
 
+####calculate 20m slope from points 20m away (average all 5 slope values for each site)#####
 
-#join 5m slope averages for site and bin to full dataframe
+#calculate average slope over 20m slope chunks for full site
 
-merged_df<-left_join(merged_df, Ave5mSlopeSite, by= "Site_ID")
-merged_df<-left_join(merged_df, Ave5mSlopeBin, by= "BinID")
-
-#calculate slope in 20m bins using only start and end Lat/Long for each 5m bin
+#calculate slope in 20m bins using only start and end Lat/Long for each 20m bin
 BEslope20<-merged_df%>%
   group_by(BinID)%>%
   slice(c(1,n()))
+
+# Function to calculate the great circle distance between two points 
+calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
+  distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
+  return(distance)
+}
 
 # calculate GCD on start and end 20m bin coordinates only
 BEslope20$GreatCircleDistance[2:(nrow(BEslope20))] <- sapply(2:(nrow(BEslope20)), function(i) {
@@ -217,7 +221,8 @@ BEslope20$GreatCircleDistance[2:(nrow(BEslope20))] <- sapply(2:(nrow(BEslope20))
          calc_great_circle_distance(lat1, lon1, lat2, lon2))
 })
 
-## Calculate difference in depth 20m bins
+
+## Calculate difference in depth
 
 BEslope20$DepthDifference[2:(nrow(BEslope20))] <- sapply(2:(nrow(BEslope20)), function(i) {
   ifelse((BEslope20$BinID[i]) != (BEslope20$BinID[i -1]),
@@ -225,11 +230,63 @@ BEslope20$DepthDifference[2:(nrow(BEslope20))] <- sapply(2:(nrow(BEslope20)), fu
          (BEslope20$Depth[i-1] - BEslope20$Depth[i]))
 })
 
+
+
+# Calculate 20m Slope 
+BEslope20$Slope20m <- sapply(1:nrow(BEslope20), function(i) {
+  ifelse(is.na(BEslope20$GreatCircleDistance[i]) || is.na(BEslope20$DepthDifference[i]),
+         NA,
+         (180.0/pi) * atan(BEslope20$DepthDifference[i]/BEslope20$GreatCircleDistance[i]))
+})
+
+#average 20m slope bins for full sites
+Ave20mSlopeSite<- BEslope20%>%
+  group_by(Site_ID)%>%
+  filter(!is.na(Slope20m))%>%
+  mutate(Slope20m =abs(Slope20m))%>%
+  summarise(Bin20m_Ave_Slope_Site = mean(Slope20m),
+            Bin20m_SD_Slope_Site =sd(Slope20m) )
+
+
+#join 20m slope averages for site and bin to full dataframe
+
+merged_df<-left_join(merged_df, Ave20mSlopeSite, by= "Site_ID")
+
+#join 5m slope averages for site and bin to full dataframe
+
+merged_df<-left_join(merged_df, Ave5mSlopeSite, by= "Site_ID")
+merged_df<-left_join(merged_df, Ave5mSlopeBin, by= "BinID")
+
+####20m slope for binned dataframe####
+#calculate slope in 20m bins using only start and end Lat/Long for each 5m bin
+BEslope20bin<-merged_df%>%
+  group_by(BinID)%>%
+  slice(c(1,n()))
+
+# calculate GCD on start and end 20m bin coordinates only
+BEslope20bin$GreatCircleDistance[2:(nrow(BEslope20bin))] <- sapply(2:(nrow(BEslope20bin)), function(i) {
+  lat1 <- BEslope20bin$Latitude[i - 1]
+  lon1 <- BEslope20bin$Longitude[i - 1]
+  lat2 <- BEslope20bin$Latitude[i]
+  lon2 <- BEslope20bin$Longitude[i]
+  ifelse((BEslope20bin$BinID[i]) != (BEslope20bin$BinID[i -1]),
+         NA,
+         calc_great_circle_distance(lat1, lon1, lat2, lon2))
+})
+
+## Calculate difference in depth 20m bins
+
+BEslope20bin$DepthDifference[2:(nrow(BEslope20bin))] <- sapply(2:(nrow(BEslope20bin)), function(i) {
+  ifelse((BEslope20bin$BinID[i]) != (BEslope20bin$BinID[i -1]),
+         NA,
+         (BEslope20bin$Depth[i-1] - BEslope20bin$Depth[i]))
+})
+
 # calculate the hypotenuse 
-BEslope20$Hypotenuse <- sqrt(BEslope20$GreatCircleDistance^2 + BEslope20$DepthDifference^2)
+BEslope20bin$Hypotenuse <- sqrt(BEslope20bin$GreatCircleDistance^2 + BEslope20bin$DepthDifference^2)
 
 #GCD 20m bins 
-BEslope20<- BEslope20%>%
+BEslope20bin<- BEslope20bin%>%
   group_by(BinID)%>%
   filter(!is.na(GreatCircleDistance))%>%
   rename(Hypotenuse20=Hypotenuse)%>%
@@ -256,10 +313,10 @@ binlines <- bininfo %>% dplyr::select("BinID")
 binlines <- left_join(binlines, BinBottom, by = "BinID")
 
 #merge 20m hypotenuse(total distance traveled) and GreatCircleDistance20 (better proxy for total linear distance than summing all Great Circle Distances) with binlines
-BEslope20bin<- BEslope20%>%
+BEslope20bin2<- BEslope20bin%>%
   dplyr::select(c(Hypotenuse20, GreatCircleDistance20,BinID))
 
-binlines<-left_join(binlines, BEslope20bin, by = "BinID")
+binlines<-left_join(binlines, BEslope20bin2, by = "BinID")
 
 #remove random extra chunk from NS06_1
 binlines<-binlines%>%
@@ -283,6 +340,7 @@ SiteBottom <- merged_df %>%
   summarize(
     Average_Slope = mean(Slope, na.rm = TRUE),
     Average_5m_slope = mean(Bin5m_Ave_Slope_Site, na.rm = TRUE),
+    Average_20m_slope = mean(Bin20m_Ave_Slope_Site, na.rm = TRUE),
     Average_noneg_slope = mean(noneg_slope, na.rm = TRUE),
     Average_negna_slope = mean(negna_slope, na.rm = TRUE),
     Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
@@ -296,7 +354,7 @@ SiteBottom <- merged_df %>%
 
 
 #merge full hypotenuse(total distance traveled) with sitelines
-BEslope20site<- BEslope20%>%
+BEslope20site<- BEslope20bin%>%
   dplyr::select(c(Hypotenuse20,GreatCircleDistance20, BinID,Site_ID))
 
 BEslope20site <- BEslope20site %>%
@@ -313,7 +371,7 @@ SiteBottom <- SiteBottom %>% mutate(PaperRatio = 100*(totaldist / chainlength))
 SiteBottom <- SiteBottom %>% mutate(Ratio = (chainlength/totaldist))
 SiteBottom <- SiteBottom %>% mutate(ChainDiff = (chainlength-totaldist))
 
-
+load("wdata/siteinfo.Rdata")
 sitelines <- siteinfo %>% dplyr::select("Site_ID")
 sitelines <- left_join(sitelines, SiteBottom, by = "Site_ID")
 

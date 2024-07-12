@@ -23,12 +23,13 @@ install.packages("GGally")
 library(GGally)
 library(ggplot2)
 
-load("wdata/full_lines.RData")
+load("wdata/sitelines.RData")
 load("wdata/bin_lines.RData")
 load("wdata/binNASC.RData")
 load("wdata/siteNASC.RData")
 load("wdata/bininfo.RData")
 load("wdata/siteinfo.RData")
+
 
 ################### merge the site dataframes############ 
 merged_site <- left_join(siteinfo, sitelines, by = "Site_ID")
@@ -136,7 +137,7 @@ site_DE<- site_complete%>%
   #dplyr::select(c(AbundanceNonSchooling,total_number_schoolingfish, number_FS,Average_5m_slope,Std_Dev_Slope, CumulativeArea, NASC_15, NASC_10, NASC_5, Average_Depth))
   dplyr::select(c(Site_ID,TotalAbundance,AbundanceNonSchooling,number_FS, total_number_schoolingfish, 
                   total_number_NoHschoolingfish,TotPel,TotBen, RFSpeciesRichness,SpeciesRichness,
-                  Average_5m_slope,Std_Dev_Slope, Ratio, 
+                  Average_5m_slope, Average_20m_slope,Std_Dev_Slope, Ratio, 
                   Cumulative_LG_DZ_Area, 
                   NASC_5_MAN,NASC_10_MAN,NASC_15_MAN,
                   NASC_5_1m,NASC_10_1m,NASC_15_1m, 
@@ -167,7 +168,7 @@ var(site_DE$AbundanceNonSchooling)
 str(site_DE)
 save(site_DE, file = "wdata/site_DE.RData")
 
-#move to script 9_Site_GAM.R
+#move to script Manual_ROV_Substrate_Annotations.R
 
 
 
