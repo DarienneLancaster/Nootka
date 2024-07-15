@@ -1147,7 +1147,7 @@ AIC(D1) #-220 (52% exp dev)
 
 ####*FINAL 10m ECHO MODEL* - based on AIC####
 ####Do not include slope as quadratic as it does not significantly improve model from slope as simple linear term - they are almost identical####
-D1 <- glm(Ben ~ NASC_10_1m + Average_5m_slope +  
+D1 <- glm(Ben ~ NASC_10_1m + Average_5m_slope +
             NASC_10_1m:Average_5m_slope, 
           family = gaussian,  data = sitefull)
 summary(D1)
@@ -1510,6 +1510,19 @@ D1 <- glm(Ben ~  Slope + Rugosity +NASC_10_1m +
 summary(D1)
 AIC(D1) #-220 (54% Dev Exp)
 
+#echosounder slope model hybrid model (best model - 61% dev exp)
+D1 <- glm(Ben ~  Average_5m_slope + Rugosity + Depth + Rock +NASC_10_1m +
+            NASC_10_1m:Average_5m_slope,
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-223 (61% Dev Exp)
+
+D1 <- glm(Ben ~  Average_5m_slope + Rugosity + Rock +NASC_10_1m +
+            NASC_10_1m:Average_5m_slope,
+          family = gaussian,  data = sitefull)
+summary(D1)
+AIC(D1) #-224 (61% Dev Exp)
+
 
 #get glm equivalent of R-squared (explained deviance)
 explaineddeviance<- 100*(((D1)$null.deviance-(D1)$deviance)/(D1)$null.deviance)
@@ -1571,18 +1584,11 @@ testDispersion(D1)
 
 str(sitefull)
 ##########################################
-#10m model
+#10m model w Manual deadzone
 ####AIC selection on full echo model 10m RFZ WITH quadratic####
 #steps - remove Rugosity (AIC 217), NASC_10_1m:Cumulative_LG_DZ_Area (AIC 218), Average_Depth (AIC 219 - 52%), 
 #Cumulative_LG_DZ_Area (AIC 220, 52%)
 
-###10m, 5m, MAN DZ##### - not significant with any vars removed
-#Full model with all vars and no quadratic for slope
-D1 <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
-            NASC_10_1m:Average_5m_slope + NASC_10_1m:Cumulative_LG_DZ_Area, 
-          family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-215 (55% exp dev)
 
 ###10m MAN DZ##### - not significant with any vars removed
 #Full model with all vars and no quadratic for slope
@@ -1615,35 +1621,18 @@ summary(D1)
 AIC(D1) #-212 (40% exp dev)
 
 
-####15m MAN DZ### 
-D1 <- glm(Ben ~ NASC_15_MAN + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
-            NASC_15_MAN:Average_5m_slope + NASC_15_MAN:Cumulative_LG_DZ_Area, 
+####10m LG DZ### 
+D1 <- glm(Ben ~ NASC_10_LG + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_10_LG:Average_5m_slope + NASC_10_LG:Cumulative_LG_DZ_Area, 
           family = gaussian,  data = sitefull)
 summary(D1)
-AIC(D1) #-207 (45% exp dev)
+AIC(D1) #-189 (13% exp dev)
 
-#AIC selection
-D1 <- glm(Ben ~ NASC_15_MAN + Average_5m_slope + Average_Depth + Cumulative_LG_DZ_Area +
-            NASC_15_MAN:Average_5m_slope + NASC_15_MAN:Cumulative_LG_DZ_Area, 
+D1 <- glm(Ben ~ NASC_10_LG , 
           family = gaussian,  data = sitefull)
 summary(D1)
-AIC(D1) #-208 (43% exp dev)
+AIC(D1) #-189 (13% exp dev)
 
-
-D1 <- glm(Ben ~ NASC_15_MAN + Average_5m_slope + Average_Depth + Cumulative_LG_DZ_Area +
-            NASC_15_MAN:Average_5m_slope, 
-          family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-206 (38% exp dev)
-
-#best model - 34% dev exp, AIC 206 (need to include depth to deal with residuals)
-D1 <- glm(Ben ~ NASC_15_MAN + Average_5m_slope + Average_Depth + 
-            NASC_15_MAN:Average_5m_slope, 
-          family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-206 (34% exp dev)
-
-####5m MAN DZ### 
 
 #get glm equivalent of R-squared (explained deviance)
 explaineddeviance<- 100*(((D1)$null.deviance-(D1)$deviance)/(D1)$null.deviance)
@@ -1703,3 +1692,33 @@ ggplot(TF2) +
 r <- simulateResiduals(D1, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
 #check dispersion
 testDispersion(D1)
+
+#########################################################
+####density vs predictor variable plots#####
+
+#density vs ROV rugosity
+ROV_DR <- ggplot(sitefull, aes(x = Ben, y = Rugosity)) +
+  geom_point(color = "gray40") +
+  labs(x = "ROV Rugosity", y = "Benthic Fish Density")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  geom_smooth(method = "lm", se = TRUE, color = "black")
+ROV_DR 
+
+#density vs Echo rugosity
+Echo_DR_SD <- ggplot(sitefull, aes(x = Ben, y = Std_Dev_Slope)) +
+  geom_point(color = "gray40") +
+  labs(x = "Echogram Rugosity (SD Slope)", y = "Benthic Fish Density")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  geom_smooth(method = "lm", se = TRUE, color = "black")
+Echo_DR_SD
+
+
+
+###put all rugosity plots together
+allrug<-grid.arrange(rugSTDROV, rugRatioROV, rugRatioSTD, rug_box, ncol = 2, respect=TRUE)
+
+ggsave("figures/ROV_Echo_Rugosity_spearmancor.png", plot = allrug, width = 25, height = 25, units = "cm")
+
+
