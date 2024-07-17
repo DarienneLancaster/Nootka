@@ -213,6 +213,82 @@ sitefull_s<-sitefull%>%
          Average_Depth_s=scale(Average_Depth))%>%
   mutate_at(vars(56:66), as.numeric)
 
+####calculate mean and sd for habitat variables across sites####
+
+summary_mean_sd <- sitefull %>%
+  dplyr::select(Average_5m_slope,
+         Average_20m_slope,
+         Slope,
+         Std_Dev_Slope,
+         Ratio,
+         Rugosity,
+         Rock,
+         Cumulative_LG_DZ_Area,
+         NASC_15_1m,
+         NASC_10_1m,
+         NASC_5_1m,
+         Depth,
+         Average_Depth) %>%
+  reframe(
+    Mean = round(colMeans(.), 2),
+    SD = round(sapply(., sd), 2)
+  ) %>%
+  t() %>%               # Transpose to make column names accessible
+  as.data.frame() %>%   # Convert to data frame
+  rename(
+    "Slope (5m)" = V1,
+    "Slope (20m)" = V2,
+    "Slope (ROV)" = V3,
+    "Rugosity (SD Slope)" = V4,
+    "Rugosity (CL Ratio)" = V5,
+    "Rugosity (ROV)" = V6,
+    "Rock (ROV)" = V7,
+    "Deadzone Area" = V8,
+    "NASC_15_1m" = V9,
+    "NASC_10_1m" = V10,
+    "NASC_5_1m" = V11,
+    "Depth (ROV)" = V12,
+    "Depth (Echosounder)" = V13)%>%
+  mutate(`Depth (ROV)` = `Depth (ROV)` / 3.281)%>% # convert to meters
+  rownames_to_column(var = "Summary") 
+
+lp("flextable")
+
+summary_mean_sd_table <-flextable(summary_mean_sd)
+summary_mean_sd_table <- set_table_properties(summary_mean_sd_table, layout = "autofit")%>%
+  fontsize(size = 10) %>%  # Adjust font size for the entire table
+  theme_booktabs() %>%    # Optional: Apply a booktabs theme for nicer table borders
+  bold(part = "header") %>% # Make headers (part = "header") bold
+  fontsize(size = 10, part = "header")  
+summary_mean_sd_table <- align(summary_mean_sd_table, align = c("left"), part = "all")
+print(summary_mean_sd_table)
+
+ %>%
+  add_header_row(values = c("", colnames(summary_mean_sd)),
+                 colwidths = c(1, rep(1, ncol(summary_mean_sd)))) %>%
+  set_header_labels(ft_labels(row_labels = " ", col_keys = colnames(summary_mean_sd)),
+                    part = "header")
+
+(summary_mean_sd_table, layout = "autofit") %>%
+  add_header_row()
+print(summary_mean_sd_table)
+
+save_as_image(summary_mean_sd_table, path='figures/HabVars_summary_mean_sd.png')
+write.table(summary_mean_sd_table, file='figures/HabVars_summary_mean_sd.jpg')
+
+
+
+summary_mean_sd_table <- kable(summary_mean_sd, format = "html", align = "l") %>%
+  kable_styling(full_width = FALSE)
+print(summary_mean_sd_table)
+write.table()
+
+# Specify the file path to save the HTML table
+file_path <- "summary_mean_sd_table.html"
+
+# Write the HTML table to a file
+writeLines(summary_mean_sd_table, con = file_path)
+
 #####site level comparison of habitat variables####
 ####prelim plots and tests####
 #test relationship between rugosity values
@@ -400,6 +476,22 @@ rugRATIOrock <- ggplot(sitefull_s, aes(x = Rock, y = Ratio_s)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 rugRATIOrock
 
+ROV_Rock_Slope <- ggplot(sitefull_s, aes(x = Slope_s, y = Rock_s)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Slope scaled", y = "Rock scaled")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+ROV_Rock_Slope
+
+ROV_Rock_Rugosity <- ggplot(sitefull_s, aes(x = Rock, y = Rugosity_s )) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "ROV Rock (%)", y = "ROV Rugosity")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+ROV_Rock_Rugosity
+
 ## box plot the ROCK data to make sense of the value distribution 
 sitefull_s_subRock <- sitefull_s %>%
   dplyr::select("Site_ID", "Rock_s", "Std_Dev_Slope_s", "Ratio_s")
@@ -422,7 +514,7 @@ rock_box<-ggplot(sitefull_s_longRock, aes(x = Method, y = Rock )) +
         axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
 rock_box
 
-allrock<-grid.arrange(rugRATIOrock, rugSTDrock, rock_box, ncol = 2, respect=TRUE)
+allrock<-grid.arrange(rugRATIOrock, rugSTDrock, ROV_Rock_Rugosity, rock_box, ncol = 2, respect=TRUE)
 allrock
 ggsave("figures/ROV_Echo_Rock_spearmancor.png", plot = allrock, width = 25, height = 25, units = "cm")
 
@@ -478,6 +570,14 @@ slope20_s <- ggplot(sitefull_s, aes(x = Slope_s, y = Average_20m_slope_s)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 slope20_s
 
+slope20_5_s <- ggplot(sitefull_s, aes(x = Average_5m_slope_s, y = Average_20m_slope_s)) +
+  geom_point(color = "gray40") +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  labs(x = "Echosounder Slope scaled (5m Average)", y = "Echosounder Slope scaled (20m Average)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+slope20_5_s
+
 
 
 ## box plot the SLOPE data to make sense of the value distribution 
@@ -503,7 +603,7 @@ slopebox_s<- ggplot(sitefull_s_long, aes(x = Method, y = Slope )) +
         axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
 slopebox_s
 
-allslope_s<-grid.arrange(slope5_s, slope20_s, slopebox_s,  ncol = 2, respect=TRUE)
+allslope_s<-grid.arrange(slope5_s, slope20_s, slope20_5_s, slopebox_s,  ncol = 2, respect=TRUE)
 ggsave("figures/ROV_Echo_Slope_scaled_spearmancor.png", plot = allslope_s, width = 25, height = 25, units = "cm")
 
 
@@ -552,6 +652,102 @@ allslope<-grid.arrange(slope5, slope20,slopebox,  ncol = 2, respect=TRUE)
 ggsave("figures/ROV_Echo_Slope_spearmancor.png", plot = allslope, width = 25, height = 25, units = "cm")
 
 
+###############################################################
+####boxplots for NASC for each RFZ and each Deadzone type####
+
+## box plot for NASC in each RFZ
+sitefull_NASC_RFZ <- sitefull %>%
+  dplyr::select("Site_ID", "NASC_15_1m", "NASC_10_1m", "NASC_5_1m")
+str(sitefull_NASC_RFZ)
+
+sitefull_NASC_RFZlong <- sitefull_NASC_RFZ %>%
+  rename(
+    "15m RFZ" = NASC_15_1m,
+    "10m RFZ" = NASC_10_1m,
+    "5m RFZ" = NASC_5_1m
+  ) %>%
+  pivot_longer(cols = c(`15m RFZ`, `10m RFZ`,`5m RFZ` ),
+               names_to = "Method",
+               values_to = "NASC")
+
+# Define the desired order of Method levels
+method_order <- c("15m RFZ", "10m RFZ","5m RFZ")  # Replace with your actual method names and desired order
+
+# Convert Method to a factor with specified levels and order
+sitefull_NASC_RFZlong$Method <- factor(sitefull_NASC_RFZlong$Method, levels = method_order)
+
+
+NASC_RFZ_box<- ggplot(sitefull_NASC_RFZlong, aes(x = Method, y = NASC )) +
+  geom_boxplot(color = "gray40") +
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  labs(title = "a)") +
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
+        axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
+NASC_RFZ_box
+
+### all values of NASC are significantly different for different Rockfish Zones
+t_test_15_10 <- t.test(sitefull$NASC_15_1m, sitefull$NASC_10_1m, paired = TRUE)
+t_test_15_10 #signficantly different t = 3.3079, df = 38, p-value = 0.002063
+
+t_test_15_5 <- t.test(sitefull$NASC_15_1m, sitefull$NASC_5_1m, paired = TRUE)
+t_test_15_5 #signficantly different t = 4.5484, df = 38, p-value = 5.382e-05
+
+t_test_10_5 <- t.test(sitefull$NASC_10_1m, sitefull$NASC_5_1m, paired = TRUE)
+t_test_10_5 #signficantly different t = 3.961, df = 38, p-value = 0.000317
+
+#double check with non-parametric test
+wilcox15_10<-wilcox.test(sitefull$NASC_10_1m, sitefull$NASC_5_1m, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
+print(wilcox15_10)
+
+
+## box plot for NASC at 10m for each DEADZONE
+sitefull_NASC_DZ <- sitefull %>%
+  dplyr::select("Site_ID", "NASC_10_LG", "NASC_10_MAN", "NASC_10_1m")
+str(sitefull_NASC_DZ)
+
+sitefull_NASC_DZlong <- sitefull_NASC_DZ %>%
+  rename(
+    "Large Deadzone" = NASC_10_LG,
+    "Manual Deadzone" = NASC_10_MAN,
+    "1m Deadzone" = NASC_10_1m
+  ) %>%
+  pivot_longer(cols = c(`Large Deadzone`, `Manual Deadzone`,`1m Deadzone` ),
+               names_to = "Method",
+               values_to = "NASC")
+
+# Define the desired order of Method levels
+method_order <- c("Large Deadzone", "Manual Deadzone","1m Deadzone")  # Replace with your actual method names and desired order
+
+# Convert Method to a factor with specified levels and order
+sitefull_NASC_DZlong$Method <- factor(sitefull_NASC_DZlong$Method, levels = method_order)
+
+
+### if we want to include this plot will need to go back and make sure cleaned data is what is loaded in here (e.g. are herring schools removed from LG and Manual
+# deadzone files?)
+NASC_DZ_box<- ggplot(sitefull_NASC_DZlong, aes(x = Method, y = NASC )) +
+  geom_boxplot(color = "gray40") +
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  labs(title = "b)") +
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
+        axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
+#+geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
+NASC_DZ_box
+
+### all values of NASC are significantly different for different Rockfish Zones
+t_test_LG_MAN <- t.test(sitefull$NASC_10_LG, sitefull$NASC_10_MAN, paired = TRUE)
+t_test_LG_MAN #signficantly different t = -2.4931, df = 38, p-value = 0.01713
+
+t_test_LG_1m <- t.test(sitefull$NASC_10_LG, sitefull$NASC_10_1m, paired = TRUE)
+t_test_LG_1m #signficantly different t = -4.1356, df = 38, p-value = 0.0001885
+
+t_test_1m_MAN <- t.test(sitefull$NASC_10_1m, sitefull$NASC_10_MAN, paired = TRUE)
+t_test_1m_MAN #NOT signficantly different t = -1.4666, df = 38, p-value = 0.1507
+
+
+NASC_all<-grid.arrange(NASC_RFZ_box, NASC_DZ_box,  ncol = 2, respect=TRUE)
+ggsave("figures/NASC_RFZ_DZ_boxes.png", plot = NASC_all, width = 25, height = 25, units = "cm")
 
 
 
