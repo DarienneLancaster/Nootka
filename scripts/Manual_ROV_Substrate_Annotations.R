@@ -65,7 +65,6 @@ create_bins <- function(data) {
 trandur <- create_bins(trandur)
 
 #summarize substrate data by site
-str(trandur1)
 trandur1<- trandur%>%
   mutate_at(vars(2:4,7:10, 12:14), as.numeric)
 
@@ -196,8 +195,6 @@ sitefull<-sitefull%>%
    filter( Site_ID !="NS05")
 
 #scale variables for comparison
-str(sitefull)
-str(sitefull_s)
 
 sitefull_s<-sitefull%>%
   mutate(Average_5m_slope_s=scale(Average_5m_slope),
@@ -214,6 +211,9 @@ sitefull_s<-sitefull%>%
   mutate_at(vars(56:66), as.numeric)
 
 ####calculate mean and sd for habitat variables across sites####
+
+lp("reporter")
+lp("magrittr")
 
 summary_mean_sd <- sitefull %>%
   dplyr::select(Average_5m_slope,
@@ -235,35 +235,38 @@ summary_mean_sd <- sitefull %>%
   ) %>%
   t() %>%               # Transpose to make column names accessible
   as.data.frame() %>%   # Convert to data frame
-  rename(
-    "Slope (5m)" = V1,
-    "Slope (20m)" = V2,
-    "Slope (ROV)" = V3,
-    "Rugosity (SD Slope)" = V4,
-    "Rugosity (CL Ratio)" = V5,
-    "Rugosity (ROV)" = V6,
-    "Rock (ROV)" = V7,
-    "Deadzone Area" = V8,
-    "NASC_15_1m" = V9,
-    "NASC_10_1m" = V10,
-    "NASC_5_1m" = V11,
-    "Depth (ROV)" = V12,
-    "Depth (Echosounder)" = V13)%>%
-  mutate(`Depth (ROV)` = `Depth (ROV)` / 3.281)%>% # convert to meters
+ rename(
+   "Slope 5m (°)" = V1,
+   "Slope 20m (°)" = V2,
+   "Slope ROV (°)" = V3,
+   "Rugosity SD_Slope (°)" = V4,
+   "Rugosity CL_Ratio (unitless)" = V5,
+   "Rugosity ROV (unitless)" = V6,
+   "Rock ROV (%)" = V7,
+   "Deadzone Area (m^2)" = V8,
+   "NASC_15_1m" = V9,
+   "NASC_10_1m" = V10,
+   "NASC_5_1m" = V11,
+   "Depth ROV (m)" = V12,
+   "Depth Echosounder(m))" = V13)%>%
+ mutate(`Depth ROV (m)` = `Depth ROV (m)` / 3.281)%>% # convert to meters
   rownames_to_column(var = "Summary") 
+
 
 lp("flextable")
 
 summary_mean_sd_table <-flextable(summary_mean_sd)
 summary_mean_sd_table <- set_table_properties(summary_mean_sd_table, layout = "autofit")%>%
-  fontsize(size = 10) %>%  # Adjust font size for the entire table
+  fontsize(size = 12) %>%  # Adjust font size for the entire table
   theme_booktabs() %>%    # Optional: Apply a booktabs theme for nicer table borders
   bold(part = "header") %>% # Make headers (part = "header") bold
-  fontsize(size = 10, part = "header")  
+  fontsize(size = 12, part = "header")  
 summary_mean_sd_table <- align(summary_mean_sd_table, align = c("left"), part = "all")
-print(summary_mean_sd_table)
 
- %>%
+print(summary_mean_sd_table)
+save_as_image(summary_mean_sd_table, path='figures/HabVars_summary_mean_sd.png')
+ 
+%>%
   add_header_row(values = c("", colnames(summary_mean_sd)),
                  colwidths = c(1, rep(1, ncol(summary_mean_sd)))) %>%
   set_header_labels(ft_labels(row_labels = " ", col_keys = colnames(summary_mean_sd)),
@@ -273,7 +276,7 @@ print(summary_mean_sd_table)
   add_header_row()
 print(summary_mean_sd_table)
 
-save_as_image(summary_mean_sd_table, path='figures/HabVars_summary_mean_sd.png')
+
 write.table(summary_mean_sd_table, file='figures/HabVars_summary_mean_sd.jpg')
 
 
@@ -535,6 +538,7 @@ print(slope5_spear)
 slope5_wilcox<-wilcox.test(sitefull_s$Slope_s, sitefull_s$Average_5m_slope_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
 print(slope5_wilcox)
 #p=0.4 (not significant so no sign. difference)
+
 
 #test 20m slope from ROV and Echosounder for significant difference (Spearman rank correlation)
 slope20_spear<-cor.test(sitefull$Slope, sitefull$Average_20m_slope,  method="spearman", exact= FALSE) #exact = FALSE gets rid of impact of tied values on ranking
@@ -1916,5 +1920,35 @@ Echo_DR_SD
 allrug<-grid.arrange(rugSTDROV, rugRatioROV, rugRatioSTD, rug_box, ncol = 2, respect=TRUE)
 
 ggsave("figures/ROV_Echo_Rugosity_spearmancor.png", plot = allrug, width = 25, height = 25, units = "cm")
+
+####deadzone vs rugosity plots####
+
+#density vs Echo rugosity
+DZ_RUG <- ggplot(sitefull, aes(x = Rugosity, y = Cumulative_LG_DZ_Area)) +
+  geom_point(color = "gray40") +
+  labs(x = "Rugosity (ROV)", y = "Deadzone Area")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  geom_smooth(method = "lm", se = TRUE, color = "black")
+DZ_RUG
+
+DZ_RUG <- ggplot(sitefull, aes(x = Slope, y = Cumulative_LG_DZ_Area)) +
+  geom_point(color = "gray40") +
+  labs(x = "Slope (ROV)", y = "Deadzone Area")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  geom_smooth(method = "lm", se = TRUE, color = "black")
+DZ_RUG
+
+DZ_RUG <- ggplot(sitefull, aes(x = Slope, y = Rugosity)) +
+  geom_point(color = "gray40") +
+  labs(x = "Slope (ROV)", y = "Rugosity")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  sm_statCorr(corr_method="spearman", color = "black")+
+  geom_smooth(method = "lm", se = TRUE, color = "black")
+DZ_RUG
 
 
