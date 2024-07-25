@@ -54,7 +54,7 @@ AllF<-ROV%>%
 
 flextable(AllF)
 
-
+#####################go back over how these are named and filtered (getting weird values in table that don't add up)
 #create new column with species common names
 ROV$Common<- ifelse(ROV$Species == "caurinus", "Copper rockfish",
                      ifelse(ROV$Species == "maliger", "Quillback rockfish",
@@ -64,7 +64,8 @@ ROV$Common<- ifelse(ROV$Species == "caurinus", "Copper rockfish",
                                                  ifelse(ROV$Species == "elongatus", "Lingcod",
                                                         ifelse(ROV$Species == "decagrammus", "Kelp greenling",
                                                                ifelse(ROV$Species == "emphaeus", "Puget Sound rockfish",
-                                                                      ifelse(ROV$Species == "flavidus", "Yellowtail rockfish",
+                                                                      ifelse(ROV$Species == "flavidus" & grepl("BP|SP|P", ROV$Notes), "Yellowtail rockfish Pelagic",
+                                                                             ifelse(ROV$Species == "flavidus" & !grepl("BP|SP|P", ROV$Notes), "Yellowtail rockfish Benthic",
                                                                              ifelse(ROV$Species == "pictus", "Painted greenling",
                                                                                     ifelse(ROV$Species == "armatus", "Staghorn sculpin",
                                                                                            ifelse(ROV$Species == "entomelas", "Widow rockfish",
@@ -79,7 +80,8 @@ ROV$Common<- ifelse(ROV$Species == "caurinus", "Copper rockfish",
                                                                                                                                                           ifelse(ROV$Species == "unknown" & grepl("SB", ROV$Notes) & grepl("J", ROV$Stage), "YOY rockfish Benthic",
                                                                                                                                                                  ifelse(ROV$Species == "unknown" & grepl("SP", ROV$Notes) & grepl("J", ROV$Stage), "YOY rockfish Pelagic",
                                                                                                                                                                       ifelse(ROV$Species == "unknown" & grepl("BP|SP|P", ROV$Notes), "Unknown Pelagic",
-                                                                                                                                                                            ifelse(ROV$Species == "unknown", "Unknown Benthic","Unknown"))))))))))))))))))))))))
+                                                                                                                                                                            ifelse(ROV$Genus == "Sebastes" & ROV$Species == "unknown" & !grepl("BP|SP|P|SB|BB", ROV$Notes), "Sebastes spp.",
+                                                                                                                                                                                   ifelse(ROV$Genus == "unknown" & ROV$Species == "unknown", "Unknown Benthic","Unknown"))))))))))))))))))))))))))
                                                                                                                                                                     
 
 
@@ -263,6 +265,40 @@ siteBen_S$TA_Ben_S <- mapply(TotalAbundance, x = 2)
 sitespecies <- sitespecies %>%
   left_join(siteBen_S %>% dplyr::select(Site_ID, TA_Ben_S), by = "Site_ID")
 
+### calculate totals for pelagics####
+
+Pel_S <- ROV %>% 
+  filter(Number > 9, Number!= "NA")%>%
+  filter(grepl("BP|SP", Notes))
+
+
+# create dataset that has only Site_ID and FullName 
+sitePel_S <- unique(Pel_S[, c("Site_ID", "Common")])
+
+# function to get abundance of each species per site 
+get.abundance <- function(xx, ss){ 
+  keep <- which(Pel_S$Site_ID == xx & Pel_S$Common == ss)
+  if (length(keep) == 0) return(0)
+  return(sum(Pel_S$Number[keep]))}
+
+# apply function 
+sitePel_S$Abundance <- mapply(get.abundance, xx = sitePel_S$Site_ID, ss = sitePel_S$Common)
+
+# reshape the dataframe to make it wide 
+sitePel_S <- reshape(sitePel_S, v.names = "Abundance", idvar = "Site_ID", timevar = "Common", direction = "wide")
+
+# fill in any NA's as zero
+sitePel_S[is.na(sitePel_S)] <- 0
+
+# function to calculate total abundance 
+TotalAbundance <- function(x) {apply(sitePel_S[, 2:7], 1, sum)}
+# function to apply it to sitePel_S
+sitePel_S$TA_Pel_S <- mapply(TotalAbundance, x = 2)
+
+##add to sitespecies dataframe
+
+sitespecies <- sitespecies %>%
+  left_join(sitePel_S %>% dplyr::select(Site_ID, TA_Pel_S), by = "Site_ID")
 
 
 
@@ -288,46 +324,72 @@ FOVvolume <- FOVmean %>% dplyr::select(Site_ID, Volume)
 ## now lets add the volume surveyed into site ID 
 sitespecies <- merge(sitespecies, FOVvolume, by = "Site_ID", all.x = TRUE)
 
-#calculate densities
+#calculate densities (divide all values by Volume then multiply by 100 (for density per 100m transect))
 sitedensity <- sitespecies %>%
   mutate(across(
-    .cols = where(is.numeric), ~ . / Volume
+    .cols = where(is.numeric), 
+    ~ (. / Volume) * 100
   ))
 
-########################work on this tomorrow - can't get pivot right#####
+########################
 ###calculate mean per column
 Mean_Density <- sitedensity %>%
-  summarize(across(where(is.numeric), ~ mean(., na.rm = TRUE)))
+  summarize(across(where(is.numeric), ~ round(mean(., na.rm = TRUE), digits = 2)))
 
 Mean_Density_long<-Mean_Density%>%
-  pivot_longer(cols = everything(),
-               names_to = c("other", "Mean"))
+  pivot_longer(cols = everything(), names_to = "Species", values_to = "Mean")
+
+SD_Density <- sitedensity %>%
+  summarize(across(where(is.numeric), ~ round(sd(., na.rm = TRUE), digits = 2)))
+
+SD_Density_long<-SD_Density%>%
+  pivot_longer(cols = everything(), names_to = "Species", values_to = "SD")
+
+#join mean and sd dataframes
+Mean_SD_Density<-left_join(Mean_Density_long, SD_Density_long, by = "Species")
+
+Total_Count <- sitespecies %>%
+  summarize(across(where(is.numeric), ~ round(sum(., na.rm = TRUE), digits = 0)))
+
+Total_Count_long<-Total_Count%>%
+  pivot_longer(cols = everything(), names_to = "Species", values_to = "Total Count")
+
+#join total count dataframes
+Fish_Summary<-left_join(Total_Count_long, Mean_SD_Density, by = "Species")
+
+#########################################################
+#format table
+
+Fish_Summary$Species <- gsub("Abundance\\.", "", Fish_Summary$Species)
+
+Latin<-ROV%>%
+  dplyr::select(Latin, Common) %>%
+  distinct(Common, .keep_all = TRUE)%>%
+  rename(Species = Common)
+
+Fish_Summary<-left_join(Fish_Summary, Latin, by= "Species")
+
+lp("glue")
+
+Fish_Summary1 <- Fish_Summary %>%
+  mutate(species = if_else(
+    !is.na(Latin), 
+    glue("{Species} ({Latin})"), 
+    Species
+  ))
+
+Fish_Summary1<- Fish_Summary1%>%
+  dplyr::select(species, `Total Count`, Mean, SD)
+
+flextable(Fish_Summary1)
+
+#calculate mean and SD of species richness
+SpeciesRichness<- sitespecies%>%
+  summarise(mean(SpeciesRichness),
+            sd(SpeciesRichness))
 
 
-Mean_SD_Density <- sitedensity %>%
-  summarize(across(where(is.numeric), list(mean = ~ mean(., na.rm = TRUE), sd = ~ sd(., na.rm = TRUE))))
-
-Mean_SD_Density_long <- Mean_SD_Density %>%
-  pivot_longer(cols = everything(),
-               names_to = c(".value", "Statistic"),
-               names_sep = "_")
-
-#### add these to siteinfo ####
-subsitespecies <- dplyr::select(sitespecies, c("Site_ID", "TotalAbundance", "SpeciesRichness"))
-siteinfo <- merge(siteinfo, subsitespecies, by = "Site_ID", all.x = TRUE)
-siteinfo <- siteinfo %>% mutate(SpeciesRichness = ifelse(is.na(SpeciesRichness), 0, SpeciesRichness),
-                                TotalAbundance = ifelse(is.na(TotalAbundance), 0, TotalAbundance))
-
-####Total count by species by site###
-AllFish<-ROV%>%
-  group_by(Site_ID)%>%
-  count(Common)%>%
-  arrange(desc(Site_ID))%>%
-  pivot_wider(names_from = Common,
-              values_from = n,
-              values_fill = 0)
-
-
+############################################################################
 AllAdultBen<-ROV%>%
   group_by(Site_ID)%>%
   filter(Number < 10, Number!= "NA") %>%
