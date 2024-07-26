@@ -23,8 +23,6 @@ lp("mosaic")
 lp("car")
 lp("performance")
 lp("DHARMa")
-install.packages("GGally")
-library(GGally)
 lp("smplot2")  #package that allows you to add correlation stats to graphs
 lp("gridExtra")
 
@@ -266,31 +264,7 @@ summary_mean_sd_table <- align(summary_mean_sd_table, align = c("left"), part = 
 print(summary_mean_sd_table)
 save_as_image(summary_mean_sd_table, path='figures/HabVars_summary_mean_sd.png')
  
-%>%
-  add_header_row(values = c("", colnames(summary_mean_sd)),
-                 colwidths = c(1, rep(1, ncol(summary_mean_sd)))) %>%
-  set_header_labels(ft_labels(row_labels = " ", col_keys = colnames(summary_mean_sd)),
-                    part = "header")
 
-(summary_mean_sd_table, layout = "autofit") %>%
-  add_header_row()
-print(summary_mean_sd_table)
-
-
-write.table(summary_mean_sd_table, file='figures/HabVars_summary_mean_sd.jpg')
-
-
-
-summary_mean_sd_table <- kable(summary_mean_sd, format = "html", align = "l") %>%
-  kable_styling(full_width = FALSE)
-print(summary_mean_sd_table)
-write.table()
-
-# Specify the file path to save the HTML table
-file_path <- "summary_mean_sd_table.html"
-
-# Write the HTML table to a file
-writeLines(summary_mean_sd_table, con = file_path)
 
 #####site level comparison of habitat variables####
 ####prelim plots and tests####
@@ -377,25 +351,28 @@ print(rugRatioSTD_wilcox)
 
 # Create ggplot plots of rugosity metrics
 rugSTDROV <- ggplot(sitefull_s, aes(x = Rugosity_s, y = Std_Dev_Slope_s)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "ROV Rugosity", y = "Echosounder Rugosity (SD Slope)")+
+  geom_point(color = "deepskyblue") +
+  labs(title = "a)") +
+  sm_statCorr(corr_method="spearman", color = "deepskyblue4")+
+  labs(x = "ROV", y = "SD Slope")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 rugSTDROV  
 
 rugRatioROV <- ggplot(sitefull_s, aes(x = Rugosity_s, y = Ratio_s)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "ROV Rugosity", y = "Echosounder Rugosity (Chain Length Ratio)")+
+  geom_point(color = "deepskyblue") +
+  labs(title = "b)") +
+  sm_statCorr(corr_method="spearman", color = "deepskyblue4")+
+  labs(x = "ROV", y = "Ratio")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 rugRatioROV  
 
 rugRatioSTD <- ggplot(sitefull_s, aes(x = Ratio_s, y = Std_Dev_Slope_s)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "Echosounder Rugosity (Chain Length Ratio)", y = "Echosounder Rugosity (SD Slope)")+
+  geom_point(color = "deepskyblue") +
+  labs(title = "c)") +
+  sm_statCorr(corr_method="spearman", color = "deepskyblue4")+
+  labs(x = "Ratio", y = "SD Slope")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 rugRatioSTD
@@ -407,24 +384,39 @@ sitefull_s_subR <- sitefull_s %>%
 sitefull_s_longR <- sitefull_s_subR %>%
   rename(
     "ROV" = Rugosity_s,
-    "Echosounder (SD Slope)" = Std_Dev_Slope_s,
-    "Echosounder (CL Ratio)" = Ratio_s
+    "SD Slope" = Std_Dev_Slope_s,
+    "Ratio" = Ratio_s
   ) %>%
-  pivot_longer(cols = c(ROV, `Echosounder (SD Slope)`, `Echosounder (CL Ratio)`),
+  pivot_longer(cols = c(ROV, `SD Slope`, `Ratio`),
                names_to = "Method",
                values_to = "Rugosity")
 
+# Define the desired order of Method levels
+method_order <- c("SD Slope","Ratio", "ROV")  # Replace with your actual method names and desired order
+
+# Convert Method to a factor with specified levels and order
+sitefull_s_longR$Method <- factor(sitefull_s_longR$Method, levels = method_order)
+
 rug_box<-ggplot(sitefull_s_longR, aes(x = Method, y = Rugosity )) +
-  geom_boxplot(color = "gray40") +
-  geom_jitter(width = 0.2, alpha = 0.6) +
+  geom_boxplot(color = "deepskyblue4") +
+  labs(title = "d)") +
+  geom_jitter(width = 0.2, alpha = 0.6, color = "deepskyblue") +
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
         axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
 rug_box
 
-###put all rugosity plots together
-allrug<-grid.arrange(rugSTDROV, rugRatioROV, rugRatioSTD, rug_box, ncol = 2, respect=TRUE)
 
+
+###put all rugosity plots together
+allrug<-grid.arrange(rugSTDROV, rugRatioROV, rugRatioSTD, rug_box, nrow = 1, respect=TRUE)
+grid.text(
+  label = "Rugosity",
+  x = unit(0.5, "npc"),  # Horizontal center
+  y = unit(1, "npc") + unit(0.5, "lines"),  # Slightly above the grid
+  gp = gpar(fontsize = 14, fontface = "bold")  # Customize font size and style
+)
+allrug
 ggsave("figures/ROV_Echo_Rugosity_spearmancor.png", plot = allrug, width = 25, height = 25, units = "cm")
 
 #######################################################################################################  
@@ -461,65 +453,79 @@ print(rugRATIOrock_spear)
 rugRATIOrock_wilcox<-wilcox.test(sitefull_s$Ratio_s, sitefull_s$Rock_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
 print(rugRATIOrock_wilcox)
 #p=0.81 (not significant so no sign. difference)
+colors()
 
 ####plot rock vs rugosity metrics
 rugSTDrock <- ggplot(sitefull_s, aes(x = Rock, y = Std_Dev_Slope_s)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "ROV Rock (%)", y = "Echosounder Rugosity (SD Slope)")+
+  geom_point(color = "orange1") +
+  labs(title = "e)") +
+  sm_statCorr(corr_method="spearman", color = "orange3")+
+  labs(x = "Rock (%)", y = "SD Slope")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 rugSTDrock
 
 rugRATIOrock <- ggplot(sitefull_s, aes(x = Rock, y = Ratio_s)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "ROV Rock (%)", y = "Echosounder Rugosity (CL Ratio)")+
+  geom_point(color = "orange1") +
+  labs(title = "f)") +
+  sm_statCorr(corr_method="spearman", color = "orange3")+
+  labs(x = "Rock (%)", y = "Ratio")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 rugRATIOrock
 
-ROV_Rock_Slope <- ggplot(sitefull_s, aes(x = Slope_s, y = Rock_s)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "ROV Slope scaled", y = "Rock scaled")+
-  theme_bw()+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-ROV_Rock_Slope
+# ROV_Rock_Slope <- ggplot(sitefull_s, aes(x = Slope_s, y = Rock_s)) +
+#   geom_point(color = "orange1") +
+#   sm_statCorr(corr_method="spearman", color = "orange3")+
+#   labs(x = "ROV Slope scaled", y = "Rock scaled")+
+#   theme_bw()+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# ROV_Rock_Slope
 
 ROV_Rock_Rugosity <- ggplot(sitefull_s, aes(x = Rock, y = Rugosity_s )) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "ROV Rock (%)", y = "ROV Rugosity")+
+  geom_point(color = "orange1") +
+  labs(title = "g)") +
+  sm_statCorr(corr_method="spearman", color = "orange3")+
+  labs(x = "Rock (%)", y = "ROV")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ROV_Rock_Rugosity
 
 ## box plot the ROCK data to make sense of the value distribution 
 sitefull_s_subRock <- sitefull_s %>%
-  dplyr::select("Site_ID", "Rock_s", "Std_Dev_Slope_s", "Ratio_s")
+  dplyr::select("Site_ID", "Rock_s", "Std_Dev_Slope_s", "Ratio_s", "Rugosity_s")
 
 sitefull_s_longRock <- sitefull_s_subRock %>%
   rename(
-    "ROV" = Rock_s,
-    "Echosounder (SD Slope)" = Std_Dev_Slope_s,
-    "Echosounder (CL Ratio)" = Ratio_s
+    "ROV" = Rugosity_s,
+    "SD Slope" = Std_Dev_Slope_s,
+    "Ratio" = Ratio_s,
+    "Rock (%)" = Rock_s
   ) %>%
-  pivot_longer(cols = c(ROV, `Echosounder (SD Slope)`, `Echosounder (CL Ratio)`),
+  pivot_longer(cols = c(ROV, `SD Slope`, `Ratio`, 'Rock (%)'),
                names_to = "Method",
                values_to = "Rock")
 
+# Define the desired order of Method levels
+method_order <- c("SD Slope","Ratio", "ROV","Rock (%)")  # Replace with your actual method names and desired order
+
+# Convert Method to a factor with specified levels and order
+sitefull_s_longRock$Method <- factor(sitefull_s_longRock$Method, levels = method_order)
+
 rock_box<-ggplot(sitefull_s_longRock, aes(x = Method, y = Rock )) +
-  geom_boxplot(color = "gray40") +
-  geom_jitter(width = 0.2, alpha = 0.6) +
+  geom_boxplot(color = "orange3") +
+  geom_jitter(width = 0.2, alpha = 0.6, color= "orange1") +
   theme_bw()+
+  labs(title = "h)") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
         axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
 rock_box
 
-allrock<-grid.arrange(rugRATIOrock, rugSTDrock, ROV_Rock_Rugosity, rock_box, ncol = 2, respect=TRUE)
-allrock
-ggsave("figures/ROV_Echo_Rock_spearmancor.png", plot = allrock, width = 25, height = 25, units = "cm")
+allrug_rock<-grid.arrange(rugSTDROV, rugRatioROV, rugRatioSTD, rug_box,
+                      rugSTDrock,rugRATIOrock,ROV_Rock_Rugosity, rock_box, nrow = 2, respect=TRUE)
+
+
+ggsave("figures/Rug_Rock_spearmancor.png", plot = allrug_rock, width = 25, height = 25, units = "cm")
 
 #############################################
 
@@ -555,29 +561,31 @@ print(slope20_spear)
 slope20_wilcox<-wilcox.test(sitefull_s$Slope_s, sitefull_s$Average_20m_slope_s, exact= FALSE, paired=TRUE) #exact = FALSE gets rid of impact of tied values on ranking, paired=TRUE makes it a paired test for dependent samples
 print(slope20_wilcox)
 #p=0.3 (not significant so no sign. difference)
-
-slope5_s <- ggplot(sitefull_s, aes(x = Slope_s, y = Average_5m_slope_s)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "ROV Slope scaled", y = "Echosounder Slope scaled (5m Average)")+
-  theme_bw()+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-slope5_s
-
-
-
 slope20_s <- ggplot(sitefull_s, aes(x = Slope_s, y = Average_20m_slope_s)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "ROV Slope scaled", y = "Echosounder Slope scaled (20m Average)")+
+  geom_point(color = "indianred2") +
+  labs(title = "i)") +
+  sm_statCorr(corr_method="spearman", color = "indianred4")+
+  labs(x = "ROV", y = "20m")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 slope20_s
 
+slope5_s <- ggplot(sitefull_s, aes(x = Slope_s, y = Average_5m_slope_s)) +
+  geom_point(color = "indianred2") +
+  labs(title = "j)") +
+  sm_statCorr(corr_method="spearman", color = "indianred4")+
+  labs(x = "ROV", y = "5m")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+slope5_s
+
+colors()
+
 slope20_5_s <- ggplot(sitefull_s, aes(x = Average_5m_slope_s, y = Average_20m_slope_s)) +
-  geom_point(color = "gray40") +
-  sm_statCorr(corr_method="spearman", color = "black")+
-  labs(x = "Echosounder Slope scaled (5m Average)", y = "Echosounder Slope scaled (20m Average)")+
+  geom_point(color = "indianred2") +
+  labs(title = "k)") +
+  sm_statCorr(corr_method="spearman", color = "indianred4")+
+  labs(x = "5m", y = "20m")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 slope20_5_s
@@ -592,26 +600,50 @@ str(sitefull_s_sub)
 sitefull_s_long <- sitefull_s_sub %>%
   rename(
     "ROV" = Slope_s,
-    "Echosounder (5m)" = Average_5m_slope_s,
-    "Echosounder (20m)" = Average_20m_slope_s
+    "5m" = Average_5m_slope_s,
+    "20m" = Average_20m_slope_s
   ) %>%
-  pivot_longer(cols = c(ROV, `Echosounder (5m)`,`Echosounder (20m)` ),
+  pivot_longer(cols = c('ROV', `5m`,`20m` ),
                names_to = "Method",
                values_to = "Slope")
 
 slopebox_s<- ggplot(sitefull_s_long, aes(x = Method, y = Slope )) +
-  geom_boxplot(color = "gray40") +
-  geom_jitter(width = 0.2, alpha = 0.6) +
+  geom_boxplot(color = "indianred4") +
+  labs(title = "l)") +
+  geom_jitter(width = 0.2, alpha = 0.6, color = "indianred2") +
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
         axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
 slopebox_s
 
-allslope_s<-grid.arrange(slope5_s, slope20_s, slope20_5_s, slopebox_s,  ncol = 2, respect=TRUE)
-ggsave("figures/ROV_Echo_Slope_scaled_spearmancor.png", plot = allslope_s, width = 25, height = 25, units = "cm")
 
+row1 <- arrangeGrob(
+  rugSTDROV, rugRatioROV, rugRatioSTD, rug_box,
+  ncol = 4, 
+  top = textGrob("Echosounder vs. ROV rugosity metrics", gp = gpar(fontsize = 12, fontface = "bold"))
+)
 
-#### try not scaled ###
+row2 <- arrangeGrob(
+  rugSTDrock, rugRATIOrock, ROV_Rock_Rugosity, rock_box,
+  ncol = 4, 
+  top = textGrob("All rugosity metrics vs. rock cover", gp = gpar(fontsize = 12, fontface = "bold"))
+)
+
+row3 <- arrangeGrob(
+  slope20_s, slope5_s, slope20_5_s, slopebox_s,
+  ncol = 4, 
+  top = textGrob("Echosounder vs. ROV slope metrics", gp = gpar(fontsize = 12, fontface = "bold"))
+)
+
+# Combine all rows into one final layout
+allrug_rock_slope <- arrangeGrob(
+  row1, row2, row3,
+  nrow = 3
+)
+grid.arrange(allrug_rock_slope)
+ggsave("figures/allrug_rock_slope.png", plot = allrug_rock_slope, width = 25, height = 25, units = "cm")
+
+#### try not scaled ####
 
 slope5 <- ggplot(sitefull, aes(x = Slope, y = Average_5m_slope)) +
   geom_point(color = "gray40") +
@@ -652,6 +684,8 @@ slopebox<- ggplot(sitefull_long, aes(x = Method, y = Slope )) +
 slopebox
 
 allslope<-grid.arrange(slope5, slope20,slopebox,  ncol = 2, respect=TRUE)
+
+
 
 ggsave("figures/ROV_Echo_Slope_spearmancor.png", plot = allslope, width = 25, height = 25, units = "cm")
 
