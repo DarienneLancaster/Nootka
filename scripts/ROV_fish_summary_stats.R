@@ -58,17 +58,18 @@ flextable(AllF)
 #create new column with species common names
 ROV$Common<- ifelse(ROV$Species == "caurinus", "Copper rockfish",
                      ifelse(ROV$Species == "maliger", "Quillback rockfish",
-                            ifelse(ROV$Species == "pinniger", "Canary rockfish",
+                            ifelse(ROV$Species == "pinniger" & grepl("BP|SP|P", ROV$Notes), "Canary rockfish Pelagic",
+                                   ifelse(ROV$Species == "pinniger" & !grepl("BP|SP|P", ROV$Notes), "Canary rockfish Benthic",
                                    ifelse(ROV$Species == "miniatus", "Vermillion rockfish",
                                           ifelse(ROV$Species == "melanops", "Black rockfish",
                                                  ifelse(ROV$Species == "elongatus", "Lingcod",
                                                         ifelse(ROV$Species == "decagrammus", "Kelp greenling",
                                                                ifelse(ROV$Species == "emphaeus", "Puget Sound rockfish",
                                                                       ifelse(ROV$Species == "flavidus" & grepl("BP|SP|P", ROV$Notes), "Yellowtail rockfish Pelagic",
-                                                                             ifelse(ROV$Species == "flavidus" & !grepl("BP|SP|P", ROV$Notes), "Yellowtail rockfish Benthic",
+                                                                             ifelse(ROV$Species == "flavidus" & !grepl("BB|SB", ROV$Notes), "Yellowtail rockfish Benthic",
                                                                              ifelse(ROV$Species == "pictus", "Painted greenling",
                                                                                     ifelse(ROV$Species == "armatus", "Staghorn sculpin",
-                                                                                           ifelse(ROV$Species == "entomelas", "Widow rockfish",
+                                                                                           ifelse(ROV$Species == "entomelas" & grepl("BP|SP|P", ROV$Notes), "Widow rockfish Pelagic",
                                                                                                   ifelse(ROV$Species == "pallasii", "Pacific herring",
                                                                                                          ifelse(ROV$Species == "vacca", "Pile Perch",
                                                                                                                 ifelse(ROV$Species == "colliei", "Spotted ratfish", 
@@ -77,14 +78,17 @@ ROV$Common<- ifelse(ROV$Species == "caurinus", "Copper rockfish",
                                                                                                                                      ifelse(ROV$Species == "frenatus", "Kelp Perch", 
                                                                                                                                             ifelse(ROV$Species == "sordidus", "Flatfish spp.", 
                                                                                                                                                    ifelse(ROV$Species == "vetulus", "Flatfish spp.",
-                                                                                                                                                          ifelse(ROV$Species == "unknown" & grepl("SB", ROV$Notes) & grepl("J", ROV$Stage), "YOY rockfish Benthic",
-                                                                                                                                                                 ifelse(ROV$Species == "unknown" & grepl("SP", ROV$Notes) & grepl("J", ROV$Stage), "YOY rockfish Pelagic",
+                                                                                                                                                          ifelse(ROV$Genus=="Sebastes" & ROV$Species == "unknown" & grepl("SB", ROV$Notes), "YOY rockfish Benthic",
+                                                                                                                                                                 ifelse(ROV$Genus=="Sebastes" & ROV$Species == "unknown" & grepl("SP", ROV$Notes), "YOY rockfish Pelagic",
                                                                                                                                                                       ifelse(ROV$Species == "unknown" & grepl("BP|SP|P", ROV$Notes), "Unknown Pelagic",
                                                                                                                                                                             ifelse(ROV$Genus == "Sebastes" & ROV$Species == "unknown" & !grepl("BP|SP|P|SB|BB", ROV$Notes), "Sebastes spp.",
-                                                                                                                                                                                   ifelse(ROV$Genus == "unknown" & ROV$Species == "unknown", "Unknown Benthic","Unknown"))))))))))))))))))))))))))
+                                                                                                                                                                                   ifelse(ROV$Genus == "unknown" & ROV$Species == "unknown" & !grepl("BP|SP|P|SB|BB", ROV$Notes), "Unknown Benthic",
+                                                                                                                                                                                          ifelse(ROV$Genus == "unknown" & ROV$Species == "unknown" & grepl("SB", ROV$Notes), "Unknown Schooling Benthic" ,"Unknown"))))))))))))))))))))))))))))
                                                                                                                                                                     
-
-
+ROV$Common<-as.factor(ROV$Common)
+levels(ROV$Common)
+ROVuk<-ROV%>%
+  filter(Common == "Unknown")
 
 #### subset dataframe to only be fish####
 ROVFish<- ROV%>%
@@ -124,13 +128,12 @@ sitespecies$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
 ### calculate totals for benthic fish####
 
 Benthic <- ROV %>% 
-  filter(Number < 10, Number!= "NA", Notes != "P") %>%
-  filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae", Family) |
-           grepl("Ratfish|Flatfish|Benthic|Skate", Common))
-
+  filter(grepl("Black rockfish|Canary rockfish Benthic|Copper rockfish|Flatfish|Kelp greenling|Kelp Perch|Lingcod|Painted greenling|Pile Perch|Puget Sound rockfish|       
+                Quillback rockfish|Sebastes spp.|Skate spp.|Spotted ratfish|Staghorn sculpin|Unknown Benthic|Unknown Schooling Benthic|Vermillion rockfish|Yellowtail rockfish Benthic|YOY rockfish Benthic", Common))
 
 # create dataset that has only Site_ID and FullName 
 sitebenthic <- unique(Benthic[, c("Site_ID", "Common")])
+
 
 # function to get abundance of each species per site 
 get.abundance <- function(xx, ss){ 
@@ -148,20 +151,20 @@ sitebenthic <- reshape(sitebenthic, v.names = "Abundance", idvar = "Site_ID", ti
 sitebenthic[is.na(sitebenthic)] <- 0
 
 # function to calculate total abundance 
-TotalAbundance <- function(x) {apply(sitebenthic[, 2:15], 1, sum)}
+TotalAbundance <- function(x) {apply(sitebenthic[, 2:19], 1, sum)}
 # function to apply it to sitebenthic
-sitebenthic$TA_AllBen <- mapply(TotalAbundance, x = 2)
+sitebenthic$'All Benthic Fish' <- mapply(TotalAbundance, x = 2)
 
 ##add to sitespecies dataframe
 
 sitespecies <- sitespecies %>%
-  left_join(sitebenthic %>% dplyr::select(Site_ID, TA_AllBen), by = "Site_ID")
+  left_join(sitebenthic %>% dplyr::select(Site_ID, 'All Benthic Fish'), by = "Site_ID")
 
 ### calculate totals for rocky reef fish ####
 
 RRF <- ROV %>% 
-  filter(Number < 10, Number!= "NA", Notes != "P") %>%
-  filter(grepl("Scorpaenidae|Hexagrammidae|Cottidae", Family))
+  filter(grepl("Black rockfish|Canary rockfish Benthic|Copper rockfish|Kelp greenling|Lingcod|Painted greenling|Puget Sound rockfish|       
+                Quillback rockfish|Sebastes|Staghorn sculpin|Vermillion rockfish|Yellowtail rockfish Benthic", Common))
 
 
 # create dataset that has only Site_ID and FullName 
@@ -183,20 +186,21 @@ siteRRF <- reshape(siteRRF, v.names = "Abundance", idvar = "Site_ID", timevar = 
 siteRRF[is.na(siteRRF)] <- 0
 
 # function to calculate total abundance 
-TotalAbundance <- function(x) {apply(siteRRF[, 2:13], 1, sum)}
+TotalAbundance <- function(x) {apply(siteRRF[, 2:12], 1, sum)}
 # function to apply it to siteRRF
-siteRRF$TA_RRF <- mapply(TotalAbundance, x = 2)
+siteRRF$'All Rocky Reef Fish' <- mapply(TotalAbundance, x = 2)
 
 ##add to sitespecies dataframe
 
 sitespecies <- sitespecies %>%
-  left_join(siteRRF %>% dplyr::select(Site_ID, TA_RRF), by = "Site_ID")
+  left_join(siteRRF %>% dplyr::select(Site_ID, 'All Rocky Reef Fish'), by = "Site_ID")
 
 ### calculate totals for Other benthics (aka mudfish) ####
 
 Oth_Ben <- ROV %>% 
-  filter(Number < 10, Number!= "NA", Notes != "P") %>%
-  filter(!grepl("Scorpaenidae|Hexagrammidae|Cottidae", Family))
+  filter(grepl("Flatfish|Kelp Perch|Pile Perch|ratfish|Unknown Benthic", Common))
+
+
 
 
 # create dataset that has only Site_ID and FullName 
@@ -218,14 +222,14 @@ siteOth_Ben <- reshape(siteOth_Ben, v.names = "Abundance", idvar = "Site_ID", ti
 siteOth_Ben[is.na(siteOth_Ben)] <- 0
 
 # function to calculate total abundance 
-TotalAbundance <- function(x) {apply(siteOth_Ben[, 2:7], 1, sum)}
+TotalAbundance <- function(x) {apply(siteOth_Ben[, 2:6], 1, sum)}
 # function to apply it to siteOth_Ben
-siteOth_Ben$TA_Oth_Ben <- mapply(TotalAbundance, x = 2)
+siteOth_Ben$'Other Benthic Fish' <- mapply(TotalAbundance, x = 2)
 
 ##add to sitespecies dataframe
 
 sitespecies <- sitespecies %>%
-  left_join(siteOth_Ben %>% dplyr::select(Site_ID, TA_Oth_Ben), by = "Site_ID")
+  left_join(siteOth_Ben %>% dplyr::select(Site_ID, 'Other Benthic Fish'), by = "Site_ID")
 
 
 
@@ -233,8 +237,8 @@ sitespecies <- sitespecies %>%
 ### calculate totals for schooling benthic####
 
 Ben_S <- ROV %>% 
-  filter(Number > 9, Number!= "NA", Notes != "P") %>%
-  filter(grepl("Benthic", Common))
+  filter(Number > 9) %>%
+  filter(grepl("Unknown Schooling Benthic|YOY rockfish Benthic", Common))
 
 
 # create dataset that has only Site_ID and FullName 
@@ -258,18 +262,17 @@ siteBen_S[is.na(siteBen_S)] <- 0
 # function to calculate total abundance 
 TotalAbundance <- function(x) {apply(siteBen_S[, 2:3], 1, sum)}
 # function to apply it to siteBen_S
-siteBen_S$TA_Ben_S <- mapply(TotalAbundance, x = 2)
+siteBen_S$'Schooling Benthics' <- mapply(TotalAbundance, x = 2)
 
 ##add to sitespecies dataframe
 
 sitespecies <- sitespecies %>%
-  left_join(siteBen_S %>% dplyr::select(Site_ID, TA_Ben_S), by = "Site_ID")
+  left_join(siteBen_S %>% dplyr::select(Site_ID, 'Schooling Benthics'), by = "Site_ID")
 
 ### calculate totals for pelagics####
 
 Pel_S <- ROV %>% 
-  filter(Number > 9, Number!= "NA")%>%
-  filter(grepl("BP|SP", Notes))
+  filter(grepl("Pacific herring|YOY rockfish Pelagic|Yellowtail rockfish Pelagic|Widow rockfish Pelagic|Canary rockfish Pelagic", Common))
 
 
 # create dataset that has only Site_ID and FullName 
@@ -291,14 +294,14 @@ sitePel_S <- reshape(sitePel_S, v.names = "Abundance", idvar = "Site_ID", timeva
 sitePel_S[is.na(sitePel_S)] <- 0
 
 # function to calculate total abundance 
-TotalAbundance <- function(x) {apply(sitePel_S[, 2:7], 1, sum)}
+TotalAbundance <- function(x) {apply(sitePel_S[, 2:6], 1, sum)}
 # function to apply it to sitePel_S
-sitePel_S$TA_Pel_S <- mapply(TotalAbundance, x = 2)
+sitePel_S$'All Pelagic Fish' <- mapply(TotalAbundance, x = 2)
 
 ##add to sitespecies dataframe
 
 sitespecies <- sitespecies %>%
-  left_join(sitePel_S %>% dplyr::select(Site_ID, TA_Pel_S), by = "Site_ID")
+  left_join(sitePel_S %>% dplyr::select(Site_ID, 'All Pelagic Fish'), by = "Site_ID")
 
 
 
@@ -382,6 +385,9 @@ Fish_Summary1<- Fish_Summary1%>%
   dplyr::select(species, `Total Count`, Mean, SD)
 
 flextable(Fish_Summary1)
+
+ROVps<-ROV%>%
+  filter(Common =="Puget Sound rockfish")
 
 #calculate mean and SD of species richness
 SpeciesRichness<- sitespecies%>%
