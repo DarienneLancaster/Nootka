@@ -849,7 +849,7 @@ binfull_s<- binfull%>%
          Slope_s=scale(Slope),
          Depth_s=scale(Depth),
          Average_Depth_s=scale(Average_Depth))%>%
-  mutate_at(vars(47:55), as.numeric)
+  mutate_at(vars(47:54), as.numeric)
 str(binfull_s)
 
 #####Binned data relationships with habitat variables#####
@@ -1379,6 +1379,61 @@ AIC(D1) #-220 (52% exp dev)
 #steps - remove Rugosity (AIC 217, 55%), NASC_10_1m:Cumulative_LG_DZ_Area (AIC 219, 55%), Average_Depth (AIC 219 - 53%), 
 #Cumulative_LG_DZ_Area (AIC 220, 52%)
 
+###AIC model selection
+
+#Full model with all vars and no quadratic for slope
+Full <- glm(Ben ~ NASC_10_1m + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_10_1m:Average_5m_slope + NASC_10_1m:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(Full)
+
+#remove rugosity
+NoRug <- glm(Ben ~ NASC_10_1m + Average_5m_slope + Average_Depth + Cumulative_LG_DZ_Area +
+            NASC_10_1m:Average_5m_slope + NASC_10_1m:Cumulative_LG_DZ_Area, 
+          family = gaussian,  data = sitefull)
+summary(NoRug)
+
+#remove NASC/Deadzone Interaction
+NoRug_NASCDZ <- glm(Ben ~ NASC_10_1m + Average_5m_slope + Average_Depth + Cumulative_LG_DZ_Area +
+               NASC_10_1m:Average_5m_slope, 
+             family = gaussian,  data = sitefull)
+summary(NoRug_NASCDZ)
+
+#remove Depth
+NoRug_NASCDZ_Dep <- glm(Ben ~ NASC_10_1m + Average_5m_slope + Cumulative_LG_DZ_Area +
+                       NASC_10_1m:Average_5m_slope, 
+                     family = gaussian,  data = sitefull)
+summary(NoRug_NASCDZ_Dep)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((NoRug_NASCDZ_Dep)$null.deviance-(NoRug_NASCDZ_Dep)$deviance)/(NoRug_NASCDZ_Dep)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+#remove Deadzone
+NoRug_NASCDZ_Dep_DZ <- glm(Ben ~ NASC_10_1m + Average_5m_slope + 
+                          NASC_10_1m:Average_5m_slope, 
+                        family = gaussian,  data = sitefull)
+summary(NoRug_NASCDZ_Dep_DZ)
+AIC(NoRug_NASCDZ_Dep_DZ)
+
+#remove Slope and slope/NASC Interaction
+NoRug_NASCDZ_Dep_DZ_slope <- glm(Ben ~ NASC_10_1m , 
+                           family = gaussian,  data = sitefull)
+summary(NoRug_NASCDZ_Dep_DZ_slope)
+AIC(NoRug_NASCDZ_Dep_DZ_slope)
+
+lp("AICcmodavg")
+
+###put all models in a list to compare AIC weights
+models <- list(NoRug_NASCDZ_Dep_DZ_slope, NoRug_NASCDZ_Dep_DZ, NoRug_NASCDZ_Dep, NoRug_NASCDZ, NoRug, Full)
+
+model.names <- c('NoRug_NASCDZ_Dep_DZ_slope','NoRug_NASCDZ_Dep_DZ', 'NoRug_NASCDZ_Dep', 'NoRug_NASCDZ', 'NoRug', 'Full')
+
+AIC_results<-aictab(cand.set = models, modnames = model.names)
+flextable(AIC_results)
+
+
 ####*FINAL 10m ECHO MODEL* - based on AIC####
 ####Do not include slope as quadratic as it does not significantly improve model from slope as simple linear term - they are almost identical####
 D1 <- glm(Ben ~ NASC_10_1m + Average_5m_slope +
@@ -1406,40 +1461,42 @@ TF2 <- sitefull %>%
 
 ## plot residuals vs predictors (looking for flat line with lm)
 
-ggplot(TF2) +
+E1<-ggplot(TF2) +
   geom_point(aes(x = Average_5m_slope,
                  y = resid)) +
   geom_smooth(aes(x = Average_5m_slope,
                   y = resid),
               method = "lm")
 
-ggplot(TF2) +
+E2<-ggplot(TF2) +
   geom_point(aes(x = Std_Dev_Slope,
                  y = resid)) +
   geom_smooth(aes(x = Std_Dev_Slope,
                   y = resid),
               method = "lm")
 
-ggplot(TF2) +
+E3<-ggplot(TF2) +
   geom_point(aes(x = Cumulative_LG_DZ_Area,
                  y = resid)) +
   geom_smooth(aes(x = Cumulative_LG_DZ_Area,
                   y = resid),
               method = "lm")
 
-ggplot(TF2) +
+E4<-ggplot(TF2) +
   geom_point(aes(x = NASC_10_1m,
                  y = resid)) +
   geom_smooth(aes(x = NASC_10_1m,
                   y = resid),
               method = "lm")
 
-ggplot(TF2) +
+E5<-ggplot(TF2) +
   geom_point(aes(x = Average_Depth,
                  y = resid)) +
   geom_smooth(aes(x = Average_Depth,
                   y = resid),
               method = "lm")
+
+resVpred<-grid.arrange(E1, E2, E3, E4, E5, nrow = 2, respect=TRUE)
 
 #check model fit with DHARMa tests
 r <- simulateResiduals(D1, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
@@ -1613,20 +1670,21 @@ testDispersion(D1)
 ###################################################################
 ####Echo model using only ROV available habitat variables####
 #model copying variables from ROV (no significant predictors and explains 7% of deviation only (ROV model explains 18% - still low))
-D1 <- glm(Ben ~  Average_5m_slope + Std_Dev_Slope + Average_Depth, 
+Slope_Depth_Rugosity <- glm(Ben ~  Average_5m_slope + Std_Dev_Slope + Average_Depth, 
           family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-193 (4% Dev exp)
+summary(Slope_Depth_Rugosity)
+AIC(Slope_Depth_Rugosity) #-193 (4% Dev exp)
 
-D1 <- glm(Ben ~  Average_5m_slope  + Average_Depth, 
+Slope_Depth_Rugosity<- glm(Ben ~  Average_5m_slope  + Average_Depth, 
           family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-195 (4% Dev exp)
+summary(Slope_Depth_Rugosity)
+AIC(Slope_Depth_Rugosity) #-195 (4% Dev exp)
 
-D1 <- glm(Ben ~  Average_5m_slope, 
+Slope <- glm(Ben ~  Average_5m_slope, 
           family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-197 (4% Dev exp)
+summary(Slope)
+AIC(Slope) #-197 (4% Dev exp)
+
 
 ##THOUGHTS:  when sampling in pre selected rockfish habitat echosounder derived habitat variables
 #are unable to predict benthic rockfish densities without the addition of NASC values. It is likely that if an 
@@ -1699,31 +1757,103 @@ testDispersion(D1)
 #### ROV model - Slope, Rug, Depth only####
 #model using only variables also available from echosounder (best model - 18% dev explained)
 ###full model
-D1 <- glm(Ben ~  Slope + Rugosity + Depth,
+Slope_Rugosity_Depth_Rock <- glm(Ben ~  Slope + Rugosity + Depth+Rock,
           family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-199 (18% Dev Exp)
+summary(Slope_Rugosity_Depth_Rock)
+AIC(Slope_Rugosity_Depth_Rock) #-199 (18% Dev Exp)
+
+Slope_Rugosity_Rock <- glm(Ben ~  Slope + Rugosity + Rock,
+                                 family = gaussian,  data = sitefull)
+summary(Slope_Rugosity_Rock)
+AIC(Slope_Rugosity_Rock) #-199 (18% Dev Exp)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((Slope_Rugosity_Rock)$null.deviance-(Slope_Rugosity_Rock)$deviance)/(Slope_Rugosity_Rock)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+Rugosity_Rock <- glm(Ben ~ Rugosity + Rock,
+                           family = gaussian,  data = sitefull)
+summary(Rugosity_Rock)
+AIC(Rugosity_Rock) #-199 (18% Dev Exp)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((Rugosity_Rock)$null.deviance-(Rugosity_Rock)$deviance)/(Rugosity_Rock)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+Slope_Rock <- glm(Ben ~ Slope + Rock,
+                     family = gaussian,  data = sitefull)
+summary(Slope_Rock)
+AIC(Slope_Rock) #-199 (18% Dev Exp)
 
 ###AIC selection BEST MODEL (remove Depth)
-D1 <- glm(Ben ~  Slope + Rugosity,
+Slope_Rugosity <- glm(Ben ~  Slope + Rugosity,
           family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-201 (17% Dev Exp)
+summary(Slope_Rugosity)
+AIC(Slope_Rugosity) #-201 (17% Dev Exp)
 
 
+###put all models in a list to compare AIC weights
+models <- list(Slope_Rugosity_Depth_Rock, Slope_Rugosity_Rock,Rugosity_Rock,Slope_Rock, Slope_Rugosity)
+
+model.names <- c('Slope_Rugosity_Depth_Rock', 'Slope_Rugosity_Rock','Rugosity_Rock','Slope_Rock', 'Slope_Rugosity')
+
+AIC_ROV_results<-aictab(cand.set = models, modnames = model.names)
+flextable(AIC_ROV_results)
+
+### model validation for ROV model
+
+par(mfrow = c(2, 2))
+plot(Slope_Rugosity_Rock)
+
+check_overdispersion(Slope_Rugosity_Rock)
 
 
-##### ROV model with rock included ####
-D1 <- glm(Ben ~  Slope + Rugosity + Depth + Rock,
-          family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-202 (27% Dev Exp)
+#####calculate residuals and add to dataframe
+residuals <- residuals(Slope_Rugosity_Rock)
+TF2 <- sitefull %>%
+  mutate(resid = residuals)
 
-#AIC selection (remove depth)  BEST MODEL
-D1 <- glm(Ben ~  Slope + Rugosity+ Rock,
-          family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-204 (27% Dev Exp)
+## plot residuals vs predictors (looking for flat line with lm)
+
+
+E1<-ggplot(TF2) +
+  geom_point(aes(x = Slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Slope,
+                  y = resid),
+              method = "lm")
+
+E2<-ggplot(TF2) +
+  geom_point(aes(x = Rugosity,
+                 y = resid)) +
+  geom_smooth(aes(x = Rugosity,
+                  y = resid),
+              method = "lm")
+
+E3<-ggplot(TF2) +
+  geom_point(aes(x = Rock,
+                 y = resid)) +
+  geom_smooth(aes(x = Rock,
+                  y = resid),
+              method = "lm")
+
+E4<-ggplot(TF2) +
+  geom_point(aes(x = Depth,
+                 y = resid)) +
+  geom_smooth(aes(x = Depth,
+                  y = resid),
+              method = "lm")
+
+
+resVpred<-grid.arrange(E1, E2, E3, E4,  nrow = 2, respect=TRUE)
+
+#check model fit with DHARMa tests
+r <- simulateResiduals(Slope_Rugosity_Rock, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
+#check dispersion
+testDispersion(D1)
+
 
 
 
