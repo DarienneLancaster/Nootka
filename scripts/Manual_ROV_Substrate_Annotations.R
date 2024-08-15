@@ -1860,11 +1860,47 @@ testDispersion(D1)
 
 ##### ROV/ECHO hybrid model with rock and NASC included ####
 ## Full model
-D1 <- glm(Ben ~  Slope + Rugosity + Depth + Rock +NASC_10_1m +
+Slope_Rug_Dep_Rock_NASC_NASCSlope <- glm(Ben ~  Slope + Rugosity + Depth + Rock +NASC_10_1m +
             NASC_10_1m:Slope,
           family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-220 (59% Dev Exp)
+summary(Slope_Rug_Dep_Rock_NASC_NASCSlope)
+AIC(Slope_Rug_Dep_Rock_NASC_NASCSlope) #-220 (59% Dev Exp)
+
+Slope_Rug_Rock_NASC_NASCSlope <- glm(Ben ~  Slope + Rugosity  + Rock +NASC_10_1m +
+                                           NASC_10_1m:Slope,
+                                         family = gaussian,  data = sitefull)
+summary(Slope_Rug_Rock_NASC_NASCSlope)
+AIC(Slope_Rug_Rock_NASC_NASCSlope) #-220 (59% Dev Exp)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((Slope_Rug_Rock_NASC_NASCSlope)$null.deviance-(Slope_Rug_Rock_NASC_NASCSlope)$deviance)/(Slope_Rug_Rock_NASC_NASCSlope)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+Slope_Rug_NASC_NASCSlope <- glm(Ben ~  Slope + Rugosity +NASC_10_1m +
+                                       NASC_10_1m:Slope,
+                                     family = gaussian,  data = sitefull)
+summary(Slope_Rug_NASC_NASCSlope)
+AIC(Slope_Rug_NASC_NASCSlope) #-220 (59% Dev Exp)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((Slope_Rug_NASC_NASCSlope)$null.deviance-(Slope_Rug_NASC_NASCSlope)$deviance)/(Slope_Rug_NASC_NASCSlope)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+Slope_NASC_NASCSlope <- glm(Ben ~  Slope  +NASC_10_1m +
+                                  NASC_10_1m:Slope,
+                                family = gaussian,  data = sitefull)
+summary(Slope_NASC_NASCSlope)
+AIC(Slope_NASC_NASCSlope) #-220 (59% Dev Exp)
+
+###put all models in a list to compare AIC weights
+models <- list(Slope_Rug_Dep_Rock_NASC_NASCSlope, Slope_Rug_Rock_NASC_NASCSlope,Slope_Rug_NASC_NASCSlope, Slope_NASC_NASCSlope)
+
+model.names <- c('Slope_Rug_Dep_Rock_NASC_NASCSlope', 'Slope_Rug_Rock_NASC_NASCSlope','Slope_Rug_NASC_NASCSlope', 'Slope_NASC_NASCSlope')
+
+AIC_hybrid_results<-aictab(cand.set = models, modnames = model.names)
+flextable(AIC_hybrid_results)
 
 
 #BEST MODEL (best residuals and simplest - no major diff in AIC) - AIC selection (remove depth - AIC -221 (58%), remove ROck AIC - 220 (54%))  
