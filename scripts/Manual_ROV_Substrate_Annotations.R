@@ -178,8 +178,8 @@ ROV_Sub_Bin<-left_join(bincountT, bin_Srov, by=c("Site", "Bin"))
 load("wdata/site_DE.RData")
 
 #rename site to match site_ID
-ROV_Sub_Site<-ROV_Sub_Site%>%
-  rename(Site_ID=Site)
+#ROV_Sub_Site<-ROV_Sub_Site%>%
+#  rename(Site_ID=Site)
 
 
 #join dataframes together
@@ -770,6 +770,7 @@ NASC_DZ_box<- ggplot(sitefull_NASC_DZlong, aes(x = Method, y = NASC )) +
   geom_jitter(width = 0.2, alpha = 0.6) +
   labs(title = "b)") +
   theme_bw()+
+ # geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
         axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
 #+geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
@@ -1217,17 +1218,37 @@ sitefull$Ben<-sitefull$AbundanceNonSchooling/sitefull$Volume
 #Echo slope vs fish density with quadratic line
 BvS<-ggplot(sitefull, aes(x=Average_5m_slope, y=Ben))+
   geom_point()+
-  geom_smooth(method="lm", formula = y ~ poly(x, 2, raw = TRUE),se=FALSE)+ #formula = y ~ poly(x, 2, raw = TRUE) makes line a quadratic
-  geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
+  geom_smooth(method="lm", formula = y ~ poly(x, 2, raw = TRUE),se=FALSE) + #formula = y ~ poly(x, 2, raw = TRUE) makes line a quadratic
+labs(x = "Slope", y = "Benthic Fish Density")
+#  geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
+# geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
+BvS
+
+BvS<-ggplot(sitefull, aes(x=Average_5m_slope, y=Ben))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE) #formula = y ~ poly(x, 2, raw = TRUE) makes line a quadratic
+  #geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
 # geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
 BvS
 
 #slope with echoslope and fish count
-ggplot(sitefull, aes(x = Slope, y = Average_5m_slope, color = Ben)) +
+ggplot(sitefull, aes(x = NASC_10_1m, y = Average_5m_slope, color = Ben)) +
   geom_point() +
-  scale_color_gradient(low = "blue", high = "red") +  # You can adjust colors as per your preference
-  labs(x = "SlopeROV", y = "SlopeEcho", color = "AbundanceNonSchooling")+
-  geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3)
+  scale_color_gradient(low = "blue", high = "red") +# You can adjust colors as per your preference
+  geom_smooth(method="lm")+
+  labs(x = "NASC", y = "SlopeEcho", color = "AbundanceNonSchooling")+
+  #geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3)
+
+  par(mfrow = c(1, 1))
+#slope with echoslope and fish count
+ggplot(sitefull, aes(x = NASC_10_1m, y = Ben, color = Average_5m_slope)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red") +# You can adjust colors as per your preference
+  geom_smooth(method="lm")+
+  labs(x = "NASC", y = "Benthic Fish Density", color = "Slope")
+  #geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3)
+
+
 
 #####Some random tests ####
 
@@ -1837,6 +1858,16 @@ testDispersion(D1)
 #### ROV model - Slope, Rug, Depth only####
 #model using only variables also available from echosounder (best model - 18% dev explained)
 ###full model
+Slope_Rugosity_Rock_ROCKSLOPE <- glm(Ben ~  Slope + Rugosity + Rock +Rock:Slope,
+                                 family = gaussian,  data = sitefull)
+summary(Slope_Rugosity_Rock_ROCKSLOPE)
+AIC(Slope_Rugosity_Rock_ROCKSLOPE)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((Slope_Rugosity_Rock_ROCKSLOPE)$null.deviance-(Slope_Rugosity_Rock_ROCKSLOPE)$deviance)/(Slope_Rugosity_Rock_ROCKSLOPE)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
 Slope_Rugosity_Depth_Rock <- glm(Ben ~  Slope + Rugosity + Depth+Rock,
           family = gaussian,  data = sitefull)
 summary(Slope_Rugosity_Depth_Rock)
@@ -1875,9 +1906,9 @@ AIC(Slope_Rugosity) #-201 (17% Dev Exp)
 
 
 ###put all models in a list to compare AIC weights
-models <- list(Slope_Rugosity_Depth_Rock, Slope_Rugosity_Rock,Rugosity_Rock,Slope_Rock, Slope_Rugosity)
+models <- list(Slope_Rugosity_Depth_Rock, Slope_Rugosity_Rock,Rugosity_Rock,Slope_Rock, Slope_Rugosity,Slope_Rugosity_Rock_ROCKSLOPE)
 
-model.names <- c('Slope_Rugosity_Depth_Rock', 'Slope_Rugosity_Rock','Rugosity_Rock','Slope_Rock', 'Slope_Rugosity')
+model.names <- c('Slope_Rugosity_Depth_Rock', 'Slope_Rugosity_Rock','Rugosity_Rock','Slope_Rock', 'Slope_Rugosity', 'Slope_Rugosity_Rock_ROCKSLOPE')
 
 AIC_ROV_results<-aictab(cand.set = models, modnames = model.names)
 flextable(AIC_ROV_results)
@@ -2133,11 +2164,227 @@ str(sitefull)
 
 ###10m MAN DZ##### - not significant with any vars removed
 #Full model with all vars and no quadratic for slope
-D1 <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+MANNASC_Slope_Rug_Depth_DZ_NASCSlope_NASCDZ <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
             NASC_10_MAN:Average_5m_slope + NASC_10_MAN:Cumulative_LG_DZ_Area, 
           family = gaussian,  data = sitefull)
-summary(D1)
-AIC(D1) #-212 (51% exp dev)
+summary(MANNASC_Slope_Rug_Depth_DZ_NASCSlope_NASCDZ)
+
+#remove Depth
+MANNASC_Slope_Rug_DZ_NASCSlope_NASCDZ <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Std_Dev_Slope + Cumulative_LG_DZ_Area +
+                                                     NASC_10_MAN:Average_5m_slope + NASC_10_MAN:Cumulative_LG_DZ_Area, 
+                                                   family = gaussian,  data = sitefull)
+summary(MANNASC_Slope_Rug_DZ_NASCSlope_NASCDZ)
+
+#remove Rugosity
+MANNASC_Slope_DZ_NASCSlope_NASCDZ <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Cumulative_LG_DZ_Area +
+                                               NASC_10_MAN:Average_5m_slope + NASC_10_MAN:Cumulative_LG_DZ_Area, 
+                                             family = gaussian,  data = sitefull)
+summary(MANNASC_Slope_DZ_NASCSlope_NASCDZ)
+
+#remove NASCDZ
+MANNASC_Slope_DZ_NASCSlope <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Cumulative_LG_DZ_Area +
+                                    NASC_10_MAN:Average_5m_slope, 
+                                  family = gaussian,  data = sitefull)
+summary(MANNASC_Slope_DZ_NASCSlope)
+
+#remove DZ
+MANNASC_Slope_NASCSlope <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + 
+                                           NASC_10_MAN:Average_5m_slope, 
+                                         family = gaussian,  data = sitefull)
+summary(MANNASC_Slope_NASCSlope)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((MANNASC_Slope_NASCSlope)$null.deviance-(MANNASC_Slope_NASCSlope)$deviance)/(MANNASC_Slope_NASCSlope)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+#remove Slope
+MANNASC <- glm(Ben ~ NASC_10_MAN , 
+                               family = gaussian,  data = sitefull)
+summary(MANNASC)
+
+
+###put all models in a list to compare AIC weights
+models <- list(MANNASC_Slope_Rug_Depth_DZ_NASCSlope_NASCDZ, MANNASC_Slope_Rug_DZ_NASCSlope_NASCDZ, MANNASC_Slope_DZ_NASCSlope_NASCDZ, MANNASC_Slope_DZ_NASCSlope,
+               MANNASC_Slope_NASCSlope, MANNASC)
+
+model.names <- c('MANNASC_Slope_Rug_Depth_DZ_NASCSlope_NASCDZ', 'MANNASC_Slope_Rug_DZ_NASCSlope_NASCDZ', 'MANNASC_Slope_DZ_NASCSlope_NASCDZ', 'MANNASC_Slope_DZ_NASCSlope',
+                 'MANNASC_Slope_NASCSlope', 'MANNASC')
+
+AIC_results<-aictab(cand.set = models, modnames = model.names)
+flextable(AIC_results)
+
+###model validation 5m RFZ model
+
+par(mfrow = c(2, 2))
+plot(MANNASC_Slope_NASCSlope)
+
+check_overdispersion(MANNASC_Slope_NASCSlope)
+
+
+#####calculate residuals and add to dataframe
+residuals <- residuals(MANNASC_Slope_NASCSlope)
+TF2 <- sitefull %>%
+  mutate(resid = residuals)
+
+## plot residuals vs predictors (looking for flat line with lm)
+
+E1<-ggplot(TF2) +
+  geom_point(aes(x = Average_5m_slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_5m_slope,
+                  y = resid),
+              method = "lm")
+
+E2<-ggplot(TF2) +
+  geom_point(aes(x = Std_Dev_Slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Std_Dev_Slope,
+                  y = resid),
+              method = "lm")
+
+E3<-ggplot(TF2) +
+  geom_point(aes(x = Cumulative_LG_DZ_Area,
+                 y = resid)) +
+  geom_smooth(aes(x = Cumulative_LG_DZ_Area,
+                  y = resid),
+              method = "lm")
+
+E4<-ggplot(TF2) +
+  geom_point(aes(x = NASC_10_MAN,
+                 y = resid)) +
+  geom_smooth(aes(x = NASC_10_MAN,
+                  y = resid),
+              method = "lm")
+
+E5<-ggplot(TF2) +
+  geom_point(aes(x = Average_Depth,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_Depth,
+                  y = resid),
+              method = "lm")
+
+resVpred<-grid.arrange(E1, E2, E3, E4, E5, nrow = 2, respect=TRUE)
+
+#check model fit with DHARMa tests
+r <- simulateResiduals(MANNASC_Slope_NASCSlope, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
+#check dispersion
+testDispersion(MANNASC_Slope_NASCSlope)
+
+##########################################
+
+###10m LG DZ##### - not significant with any vars removed
+#Full model with all vars and no quadratic for slope
+LGNASC_Slope_Rug_Depth_DZ_NASCSlope_NASCDZ <- glm(Ben ~ NASC_10_LG + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
+                                                     NASC_10_LG:Average_5m_slope + NASC_10_LG:Cumulative_LG_DZ_Area, 
+                                                   family = gaussian,  data = sitefull)
+summary(LGNASC_Slope_Rug_Depth_DZ_NASCSlope_NASCDZ)
+
+#remove Depth
+LGNASC_Slope_Rug_DZ_NASCSlope_NASCDZ <- glm(Ben ~ NASC_10_LG + Average_5m_slope + Std_Dev_Slope  + Cumulative_LG_DZ_Area +
+                                              NASC_10_LG:Average_5m_slope + NASC_10_LG:Cumulative_LG_DZ_Area, 
+                                            family = gaussian,  data = sitefull)
+summary(LGNASC_Slope_Rug_DZ_NASCSlope_NASCDZ)
+
+#remove Rugosity
+LGNASC_Slope_DZ_NASCSlope_NASCDZ <- glm(Ben ~ NASC_10_LG + Average_5m_slope + Cumulative_LG_DZ_Area +
+                                          NASC_10_LG:Average_5m_slope + NASC_10_LG:Cumulative_LG_DZ_Area, 
+                                        family = gaussian,  data = sitefull)
+summary(LGNASC_Slope_DZ_NASCSlope_NASCDZ)
+
+#remove NASCDZ
+LGNASC_Slope_NASCSlope <- glm(Ben ~ NASC_10_LG + Average_5m_slope + 
+                                   NASC_10_LG:Average_5m_slope , 
+                                 family = gaussian,  data = sitefull)
+summary(LGNASC_Slope_NASCSlope)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((LGNASC_Slope_NASCSlope)$null.deviance-(LGNASC_Slope_NASCSlope)$deviance)/(LGNASC_Slope_NASCSlope)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+#remove Slope
+LGNASC <- glm(Ben ~ NASC_10_LG , 
+               family = gaussian,  data = sitefull)
+summary(LGNASC)
+
+#get glm equivalent of R-squared (explained deviance)
+explaineddeviance<- 100*(((LGNASC)$null.deviance-(LGNASC)$deviance)/(LGNASC)$null.deviance)
+#get value for explained deviance (also known as pseudo Rsquared)
+explaineddeviance
+
+
+###put all models in a list to compare AIC weights
+models <- list(LGNASC_Slope_Rug_Depth_DZ_NASCSlope_NASCDZ, LGNASC_Slope_Rug_DZ_NASCSlope_NASCDZ, LGNASC_Slope_DZ_NASCSlope_NASCDZ,
+               LGNASC_Slope_NASCSlope, LGNASC)
+
+model.names <- c('LGNASC_Slope_Rug_Depth_DZ_NASCSlope_NASCDZ', 'LGNASC_Slope_Rug_DZ_NASCSlope_NASCDZ', 'LGNASC_Slope_DZ_NASCSlope_NASCDZ',
+                 'LGNASC_Slope_NASCSlope', 'LGNASC')
+
+AIC_results<-aictab(cand.set = models, modnames = model.names)
+flextable(AIC_results)
+
+####Do not proceed with model validation because deviance explained is too low. 
+
+###model validation 5m RFZ model
+
+par(mfrow = c(2, 2))
+plot(MANNASC_Slope_NASCSlope)
+
+check_overdispersion(MANNASC_Slope_NASCSlope)
+
+
+#####calculate residuals and add to dataframe
+residuals <- residuals(MANNASC_Slope_NASCSlope)
+TF2 <- sitefull %>%
+  mutate(resid = residuals)
+
+## plot residuals vs predictors (looking for flat line with lm)
+
+E1<-ggplot(TF2) +
+  geom_point(aes(x = Average_5m_slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_5m_slope,
+                  y = resid),
+              method = "lm")
+
+E2<-ggplot(TF2) +
+  geom_point(aes(x = Std_Dev_Slope,
+                 y = resid)) +
+  geom_smooth(aes(x = Std_Dev_Slope,
+                  y = resid),
+              method = "lm")
+
+E3<-ggplot(TF2) +
+  geom_point(aes(x = Cumulative_LG_DZ_Area,
+                 y = resid)) +
+  geom_smooth(aes(x = Cumulative_LG_DZ_Area,
+                  y = resid),
+              method = "lm")
+
+E4<-ggplot(TF2) +
+  geom_point(aes(x = NASC_10_MAN,
+                 y = resid)) +
+  geom_smooth(aes(x = NASC_10_MAN,
+                  y = resid),
+              method = "lm")
+
+E5<-ggplot(TF2) +
+  geom_point(aes(x = Average_Depth,
+                 y = resid)) +
+  geom_smooth(aes(x = Average_Depth,
+                  y = resid),
+              method = "lm")
+
+resVpred<-grid.arrange(E1, E2, E3, E4, E5, nrow = 2, respect=TRUE)
+
+#check model fit with DHARMa tests
+r <- simulateResiduals(MANNASC_Slope_NASCSlope, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
+#check dispersion
+testDispersion(MANNASC_Slope_NASCSlope)
+
+########################
+
 
 #AIC selection
 D1 <- glm(Ben ~ NASC_10_MAN + Average_5m_slope + Std_Dev_Slope+ Cumulative_LG_DZ_Area +

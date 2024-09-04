@@ -15,10 +15,6 @@ lp("ggplot2")
 lp("flextable")
 lp("xlsx")
 
-#### Set Working Directory #### 
-
-
-setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 ######pull 100X15 from Large DZ files####################################################################
 
@@ -1027,7 +1023,7 @@ binNASC <- merge(bin_df7, bin_df6, by = c("Site_ID", "Interval", "BinID" ))
 save(binNASC, file = "wdata/binNASC.RData")
 write.csv(binNASC, "wdata/binNASC.csv")
 save(siteNASC, file = "wdata/siteNASC.RData")
-write.csv(siteNASC, "wdata/siteNASs.csv")
+write.csv(siteNASC, "wdata/siteNASc.csv")
 
 
 
