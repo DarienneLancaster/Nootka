@@ -1056,7 +1056,7 @@ for (i in 1:nrow(file_df_t3)) {
   
   # clean and subset the data to keep only what we need 
   file_t3 <- file_t3 %>%
-    select("Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+    dplyr::select("Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
   
   # write column with containing the site_IDs 
   file_t3$Site_ID <- site_id
@@ -1104,7 +1104,7 @@ for (i in 1:nrow(file_df_t3)) {
   
   # clean and subset the data to keep only what we need 
   file_t3 <- file_t3 %>%
-    select("Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+    dplyr::select("Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
   
   # write column with containing the site_IDs 
   file_t3$Site_ID <- site_id
@@ -1147,7 +1147,7 @@ for (i in 1:nrow(file_df_t3)) {
   
   # clean and subset the data to keep only what we need 
   file_t3 <- file_t3 %>%
-    select("Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
+    dplyr::select("Sv_mean", "NASC", "Depth_mean", "Layer_depth_min", "Layer_depth_max")
   
   # write column with containing the site_IDs 
   file_t3$Site_ID <- site_id

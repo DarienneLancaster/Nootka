@@ -2540,3 +2540,75 @@ DZ_RUG <- ggplot(sitefull, aes(x = Slope, y = Rugosity)) +
 DZ_RUG
 
 
+
+
+#########Transect 1 vs. Transect 3 (10m RFZ NASC sign. difference tests)#########
+
+load("wdata/full_df_t3.RData")
+
+T3_10m<-full_df_t3%>%
+  dplyr::select(Site_ID, NASC_10_t3)
+
+T1_10m<-sitefull%>%
+  dplyr::select(Site_ID, NASC_10_1m)
+
+T1_T3_NASC<- left_join(T1_10m, T3_10m, by = "Site_ID")
+
+
+### t test to check for significant difference between T1 and T3
+t_test_T1_T3 <- t.test(T1_T3_NASC$NASC_10_1m, T1_T3_NASC$NASC_10_t3, paired = TRUE)
+t_test_T1_T3 #not significantly different t = -1.707, df = 38, p-value = 0.09599
+
+##check pearson correlation
+pearson <- cor(T1_T3_NASC$NASC_10_1m, T1_T3_NASC$NASC_10_t3, method = "pearson")
+pearson
+
+
+##plot correlation
+Cor_T1T3 <- ggplot(T1_T3_NASC, aes(x = NASC_10_1m, y = NASC_10_t3)) +
+  geom_point(color = "gray40") +
+ # labs(title = "b)") +
+  sm_statCorr(corr_method="pearson", color = "gray40")+
+  labs(x = "Transect 1 NASC", y = "Transect 3 NASC")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+Cor_T1T3
+
+ggsave("figures/T1_T3_pearsonscor_plot.png", plot = Cor_T1T3, width = 25, height = 25, units = "cm")
+
+
+## box plot for NASC at 10m for each DEADZONE
+T1_T3 <- T1_T3_NASC %>%
+  rename(
+    "Transect 1" = NASC_10_1m,
+    "Transect 3" = NASC_10_t3
+  ) %>%
+  pivot_longer(cols = c(`Transect 1`, `Transect 3`),
+               names_to = "Method",
+               values_to = "NASC")
+
+# Define the desired order of Method levels
+method_order <- c("Transect 1", "Transect 3")  # Replace with your actual method names and desired order
+
+# Convert Method to a factor with specified levels and order
+T1_T3$Method <- factor(T1_T3$Method, levels = method_order)
+str(T1_T3)
+
+
+### if we want to include this plot will need to go back and make sure cleaned data is what is loaded in here (e.g. are herring schools removed from LG and Manual
+# deadzone files?)
+T1_T3_NASC_plot<- ggplot(T1_T3, aes(x = Method, y = NASC )) +
+  geom_boxplot(color = "gray40") +
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  theme_bw()+
+  #labs(title = "a)") +
+  #geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title.x = element_blank(),
+        axis.text.x = element_text(color = "black"),  axis.text.y = element_text(color = "black"),)
+#+geom_text(aes(label = Site_ID), nudge_x = 0.1, nudge_y = 0.1, size = 3) 
+T1_T3_NASC_plot
+
+#T1T3_plots_all<-grid.arrange(T1_T3_NASC_plot, Cor_T1T3,  ncol = 2, respect=TRUE)
+ggsave("figures/T1_T3_NASC_boxplot.png", plot = T1_T3_NASC_plot, width = 25, height = 25, units = "cm")
+
+
