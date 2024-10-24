@@ -1,7 +1,11 @@
 #Deadzone height calculator
 
-#load packages
+#### Load Packages #### 
+lp<-function(pck){
+  if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
+}
 lp("dplyr")
+lp("flextable")
 
 
 #Basic formula for calculating Deadzone height (see farther down for full code looping through a dataframe)
@@ -65,120 +69,19 @@ Echo_depth_slope<-site_DE%>%
 
 DZdata<-left_join(Echo_depth_slope, Rug_height_site, by="Site_ID")
 
+#create adjusted depth based on rugosity offset
 DZdata$depth_adjust<-DZdata$Average_Depth-DZdata$Rug_height
 
-mean(DZdata$Average_5m_slope)
-#16.68587
-sd(DZdata$Average_5m_slope)
-#6.479068
+#DZdata is for mean depth and slope information per site
 
-mean(DZdata$Average_Depth)
-#38.04964
-sd(DZdata$Average_Depth)
-#9.544151
-
-
-##########################################################################
-#loop dataframe through formulas to calculate deadzone height for mean depth and mean slope at each site
-
-########loop to calculate beta###########
-DZdata$beta <- NA  # Create a column for beta with NA values
-unique_sites<-unique(DZdata$Site_ID) 
-
-
-# Loop through each unique Site_ID
-for (i in unique_sites) {
-  # Filter the dataframe for the current Site_ID
-  site_data <- DZdata[DZdata$Site_ID == i, ]
-  
-  # Calculate the average slope for this Site_ID
-  slope <- site_data$Average_5m_slope
-  
-  # Calculate beta in radians
-  beta <- slope * pi / 180
-  
-  # Update the beta column for this Site_ID
-  DZdata$beta[DZdata$Site_ID == i] <- beta
-}
-
-#########loop to calculate theta########
-DZdata$theta <- NA  # Create a column for beta with NA values
-unique_sites<-unique(DZdata$Site_ID)
-#half beam angle in degrees (this is half your transducer beam width)
-hba<- 5 ###change this value depending on your transducer (for 38kHz transducer with 10 degree = 5degree half beam)
-
-
-# Loop through each unique Site_ID
-for (i in unique_sites) {
-  # Filter the dataframe for the current Site_ID
-  site_data <- DZdata[DZdata$Site_ID == i, ]
-  
-  # Calculate beta in radians
-  theta<-hba*pi/180
-  
-  # Update the beta column for this Site_ID
-  DZdata$theta[DZdata$Site_ID == i] <- theta
-}
-
-#########loop to calculate deadzone height (worst case)########
-DZdata$DZworst <- NA  # Create a column for beta with NA values
-
-#pulse length (seconds)
-pl<-0.0001
-#sound speed in water
-c<-1450
-
-# Loop through each unique Site_ID
-for (i in unique(DZdata$Site_ID)) {
-  # Filter the dataframe for the current Site_ID
-  site_data <- DZdata[DZdata$Site_ID == i, ]
-  
-  # Check if site_data is not empty
-  if (nrow(site_data) > 0) {
-    # Theoretical worst case scenario deadzone height
-    DZworst <- (site_data$depth_adjust[1] * (((1 / (cos(site_data$beta[1]))) - 1)) + ((c * pl) / 2))
-    
-    # Update the DZworst column for this Site_ID
-    DZdata$DZworst[DZdata$Site_ID == i] <- DZworst
-  }
-}
-
-#########loop to calculate deadzone height (best case)########
-DZdata$DZbest <- NA  # Create a column for beta with NA values
-
-# Loop through each unique Site_ID
-for (i in unique(DZdata$Site_ID)) {
-  # Filter the dataframe for the current Site_ID
-  site_data <- DZdata[DZdata$Site_ID == i, ]
-  
-  # Check if site_data is not empty
-  if (nrow(site_data) > 0) {
-    
-    # Theoretical worst case scenario deadzone height
-    DZbest<-(site_data$depth_adjust[1]*(((cos(site_data$theta[1]-site_data$beta[1]))/(cos(site_data$beta[1])))-1))+((c*pl)/2)
-    
-    # Update the DZbest column for this Site_ID
-    DZdata$DZbest[DZdata$Site_ID == i] <- DZbest
-  }
-}
-
-##########################
-#calculate deadzone height accounting for height of boulders, cobble, etc... off bottom
-
-DZdata$TotDZworst<-DZdata$DZworst+DZdata$Rug_height
-mean(DZdata$TotDZworst)
-mean(MaxDepth$Average_5m_slope)
-sd(DZdata$TotDZworst)
-DZdata$TotDZbest<-DZdata$DZbest+DZdata$Rug_height
-mean(DZdata$TotDZbest)
-sd(DZdata$TotDZbest)
 
 #######################################################################
 #calculate DZ height for max and min depth and slopes
 
+#import depth and slopes for 5m increments across all sites
 AllDepthSlope<-read.csv("wdata/BEslope.csv")
 
-#calculate max depth for each site
+#calculate max 5m depth bin for each site
 MaxDepth<- AllDepthSlope%>%
   filter(!is.na(Slope5m))%>% #remove NAs
   mutate(Slope5m =abs(Slope5m))%>%
@@ -189,7 +92,7 @@ MaxDepth<- AllDepthSlope%>%
   dplyr::select(Site_ID,Max_Depth,Average_5m_slope)%>%
   ungroup()
 
-#calculate min depth for each site
+#calculate min 5m depth bin for each site
 MinDepth<- AllDepthSlope%>%
   filter(!is.na(Slope5m))%>% #remove NAs
   mutate(Slope5m =abs(Slope5m))%>%
@@ -201,18 +104,35 @@ MinDepth<- AllDepthSlope%>%
   ungroup()
 
 
-##########run max/min depths through DZ height loop#############
+##########################################################################
+#loop dataframe through formulas to calculate deadzone height for mean depth and mean slope at each site
 
-####MAX DEPTH DEADZONE####
+#input values for analysis
+#loop through each of DZdata, MaxDepth, an MinDepth
+
+#dataframe name
+data<-DZdata
+
+#half beam angle in degrees (this is half your transducer beam width)
+hba<- 5 ###change this value depending on your transducer (for 38kHz transducer with 10 degree = 5degree half beam)
+
+#pulse length (seconds)
+pl<-0.0004
+
+#sound speed in water
+c<-1450
+
 ########loop to calculate beta###########
-MaxDepth$beta <- NA  # Create a column for beta with NA values
-unique_sites<-unique(MaxDepth$Site_ID) 
 
+# Create a column for beta with NA values
+data$beta <- NA  
+#create list of unique site IDs
+unique_sites<-unique(data$Site_ID) 
 
 # Loop through each unique Site_ID
 for (i in unique_sites) {
   # Filter the dataframe for the current Site_ID
-  site_data <- MaxDepth[MaxDepth$Site_ID == i, ]
+  site_data <- data[data$Site_ID == i, ]
   
   # Calculate the average slope for this Site_ID
   slope <- site_data$Average_5m_slope
@@ -221,192 +141,154 @@ for (i in unique_sites) {
   beta <- slope * pi / 180
   
   # Update the beta column for this Site_ID
-  MaxDepth$beta[MaxDepth$Site_ID == i] <- beta
+  data$beta[data$Site_ID == i] <- beta
 }
 
 #########loop to calculate theta########
-MaxDepth$theta <- NA  # Create a column for beta with NA values
-unique_sites<-unique(MaxDepth$Site_ID)
-#half beam angle in degrees (this is half your transducer beam width)
-hba<- 5 ###change this value depending on your transducer (for 38kHz transducer with 10 degree = 5degree half beam)
-
+data$theta <- NA  # Create a column for theta with NA values
 
 # Loop through each unique Site_ID
 for (i in unique_sites) {
   # Filter the dataframe for the current Site_ID
-  site_data <- MaxDepth[MaxDepth$Site_ID == i, ]
+  site_data <- data[data$Site_ID == i, ]
   
   # Calculate beta in radians
   theta<-hba*pi/180
   
   # Update the beta column for this Site_ID
-  MaxDepth$theta[MaxDepth$Site_ID == i] <- theta
+  data$theta[data$Site_ID == i] <- theta
 }
 
 #########loop to calculate deadzone height (worst case)########
-MaxDepth$DZworst <- NA  # Create a column for beta with NA values
+#worst case does not account for half beam angle (see Tuser paper)
 
-#pulse length (seconds)
-pl<-0.0001
-#sound speed in water
-c<-1450
+data$DZworst <- NA  # Create a column for deadzone worst case scenario with NA values
 
 # Loop through each unique Site_ID
-for (i in unique(MaxDepth$Site_ID)) {
+for (i in unique(data$Site_ID)) {
   # Filter the dataframe for the current Site_ID
-  site_data <- MaxDepth[MaxDepth$Site_ID == i, ]
+  site_data <- data[data$Site_ID == i, ]
   
   # Check if site_data is not empty
   if (nrow(site_data) > 0) {
     # Theoretical worst case scenario deadzone height
-    DZworst <- (site_data$Max_Depth[1] * (((1 / (cos(site_data$beta[1]))) - 1)) + ((c * pl) / 2))
+    ####make sure you depth column name is correct to your dataframe here
+    DZworst <- (site_data$depth_adjust[1] * (((1 / (cos(site_data$beta[1]))) - 1)) + ((c * pl) / 2))
     
     # Update the DZworst column for this Site_ID
-    MaxDepth$DZworst[MaxDepth$Site_ID == i] <- DZworst
+    data$DZworst[data$Site_ID == i] <- DZworst
   }
 }
 
 #########loop to calculate deadzone height (best case)########
-MaxDepth$DZbest <- NA  # Create a column for beta with NA values
+#this loop accounts for half beam angle and gives more accurate deadzone height estimate
+
+data$DZbest <- NA  # Create a column for beta with NA values
 
 # Loop through each unique Site_ID
-for (i in unique(MaxDepth$Site_ID)) {
+for (i in unique(data$Site_ID)) {
   # Filter the dataframe for the current Site_ID
-  site_data <- MaxDepth[MaxDepth$Site_ID == i, ]
+  site_data <- data[data$Site_ID == i, ]
   
   # Check if site_data is not empty
   if (nrow(site_data) > 0) {
     
     # Theoretical worst case scenario deadzone height
-    DZbest<-(site_data$Max_Depth[1]*(((cos(site_data$theta[1]-site_data$beta[1]))/(cos(site_data$beta[1])))-1))+((c*pl)/2)
+    ####make sure you depth column name is correct to your dataframe here
+    DZbest<-(site_data$depth_adjust[1]*(((cos(site_data$theta[1]-site_data$beta[1]))/(cos(site_data$beta[1])))-1))+((c*pl)/2)
     
     # Update the DZbest column for this Site_ID
-    MaxDepth$DZbest[MaxDepth$Site_ID == i] <- DZbest
+    data$DZbest[data$Site_ID == i] <- DZbest
   }
 }
 
+#rename data for specific analysis
+DZdataDZ<-data
 
-####MIN DEPTH DEADZONE####
-########loop to calculate beta###########
-MinDepth$beta <- NA  # Create a column for beta with NA values
-unique_sites<-unique(MinDepth$Site_ID) 
+#export data
+write.csv(DZdataDZ, "wdata/DZdataDZ.csv")
+write.csv(MaxDepthDZ, "wdata/MaxDepthDZ.csv")
+write.csv(MinDepthDZ, "wdata/MinDepthDZ.csv")
 
+##########################################################################
+#pull data into a summary table
 
-# Loop through each unique Site_ID
-for (i in unique_sites) {
-  # Filter the dataframe for the current Site_ID
-  site_data <- MinDepth[MinDepth$Site_ID == i, ]
-  
-  # Calculate the average slope for this Site_ID
-  slope <- site_data$Average_5m_slope
-  
-  # Calculate beta in radians
-  beta <- slope * pi / 180
-  
-  # Update the beta column for this Site_ID
-  MinDepth$beta[MinDepth$Site_ID == i] <- beta
-}
+#pull max deadzone calculated from deepest depths
+MaxDeets<-MaxDepthDZ%>%
+  slice(c(which.max(DZbest)))%>%
+  rename(Depth = Max_Depth, Slope = Average_5m_slope)%>%
+  dplyr::select(DZbest, Depth, Slope)
 
-#########loop to calculate theta########
-MinDepth$theta <- NA  # Create a column for beta with NA values
-unique_sites<-unique(MinDepth$Site_ID)
-#half beam angle in degrees (this is half your transducer beam width)
-hba<- 5 ###change this value depending on your transducer (for 38kHz transducer with 10 degree = 5degree half beam)
+#pull min deadzone calculated from shallowest depths
+MinDeets<-MinDepthDZ%>%
+  slice(c(which.min(DZbest)))%>%
+  rename(Depth = Min_Depth, Slope = Average_5m_slope)%>%
+  dplyr::select(DZbest, Depth, Slope)
 
-
-# Loop through each unique Site_ID
-for (i in unique_sites) {
-  # Filter the dataframe for the current Site_ID
-  site_data <- MinDepth[MinDepth$Site_ID == i, ]
-  
-  # Calculate beta in radians
-  theta<-hba*pi/180
-  
-  # Update the beta column for this Site_ID
-  MinDepth$theta[MinDepth$Site_ID == i] <- theta
-}
-
-#########loop to calculate deadzone height (worst case)########
-MinDepth$DZworst <- NA  # Create a column for beta with NA values
-
-#pulse length (seconds)
-pl<-0.0001
-#sound speed in water
-c<-1450
-
-# Loop through each unique Site_ID
-for (i in unique(MinDepth$Site_ID)) {
-  # Filter the dataframe for the current Site_ID
-  site_data <- MinDepth[MinDepth$Site_ID == i, ]
-  
-  # Check if site_data is not empty
-  if (nrow(site_data) > 0) {
-    # Theoretical worst case scenario deadzone height
-    DZworst <- (site_data$Min_Depth[1] * (((1 / (cos(site_data$beta[1]))) - 1)) + ((c * pl) / 2))
-    
-    # Update the DZworst column for this Site_ID
-    MinDepth$DZworst[MinDepth$Site_ID == i] <- DZworst
-  }
-}
-
-#########loop to calculate deadzone height (best case)########
-MinDepth$DZbest <- NA  # Create a column for beta with NA values
-
-# Loop through each unique Site_ID
-for (i in unique(MinDepth$Site_ID)) {
-  # Filter the dataframe for the current Site_ID
-  site_data <- MinDepth[MinDepth$Site_ID == i, ]
-  
-  # Check if site_data is not empty
-  if (nrow(site_data) > 0) {
-    
-    # Theoretical worst case scenario deadzone height
-    DZbest<-(site_data$Min_Depth[1]*(((cos(site_data$theta[1]-site_data$beta[1]))/(cos(site_data$beta[1])))-1))+((c*pl)/2)
-    
-    # Update the DZbest column for this Site_ID
-    MinDepth$DZbest[MinDepth$Site_ID == i] <- DZbest
-  }
-}
-
-MinSum <- MinDepth %>%
-  summarize(
-    Mean_DZbest = mean(DZbest, na.rm = TRUE),
-    Max_DZbest = max(DZbest, na.rm = TRUE),
-    Min_DZbest = min(DZbest, na.rm = TRUE),
-    SD_DZbest = sd(DZbest, na.rm = TRUE),
-    .groups = 'drop'  # Optional: Ungroup after summarizing
+#calculate mean deadzone, depth, and slope across all sites (site data already averaged across transect)
+MeanDeets<-DZdataDZ%>%
+  summarise(
+    DZbest = mean(DZbest, na.rm = TRUE),
+    Depth = mean(depth_adjust, na.rm = TRUE),
+    Slope = mean(Average_5m_slope, na.rm = TRUE)
   )
 
-MaxSum <- MaxDepth %>%
-  summarize(
-    Mean_DZbest = mean(DZbest, na.rm = TRUE),
-    Max_DZbest = max(DZbest, na.rm = TRUE),
-    Min_DZbest = min(DZbest, na.rm = TRUE),
-    SD_DZbest = sd(DZbest, na.rm = TRUE),
-    .groups = 'drop'  # Optional: Ungroup after summarizing
+#calculate standard deviation of deadzone, depth, and slope across all sites (site data already averaged across transect)
+SDDeets<-DZdataDZ%>%
+  summarise(
+    DZbest = sd(DZbest, na.rm = TRUE),
+    Depth = sd(depth_adjust, na.rm = TRUE),
+    Slope = sd(Average_5m_slope, na.rm = TRUE)
   )
 
-MeanSum <- DZdata %>%
-  summarize(
-    Mean_DZbest = mean(DZbest, na.rm = TRUE),
-    Max_DZbest = max(DZbest, na.rm = TRUE),
-    Min_DZbest = min(DZbest, na.rm = TRUE),
-    SD_DZbest = sd(DZbest, na.rm = TRUE),
-    .groups = 'drop'  # Optional: Ungroup after summarizing
-  )
+# Combine the four data frames
+CombinedDeets <- bind_rows(
+  MinDeets %>% mutate(Type = "Minimum"),
+  MaxDeets %>% mutate(Type = "Maximum"),
+  MeanDeets %>% mutate(Type = "Mean"),
+  SDDeets %>% mutate(Type = "SD"),
+)%>%
+  rename(Transect_Depth = Type, Deadzone_Height = DZbest)
 
-# Add a new column indicating the source data frame
-MaxSum <- MaxSum %>% mutate(Source = "MaxDepth")
-MinSum <- MinSum %>% mutate(Source = "MinDepth")
-MeanSum <- MeanSum %>% mutate(Source = "MeanDepth")
+#rearrange columns
+CombinedDeets <- CombinedDeets[, c(4, 1, 2, 3)]
+flextable(CombinedDeets)
 
-Sum<-bind_rows(MaxSum, MinSum, MeanSum)
-flextable(Sum)
-
-MaxDeets<-MaxDepth%>%
-  slice(c(which.max(DZbest), which.min(DZbest)))
-
-MinDeets<-MinDepth%>%
-  slice(c(which.max(DZbest), which.min(DZbest)))
+###summarize data for Min, Max, and Mean deadzone height calculations
+# MinSum <- MinDepth %>%
+#   summarize(
+#     Mean_DZbest = mean(DZbest, na.rm = TRUE),
+#     Max_DZbest = max(DZbest, na.rm = TRUE),
+#     Min_DZbest = min(DZbest, na.rm = TRUE),
+#     SD_DZbest = sd(DZbest, na.rm = TRUE),
+#     .groups = 'drop'  # Optional: Ungroup after summarizing
+#   )
+# 
+# MaxSum <- MaxDepth %>%
+#   summarize(
+#     Mean_DZbest = mean(DZbest, na.rm = TRUE),
+#     Max_DZbest = max(DZbest, na.rm = TRUE),
+#     Min_DZbest = min(DZbest, na.rm = TRUE),
+#     SD_DZbest = sd(DZbest, na.rm = TRUE),
+#     .groups = 'drop'  # Optional: Ungroup after summarizing
+#   )
+# 
+# MeanSum <- DZdata %>%
+#   summarize(
+#     Mean_DZbest = mean(DZbest, na.rm = TRUE),
+#     Max_DZbest = max(DZbest, na.rm = TRUE),
+#     Min_DZbest = min(DZbest, na.rm = TRUE),
+#     SD_DZbest = sd(DZbest, na.rm = TRUE),
+#     .groups = 'drop'  # Optional: Ungroup after summarizing
+#   )
+# 
+# # Add a new column indicating the source data frame
+# MaxSum <- MaxSum %>% mutate(Source = "MaxDepth")
+# MinSum <- MinSum %>% mutate(Source = "MinDepth")
+# MeanSum <- MeanSum %>% mutate(Source = "MeanDepth")
+# 
+# Sum<-bind_rows(MaxSum, MinSum, MeanSum)
+# flextable(Sum)
+###this table is a bit over elaborate, make simpler one
 
 
