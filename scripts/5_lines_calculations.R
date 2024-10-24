@@ -181,6 +181,8 @@ BEslope$Slope5m <- sapply(1:nrow(BEslope), function(i) {
          (180.0/pi) * atan(BEslope$DepthDifference[i]/BEslope$GreatCircleDistance[i]))
 })
 
+write.csv(BEslope, "wdata/BEslope.csv")
+
 #average 5m slope bins for full sites
 Ave5mSlopeSite<- BEslope%>%
   group_by(Site_ID)%>%
