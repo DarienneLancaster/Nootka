@@ -206,12 +206,15 @@ for (i in unique(data$Site_ID)) {
 DZdataDZ<-data
 
 #export data
-write.csv(DZdataDZ, "wdata/DZdataDZ.csv")
-write.csv(MaxDepthDZ, "wdata/MaxDepthDZ.csv")
-write.csv(MinDepthDZ, "wdata/MinDepthDZ.csv")
+# write.csv(DZdataDZ, "wdata/DZdataDZ.csv")
+# write.csv(MaxDepthDZ, "wdata/MaxDepthDZ.csv")
+# write.csv(MinDepthDZ, "wdata/MinDepthDZ.csv")
 
 ##########################################################################
 #pull data into a summary table
+DZdataDZ <-read.csv("wdata/DZdataDZ.csv",  header = TRUE)
+MaxDepthDZ <- read.csv("wdata/MaxDepthDZ.csv",  header = TRUE)
+MinDepthDZ <- read.csv("wdata/MinDepthDZ.csv",  header = TRUE)
 
 #pull max deadzone calculated from deepest depths
 MaxDeets<-MaxDepthDZ%>%
@@ -248,11 +251,27 @@ CombinedDeets <- bind_rows(
   MeanDeets %>% mutate(Type = "Mean"),
   SDDeets %>% mutate(Type = "SD"),
 )%>%
-  rename(Transect_Depth = Type, Deadzone_Height = DZbest)
+  rename(Transect_Depth = Type, Deadzone_Height = DZbest)%>%
+  mutate(across(where(is.numeric), ~ round(., 2)))
 
 #rearrange columns
 CombinedDeets <- CombinedDeets[, c(4, 1, 2, 3)]
 flextable(CombinedDeets)
+
+#export flextable into word for formatting
+
+lp("officer")
+help(package="officer")
+
+# Create a new Word document
+doc <- read_docx()
+
+# Add the flextable
+doc <- doc %>%
+  body_add(CombinedDeets)
+
+# Save the Word document
+print(doc, target = "figures/deadzone_height.docx")
 
 ###summarize data for Min, Max, and Mean deadzone height calculations
 # MinSum <- MinDepth %>%
