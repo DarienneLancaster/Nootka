@@ -59,7 +59,7 @@ create_bins <- function(data) {
     dplyr::select(-Min_Time)
 }
 
-# Apply the function (add bin ID numbers to each substrate annotation based on time along transect)
+# Apply the function (add bin ID numbers to each substrate annotation based on time along Pass)
 trandur <- create_bins(trandur)
 
 #summarize substrate data by site
@@ -183,6 +183,8 @@ load("wdata/site_DE.RData")
 
 
 #join dataframes together
+ROV_Sub_Site<-ROV_Sub_Site%>%
+  rename(Site_ID = Site)
 sitefull<-left_join(ROV_Sub_Site, site_DE, by="Site_ID")
 
 sitefull<-sitefull%>%
@@ -741,23 +743,23 @@ wilcox15_10<-wilcox.test(sitefull$NASC_10_1m, sitefull$NASC_5_1m, exact= FALSE, 
 print(wilcox15_10)
 
 
-## box plot for NASC at 10m for each DEADZONE
+## box plot for NASC at 10m for each DEADZONE buffer
 sitefull_NASC_DZ <- sitefull %>%
   dplyr::select("Site_ID", "NASC_10_LG", "NASC_10_MAN", "NASC_10_1m")
 str(sitefull_NASC_DZ)
 
 sitefull_NASC_DZlong <- sitefull_NASC_DZ %>%
   rename(
-    "Large Deadzone" = NASC_10_LG,
-    "Manual Deadzone" = NASC_10_MAN,
-    "1m Deadzone" = NASC_10_1m
+    "Large Buffer" = NASC_10_LG,
+    "Manual Buffer" = NASC_10_MAN,
+    "1m Buffer" = NASC_10_1m
   ) %>%
-  pivot_longer(cols = c(`Large Deadzone`, `Manual Deadzone`,`1m Deadzone` ),
+  pivot_longer(cols = c(`Large Buffer`, `Manual Buffer`,`1m Buffer` ),
                names_to = "Method",
                values_to = "NASC")
 
 # Define the desired order of Method levels
-method_order <- c("Large Deadzone", "Manual Deadzone","1m Deadzone")  # Replace with your actual method names and desired order
+method_order <- c("Large Buffer", "Manual Buffer","1m Buffer")  # Replace with your actual method names and desired order
 
 # Convert Method to a factor with specified levels and order
 sitefull_NASC_DZlong$Method <- factor(sitefull_NASC_DZlong$Method, levels = method_order)
@@ -2027,6 +2029,14 @@ residuals <- residuals(Slope_Rug_NASC_NASCSlope)
 TF2 <- sitefull %>%
   mutate(resid = residuals)
 
+hist(sitefull$Rock)
+
+sitefullT<-sitefull
+sitefullT$RockT<-sitefullT$Rock/100
+
+sitefullT$RockTlogit<-logit(sitefullT$RockT)
+hist(sitefullT$RockTlogit)
+
 ## plot residuals vs predictors (looking for flat line with lm)
 
 
@@ -2570,7 +2580,7 @@ Cor_T1T3 <- ggplot(T1_T3_NASC, aes(x = NASC_10_1m, y = NASC_10_t3)) +
   geom_point(color = "gray40") +
  # labs(title = "b)") +
   sm_statCorr(corr_method="pearson", color = "gray40")+
-  labs(x = "Transect 1 NASC", y = "Transect 3 NASC")+
+  labs(x = "Pass 1 NASC", y = "Pass 3 NASC")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 Cor_T1T3
@@ -2581,15 +2591,15 @@ ggsave("figures/T1_T3_pearsonscor_plot.png", plot = Cor_T1T3, width = 25, height
 ## box plot for NASC at 10m for each DEADZONE
 T1_T3 <- T1_T3_NASC %>%
   rename(
-    "Transect 1" = NASC_10_1m,
-    "Transect 3" = NASC_10_t3
+    "Pass 1" = NASC_10_1m,
+    "Pass 3" = NASC_10_t3
   ) %>%
-  pivot_longer(cols = c(`Transect 1`, `Transect 3`),
+  pivot_longer(cols = c(`Pass 1`, `Pass 3`),
                names_to = "Method",
                values_to = "NASC")
 
 # Define the desired order of Method levels
-method_order <- c("Transect 1", "Transect 3")  # Replace with your actual method names and desired order
+method_order <- c("Pass 1", "Pass 3")  # Replace with your actual method names and desired order
 
 # Convert Method to a factor with specified levels and order
 T1_T3$Method <- factor(T1_T3$Method, levels = method_order)
