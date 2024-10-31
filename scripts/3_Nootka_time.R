@@ -67,7 +67,18 @@ nootkadata <- nootkadata %>%
 
 
 nootkadata <- nootkadata %>%
-  mutate(Long_Decimal = sapply(Long, dm_to_decimal))
+  mutate(Long_Decimal = sapply(Long, dm_to_decimal))%>%
+  filter(Site_ID !="NS01", Site_ID != "NS02", Site_ID != "NS03", Site_ID != "NS04", #remove sites that were taken out of analysis
+         Site_ID != "NS05", Site_ID != "NS06", Site_ID != "NS08", Site_ID != "NS18")
+
+#calculate mean time to complete full survey and mean time to complete ROV survey
+MeanTime<-nootkadata%>%
+  summarise(
+    Mean_duration = mean(site_duration, na.rm = TRUE),
+    SD_duration = sd(site_duration, na.rm = TRUE),
+    MeanT2_duration = mean(T2_duration, na.rm = TRUE),
+    SDT2_duration = sd(T2_duration, na.rm = TRUE)
+  )
 
 
 ## Save Nootka data 
