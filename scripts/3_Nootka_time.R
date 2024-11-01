@@ -1,11 +1,9 @@
-# By: Hutton Noth 
-# Date: Fall 2023
-## set working directory 
-#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
+##script to calculate duration of surveys at each site
 
 ## required packages 
 lp("tidyverse")
 lp("readxl")
+lp("dplyr")
 
 ## if you read in the file as a excel vs csv it will keep column class's proper for doing time calculations. 
 nootkadata <- read_excel("odata/Nootka_Data_2023.xlsx")
@@ -15,15 +13,7 @@ head(nootkadata)
 str(nootkadata)
 
 ## Convert the excel time to a time usable in R ## 
-# I struggled getting time calculations because in time columns on excel there was written out NA's this caused the it to be chr not POSIXct 
 
-## T2 and T3 times were loaded in as fractions instead of the format of the last one
-## "0.41319444444444442": This is also a representation of time as a fraction of a day.
-## RESOLVED: as some of the times are missing for T2 and T3 missing
-## there was NA written into the excel file with made the dates show up as fractions and characters 
-## removing NA from the excel file solved this issue
-
- 
 ## Calculate the duration for transect for each transect ## 
 nootkadata$T1_duration <- nootkadata$T1_End - nootkadata$T1_Start
 
@@ -37,7 +27,7 @@ nootkadata$site_duration <- nootkadata$T3_End - nootkadata$T1_Start
 ## How long between the end of transect 1 to the ROV transect = time for the fish to move 
 nootkadata$T2_T1_duration <- nootkadata$T2_Start - nootkadata$T1_End
 
-## Depth differnences ## 
+## Depth differences ## 
 nootkadata$T1_DepthDif <- nootkadata$T1_Edepth - nootkadata$T1_Sdepth
 
 nootkadata$T2_DepthDif <- nootkadata$T2_Edepth - nootkadata$T2_Sdepth
@@ -45,9 +35,6 @@ nootkadata$T2_DepthDif <- nootkadata$T2_Edepth - nootkadata$T2_Sdepth
 nootkadata$T3_DepthDif <- nootkadata$T3_Edepth - nootkadata$T3_Sdepth
 
 ## Lat and long conversion calculations ## 
-
-# Load the required packages 
-lp("dplyr")
 
 # Function to convert DMS to decimal degrees
 # we are keeping the degrees then pasting the minutes plus decimals of the minutes to the equation that divides them by 60
@@ -68,7 +55,7 @@ nootkadata <- nootkadata %>%
 
 nootkadata <- nootkadata %>%
   mutate(Long_Decimal = sapply(Long, dm_to_decimal))%>%
-  filter(Site_ID !="NS01", Site_ID != "NS02", Site_ID != "NS03", Site_ID != "NS04", #remove sites that were taken out of analysis
+  filter(Site_ID !="NS01", Site_ID != "NS02", Site_ID != "NS03", Site_ID != "NS04", #remove sites that were taken out of final analysis
          Site_ID != "NS05", Site_ID != "NS06", Site_ID != "NS08", Site_ID != "NS18")
 
 #calculate mean time to complete full survey and mean time to complete ROV survey
@@ -90,7 +77,7 @@ write.csv(nootkadata,"wdata/nootkadata.csv")
 # Calculate summary statistics across specified columns
 ## identify the class 
 class(nootkadata$T2_duration)
-## the regular calculation of summary stats and standard deviation can not be conducted on difftime class
+## the regular calculation of summary stats and standard deviation cannot be conducted on diff time class
 # Function to calculate standard deviation for difftime objects
 sd_difftime <- function(x) {
   sd_numeric <- sd(as.numeric(x, units = "secs"), na.rm = TRUE)
