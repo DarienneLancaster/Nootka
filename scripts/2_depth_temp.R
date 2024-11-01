@@ -1,12 +1,13 @@
-# By: Hutton Noth 
-# Date: Fall 2023
+#load data from StarOddis
 
-## setwd("C:/Users/dlanc/Documents/PhD/R/Nootka") 
+## set working directory to project directory 
+#Session>Set working directory>to project directory
+# project directory should contain 4 folders named odata, wdata, figures, scripts
 
-setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
-
-## There is two files we will be working with, one with the Staroddi data 
+## There are two files we will be working with, one with the Staroddi data 
 ## the other is manual measurements of temp and depth from ROV 
+
+#load packages
 lp("tidyverse")
 lp("readxl")
 lp("dplyr")
