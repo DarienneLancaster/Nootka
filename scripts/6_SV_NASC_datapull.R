@@ -1,8 +1,4 @@
-# By: Hutton Noth 
-# Date: Feb 20th, 2024 
-
-#Adjustements by: Darienne Lancaster
-#April 20, 2024
+##work with NASC exports to calculate NASC for each deadzone buffer and rocky reef fish zone (RFZ) combination
 
 #### Load Packages #### 
 lp<-function(pck){
@@ -462,7 +458,6 @@ siteNASC<-left_join(siteNASC, full15_allDZ_df, by= "Site_ID")
 ## for loop 
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-#Bin5_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x5"
 
 Bin5_path <- "odata/Transect 1/20x5"
 # get a list of file names 
@@ -639,8 +634,6 @@ Bin5_MAN_df <- Bin5_MAN_df %>%
 
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-#Hutton path
-#Bin10_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x10"
 
 ##########pull 20X10 from Large DZ #### 
 Bin10_path <- "odata/Transect 1/20x10"
@@ -816,8 +809,6 @@ Bin10_MAN_df <- Bin10_MAN_df %>%
   dplyr::select(-c(5,6))
 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-#Hutton path
-#Bin15_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/20x15"
 
 ##########pull 20X15 from Large DZ #### 
 
@@ -1017,15 +1008,10 @@ binNASC <- merge(bin_df7, bin_df6, by = c("Site_ID", "Interval", "BinID" ))
 
 #view(bin_df)
 
-
-#save(bin_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_df.RData")
-#save(full_df, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/full_df.RData")
 save(binNASC, file = "wdata/binNASC.RData")
 write.csv(binNASC, "wdata/binNASC.csv")
 save(siteNASC, file = "wdata/siteNASC.RData")
 write.csv(siteNASC, "wdata/siteNASc.csv")
-
-
 
 #### Transect 3 ####
 #### 100x15 ####
@@ -1075,8 +1061,7 @@ full15_df_t3 <- full15_df_t3 %>%
 
 #### 100x10 #### 
 ## we want to create a dataframe for all the # specify the path on the computer to the folder with the files you want to run through the code 
-#Hutton path
-#Full10_path <- "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/BIOSONIC/Analysis/Exports/Transect 1/100x10"
+
 Full10_path_t3 <- "odata/Transect 3/100x10"
 
 # get a list of file names 
@@ -1169,5 +1154,6 @@ full_df_t3 <- merge(full_df_t3, full5_df_t3, by = c( "Layer_depth_min", "Layer_d
 
 
 save(full_df_t3, file = "wdata/full_df_t3.RData")
-view(full_df_t3)
+
+#proceed to script 7_analysis_GLMs_Spearmans.R
 

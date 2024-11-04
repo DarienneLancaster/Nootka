@@ -1,8 +1,5 @@
-# By: Hutton Noth 
-# Date: Feb 20th, 2024 
-
-#Adjustements by: Darienne Lancaster
-#April 20, 2024
+# Calculate slope in 5 and 20m bins from echosounder detected bottom
+# Calculate rugosity metrics using echosounder bottom line
 
 #### Load Packages #### 
 lp<-function(pck){
@@ -14,10 +11,6 @@ lp("dplyr")
 lp("ggplot2")
 lp("flextable")
 lp("xlsx")
-
-#### Set Working Directory #### 
-
-#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 ####  Lets attempt a for loop #### 
 # create a list of all the file names we need to pull through the code 
@@ -126,9 +119,9 @@ merged_df$BinID <- paste(merged_df$Site_ID, merged_df$Bin, sep = "_")
 merged_df <-merged_df %>%
   filter(!is.na(Bin))
 
-# load in bininfo from saved on cleandata.R 
-#load("C:/Users/HuttonNoth(HFS)/Desktop/Biosonic_ROV_2023/Nootka_Aug2023/R/Nootka/bininfo.RData")
-load("wdata/bininfo.RData")
+# load in bininfo saved in script 4_cleanedcode.R 
+
+load("wdata/bininfo20241104.RData")
 
 #### lets calculate different variables for each of the bin level 
 
@@ -181,7 +174,7 @@ BEslope$Slope5m <- sapply(1:nrow(BEslope), function(i) {
          (180.0/pi) * atan(BEslope$DepthDifference[i]/BEslope$GreatCircleDistance[i]))
 })
 
-write.csv(BEslope, "wdata/BEslope.csv")
+write.csv(BEslope, "wdata/BEslope20241104.csv")
 
 #average 5m slope bins for full sites
 Ave5mSlopeSite<- BEslope%>%
@@ -324,9 +317,10 @@ binlines<-left_join(binlines, BEslope20bin2, by = "BinID")
 binlines<-binlines%>%
   slice(-26)
 
+####Calcualte Rugosity Ratio - binned data####
 
 binlines <- binlines %>% mutate(PaperRatio = 100*(GreatCircleDistance20 / chainlength)) #this is the original formula used in rugosity paper that uses a set length of chain, this doesn't work for our method
-binlines <- binlines %>% mutate(Ratio = (chainlength/GreatCircleDistance20)) #this is a ratio adapted to our length over 100m method (this is the one we want to use)
+binlines <- binlines %>% mutate(Ratio = (chainlength/GreatCircleDistance20)) #this is a ratio adapted to our length over 100m method (this is the one we use in our analyses)
 binlines <- binlines %>% mutate(ChainDiff = (chainlength-GreatCircleDistance20)) #this is a simpler version that just subtracts 100m transect from full bottom line length
 
 
@@ -369,20 +363,23 @@ BEslope20site <- BEslope20site %>%
 
 SiteBottom<-left_join(SiteBottom, BEslope20site, by = "Site_ID")
 
+####Calcualte Rugosity Ratio - site data####
+
 SiteBottom <- SiteBottom %>% mutate(PaperRatio = 100*(totaldist / chainlength))
 SiteBottom <- SiteBottom %>% mutate(Ratio = (chainlength/totaldist))
 SiteBottom <- SiteBottom %>% mutate(ChainDiff = (chainlength-totaldist))
 
-load("wdata/siteinfo.Rdata")
+#load Rdata from script 4
+load("wdata/siteinfo20241104.Rdata")
 sitelines <- siteinfo %>% dplyr::select("Site_ID")
 sitelines <- left_join(sitelines, SiteBottom, by = "Site_ID")
 
 
 
-# #### Deadzone for-loop for Large, 1m, and Manual deadzones ####
+# #### Deadzone for-loop for Large, 1m, and Manual deadzone buffers ####
 ##################################################################################
 
-##Large deadzone###
+##Large deadzone buffer###
 LGdeadzone_path <- "odata/Transect 1/100mLines/Deadzone"
 LGdeadzone_save_path <- "odata/Transect 1/100mLines/Deadzone/RCODED"
 
@@ -490,7 +487,7 @@ combined_df <- combined_df %>% mutate(LG_DZ_Area = LG_DZDifference * GreatCircle
 
 
 
-#### lets calculate different variables for each of variables at bin level ####
+#### lets calculate different variables at bin level ####
 Bin_LG_Deadzone <- combined_df %>%
   group_by(BinID) %>%
   summarize(
@@ -778,13 +775,10 @@ Site_MAN_Deadzone <- combined_df_LG_1m_MAN %>%
 sitelines <- left_join(sitelines, Site_MAN_Deadzone, by = "Site_ID")
 
 
-# save(binlines, file = "C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka/bin_lines.RData")
-
-
-save(sitelines, file = "wdata/sitelines.RData")
-write.csv(sitelines, "wdata/sitelines.csv")
-save(binlines, file = "wdata/binlines.RData")
-write.csv(binlines, "wdata/binlines.csv")
+save(sitelines, file = "wdata/sitelines20241104.RData")
+write.csv(sitelines, "wdata/sitelines20241104.csv")
+save(binlines, file = "wdata/binlines20241104.RData")
+write.csv(binlines, "wdata/binlines20241104.csv")
 
 ####checking if acoustic data depth range matches ROV data depth range
 #calculate start and end depth for each transect and each bin
@@ -802,7 +796,7 @@ BEdepth_bin<-merged_df%>%
   slice(c(1,n()))%>%
   dplyr::select(BinID, Depth)
 
-EVdata <-read.csv("odata/NootkaROV_20240301_finalDL.csv",  skip=4, stringsAsFactors = FALSE)
+EVdata <-read.csv("odata/NootkaROV_20240426_finalDL_NS42noGPSused.csv",  skip=4, stringsAsFactors = FALSE)
 # create a column for Site_ID by pulling the first 4 letters from filename 
 EVdata$Site_ID <- substr(EVdata$Filename, 1, 4)
 
@@ -821,225 +815,5 @@ BEdepth_siteEV$Depth_ROV<-BEdepth_siteEV$Depth_ROV/3.281
 
 AVdepth<-left_join(BEdepth_site, BEdepth_siteEV, "Site_ID_unique")
 
-
-
-
-##################################################################################
-#### Transect 3 Bottom Line forloop ####
-# Lets calculate site level variables 
-
-folder_path_t3 <- "odata/Transect 3/Bottom Lines"
-
-# get a list of file names 
-file_names_t3 <- list.files(folder_path_t3)
-
-# select only the csv files 
-csv_files_t3 <- file_names_t3[grep("\\.csv$", file_names_t3)]
-
-# make it into a dataframe
-file_df_t3 <- data.frame(file_name = csv_files_t3)
-
-# create a column in the dataframe for site ID 
-file_df_t3$Site_ID <- substr(file_df_t3$file_name, 1, 4)
-
-merged_df_t3 <- data.frame()
-
-# make path for the for-loop to pull from 
-save_path_t3 <- "odata/Transect 3/Bottom Lines/RCODED"
-
-# loop each row in the file_df_t3 that contains all the names of files of interest
-for (i in 1:nrow(file_df_t3)) {
-  # set the file name and site ID 
-  file_name <- file_df_t3$file_name[i]
-  site_id <- file_df_t3$Site_ID[i]
-  
-  # pull in files from our specified pathway 
-  file <- read.csv(file.path(folder_path_t3, file_name))
-  
-  # clean and subset the data to keep only what we need 
-  file <- file %>%
-    select("Latitude", "Longitude", "Depth")
-  
-  # remove any duplicate pings with same lat long and depth
-  file <- distinct(file, Latitude, Longitude, Depth, .keep_all = TRUE)
-  
-  # write column with containing the site_IDs 
-  file$Site_ID <- site_id
-  
-  # calculate the great circle distance 
-  calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
-    distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) *
-                        cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
-    return(distance)
-  }
-  
-  # apply the GCD function to our data 
-  file$GreatCircleDistance[2:(nrow(file))] <- sapply(2:(nrow(file)), function(j) {
-    lat1 <- file$Latitude[j - 1]
-    lon1 <- file$Longitude[j - 1]
-    lat2 <- file$Latitude[j]
-    lon2 <- file$Longitude[j]
-    calc_great_circle_distance(lat1, lon1, lat2, lon2)
-  })
-  
-  # difference in depth 
-  file$DepthDifference <- c(NA, file$Depth[-1] - file$Depth[-nrow(file)])
-  
-  # measure slope 
-  file$Slope <- sapply(1:nrow(file), function(j) {
-    ifelse(is.na(file$GreatCircleDistance[j]) || is.na(file$DepthDifference[j]),
-           NA,
-           (180.0/pi) * atan(file$DepthDifference[j] / file$GreatCircleDistance[j]))
-  })
-  
-  # calculate the hypotenuse 
-  file$Hypotenuse <- sqrt(file$GreatCircleDistance^2 + file$DepthDifference^2)
-  
-  # cumulative sum of great circle distance to help bin the data
-  file$GreatCircleDistance[is.na(file$GreatCircleDistance)] <- 0
-  file$CumulativeGCD <- cumsum(file$GreatCircleDistance)
-  
-  # do the same for the Hypotenuse
-  file$Hypotenuse[is.na(file$Hypotenuse)] <- 0
-  file$CumulativeHypo <- cumsum(file$Hypotenuse)
-  
-  # create a dataframe that holds all the data
-  merged_df_t3 <- rbind(merged_df_t3, file)
-  
-  # export csv of the calculations
-  write.csv(file, file.path(save_path_t3, paste0(site_id, "_", file_name)), row.names = FALSE)
-}
-
-
-#### Transect 3 bottom Variables ##### 
-# First make a column that changes negative slope values to positive
-merged_df_t3$noneg_slope <- abs(merged_df_t3$Slope)
-
-# Also try a column that makes all negative slope values NA
-merged_df_t3 <- merged_df_t3 %>%
-  mutate(negna_slope = replace(Slope, Slope < 0, NA))
-
-SiteBottom_t3 <- merged_df_t3 %>%
-  group_by(Site_ID) %>%
-  summarize(
-    Average_Slope = mean(Slope, na.rm = TRUE),
- #   Average_5m_slope = mean(Bin5m_Ave_Slope_Site, na.rm = TRUE),
-    Average_noneg_slope = mean(noneg_slope, na.rm = TRUE),
-    Average_negna_slope = mean(negna_slope, na.rm = TRUE),
-    Std_Dev_Slope = sd(Slope, na.rm = TRUE), 
-    profilelength = sum(GreatCircleDistance, na.rm = TRUE),
-    chainlength = sum(Hypotenuse, na.rm = TRUE)
-  )
-
-SiteBottom_t3 <- SiteBottom_t3 %>%
-  mutate(PaperRatio = 100 * (profilelength / chainlength)) %>%
-  mutate(Ratio = chainlength / profilelength) %>%
-  mutate(ChainDiff = chainlength - profilelength)
-
-sitelines_t3 <- siteinfo %>% select("Site_ID")
-sitelines_t3 <- left_join(sitelines_t3, SiteBottom_t3, by = "Site_ID")
-
-
-
-#### Transect 3 
-deadzone_path_t3 <- "odata/Transect 3/Deadzone Lines"
-deadzone_save_path_t3 <- "odata/Transect 3/Deadzone Lines"
-
-# List all relevant files
-deadzone_names_t3 <- list.files(deadzone_path_t3)
-
-# Filter for only CSV files
-deadzone_csv_t3 <- deadzone_names_t3[grep("\\.csv$", deadzone_names_t3)]
-
-# Make dataframe
-deadzone_df_t3 <- data.frame(deadzone_names = deadzone_csv_t3)
-
-# Site_Id column
-deadzone_df_t3$Site_ID <- substr(deadzone_df_t3$deadzone_names, 1, 4)
-
-# Make empty dataframe
-deadzone_merge_t3 <- data.frame()
-
-# Now let's run the for-loop on the deadzone line
-for (i in 1:nrow(deadzone_df_t3)) {
-  # Set site ID and file names to run through the for loop
-  deadzone_file_name_t3 <- deadzone_df_t3$deadzone_names[i]
-  deadzone_site_id_t3 <- deadzone_df_t3$Site_ID[i]
-  
-  # Read in the files
-  deadzone_file_t3 <- read.csv(file.path(deadzone_path_t3, deadzone_file_name_t3))
-  
-  # Clean up the dataframe
-  deadzone_file_t3 <- deadzone_file_t3 %>%
-    select("Latitude", "Longitude", "Depth")
-  
-  # Remove duplicate pings
-  deadzone_file_t3 <- distinct(deadzone_file_t3, Latitude, Longitude, Depth, .keep_all = TRUE)
-  
-  # Add site ID
-  deadzone_file_t3$Site_ID <- deadzone_site_id_t3
-  
-  # Great circle distance function
-  calc_great_circle_distance <- function(lat1, lon1, lat2, lon2) {
-    distance <- (acos(sin(lat1 * pi / 180) * sin(lat2 * pi / 180) + cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * cos((lon2 - lon1) * pi / 180)) * 180 / pi) * 60 * 1852
-    return(distance)
-  }
-  
-  # Apply GCD to data
-  deadzone_file_t3$GreatCircleDistance[2:(nrow(deadzone_file_t3))] <- sapply(2:(nrow(deadzone_file_t3)), function(j) {
-    lat1 <- deadzone_file_t3$Latitude[j - 1]
-    lon1 <- deadzone_file_t3$Longitude[j - 1]
-    lat2 <- deadzone_file_t3$Latitude[j]
-    lon2 <- deadzone_file_t3$Longitude[j]
-    calc_great_circle_distance(lat1, lon1, lat2, lon2)
-  })
-  
-  # Measure the depth change
-  deadzone_file_t3$DepthDifference <- c(NA, deadzone_file_t3$Depth[-1] - deadzone_file_t3$Depth[-nrow(deadzone_file_t3)])
-  
-  # Calculate the slope
-  deadzone_file_t3$Slope <- sapply(1:nrow(deadzone_file_t3), function(j) {
-    ifelse(is.na(deadzone_file_t3$GreatCircleDistance[j]) || is.na(deadzone_file_t3$DepthDifference[j]),
-           NA,
-           (180.0/pi) * atan(deadzone_file_t3$DepthDifference[j] / deadzone_file_t3$GreatCircleDistance[j]))
-  })
-  
-  # Calculate the hypotenuse
-  deadzone_file_t3$Hypotenuse <- sqrt(deadzone_file_t3$GreatCircleDistance^2 + deadzone_file_t3$DepthDifference^2)
-  
-  # Measure the cumulative sum of GCD to allow the data to get binned
-  deadzone_file_t3$GreatCircleDistance[is.na(deadzone_file_t3$GreatCircleDistance)] <- 0
-  deadzone_file_t3$CumulativeGCD <- cumsum(deadzone_file_t3$GreatCircleDistance)
-  
-  # Do the same for the Hypotenuse
-  deadzone_file_t3$Hypotenuse[is.na(deadzone_file_t3$Hypotenuse)] <- 0
-  deadzone_file_t3$CumulativeHypo <- cumsum(deadzone_file_t3$Hypotenuse)
- 
-  # Create a df that holds all the data
-  deadzone_merge_t3 <- rbind(deadzone_merge_t3, deadzone_file_t3)
-  
-  # Export csv of the calculations
-  write.csv(deadzone_file_t3, file.path(deadzone_save_path_t3, paste0(deadzone_site_id_t3, "_", deadzone_file_name_t3)), row.names = FALSE)
-}
-
-
-
-
-deadzone_merge_t3$DZDepth <- deadzone_merge_t3$Depth
-
-# Subset the data
-deadzone_clean_t3 <- deadzone_merge_t3 %>% select(Latitude, Longitude, GreatCircleDistance, DZDepth)
-
-# Now let's add the depth of the deadzone to the bottom dataframe
-combined_df_t3 <- merge(merged_df_t3, deadzone_clean_t3, 
-                        by = c("Latitude", "Longitude", "GreatCircleDistance"))
-
-# Now let's create a column to calculate the difference in depth of the deadzone to bottom line
-combined_df_t3 <- combined_df_t3 %>% mutate(DZDifference = abs(Depth - DZDepth))
-combined_df_t3 <- combined_df_t3 %>% mutate(Area = DZDifference * GreatCircleDistance)
-
-
-
-
-
+#proceed to 6_SV_NASC_datapull.R
 

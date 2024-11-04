@@ -1,5 +1,4 @@
-# By: Hutton Noth 
-# Date: Fall 2023
+#summarize ROV fish data from EventMeasure and substrate/slope data
 
 ####  Load in Packages ####
 lp<-function(pck){
@@ -13,13 +12,6 @@ lp("flextable")
 lp("xlsx")
 lp("RColorBrewer")
 display.brewer.all()
-
-
-
-#### Set Working Directory #### 
-
-#setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
-
 
 #### Create siteinfo Data frame #### 
 
@@ -123,11 +115,6 @@ srplot2<-ggplot(AllSchooling, aes(x=Common, y=Total_Schooling))+
   xlab("Species")  + 
   theme(axis.text.x = element_text(size = 12, face = "plain", angle = 75, hjust=1, colour = "black")) 
 print(srplot2)
-
-
-
-
-
 
 
 ############## Site information ###########################
@@ -331,12 +318,12 @@ sitespecies <- reshape(sitespecies, v.names = "Abundance", idvar = "Site_ID", ti
 sitespecies[is.na(sitespecies)] <- 0
 
 # function to calculate total abundance 
-TotalAbundance <- function(x) {apply(sitespecies[, 2:26], 1, sum)}
+TotalAbundance <- function(x) {apply(sitespecies[, 2:24], 1, sum)}
 # function to apply it to sitespecies 
 sitespecies$TotalAbundance <- mapply(TotalAbundance, x = 2)
 
 # function to get species richness per site 
-SpeciesRichness <- function(x) {apply(sitespecies[, 2:26 ]> 0, 1, sum)}
+SpeciesRichness <- function(x) {apply(sitespecies[, 2:24 ]> 0, 1, sum)}
 
 # function to apply it to sitespecies 
 sitespecies$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
@@ -485,7 +472,7 @@ NSwide[is.na(NSwide)] <- 0
 
 # function to calculate abundance for non-schooling fish 
 nonschoolingabundance <- function(x) {
-  apply(NSwide[, 2:14], 1, sum)
+  apply(NSwide[, 2:13], 1, sum)
 }
 
 
@@ -493,7 +480,7 @@ NSwide$AbundanceNonSchooling <- mapply(nonschoolingabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSwide[, 2:14]> 0, 1, sum)
+  apply(NSwide[, 2:13]> 0, 1, sum)
 }
 NSwide$SRNonSchooling <- mapply(nonschoolspeciesrichness, x = 2)
 
@@ -529,7 +516,7 @@ NSwide[is.na(NSwide)] <- 0
 
 # function to calculate abundance for non-schooling fish 
 mudfishabundance <- function(x) {
-  apply(NSwide[, 2:10], 1, sum)
+  apply(NSwide[, 2:9], 1, sum)
 }
 
 
@@ -537,7 +524,7 @@ NSwide$Abundancemudfish <- mapply(mudfishabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSwide[, 2:10]> 0, 1, sum)
+  apply(NSwide[, 2:9]> 0, 1, sum)
 }
 NSwide$SRmudfish <- mapply(nonschoolspeciesrichness, x = 2)
 
@@ -656,12 +643,12 @@ subareaspecies$Abundance <- mapply(get.abundance, xx = subareaspecies$Subarea, s
 speciesinsubarea <- subareaspecies %>%  dplyr::select(Subarea, FullName, Abundance)
 subareaspecies <- reshape(subareaspecies, v.names = "Abundance", idvar = "Subarea", timevar = "FullName", direction = "wide")
 subareaspecies[is.na(subareaspecies)] <- 0
-TotalAbundance <- function(x) {apply(subareaspecies[, 2:26], 1, sum)}
+TotalAbundance <- function(x) {apply(subareaspecies[, 2:24], 1, sum)}
 subareaspecies$TotalAbundance <- mapply(TotalAbundance, x = 2)
 sum(subareaspecies$TotalAbundance) # we counted 13658 
 
 # find species richness per subarea 
-SpeciesRichness <- function(x) {apply(subareaspecies[, 2:26 ]> 0, 1, sum)}
+SpeciesRichness <- function(x) {apply(subareaspecies[, 2:24 ]> 0, 1, sum)}
 subareaspecies$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
 Sebastes <-  ROVFish%>% filter(Genus == "Sebastes")
 subarea1 <- dplyr::select(subareaspecies, c("Subarea", "TotalAbundance", "SpeciesRichness"))
@@ -806,6 +793,7 @@ flextable(subarea_table)
   
 ############## Bin Information ############################
 ## try to create 5 bins of time per site. 
+  #binned information not used in publication
 
 ## remove the times that the ROv gets pulled from the time from aanotations
 ROV$Time <- as.numeric(ROV$Time)
@@ -906,12 +894,12 @@ binspecieswide <- binspecies %>%
 binspecieswide[is.na(binspecieswide)] <- 0
 
 # function to calculate total abundance 
-TotalAbundance <- function(x) {apply(binspecieswide[, 2:26], 1, sum)}
+TotalAbundance <- function(x) {apply(binspecieswide[, 2:24], 1, sum)}
 # function to apply it to binspecies 
 binspecieswide$TotalAbundance <- mapply(TotalAbundance, x = 2)
 
 # function to get species richness per site 
-SpeciesRichness <- function(x) {apply(binspecieswide[, 2:26 ]> 0, 1, sum)}
+SpeciesRichness <- function(x) {apply(binspecieswide[, 2:24 ]> 0, 1, sum)}
 
 # function to apply it to binspecies 
 binspecieswide$SpeciesRichness <- mapply(SpeciesRichness, x = 2)
@@ -1062,14 +1050,14 @@ ncol(NSbinwide)
 
 # function to calculate abundance for non-schooling fish 
 nonschoolingabundance <- function(x) {
-  apply(NSbinwide[, 2:14], 1, sum)
+  apply(NSbinwide[, 2:13], 1, sum)
 }
 
 NSbinwide$AbundanceNonSchooling <- mapply(nonschoolingabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSbinwide[, 2:14]> 0, 1, sum)
+  apply(NSbinwide[, 2:13]> 0, 1, sum)
 }
 NSbinwide$SRNonSchooling <- mapply(nonschoolspeciesrichness, x = 2)
 
@@ -1107,14 +1095,14 @@ ncol(NSbinwide)
 
 # function to calculate abundance for non-schooling fish 
 mudfishabundance <- function(x) {
-  apply(NSbinwide[, 2:10], 1, sum)
+  apply(NSbinwide[, 2:9], 1, sum)
 }
 
 NSbinwide$Abundancemudfish <- mapply(mudfishabundance, x = 2)
 
 # function to calculate species richness for non-schooling fish 
 nonschoolspeciesrichness <- function(x) { 
-  apply(NSbinwide[, 2:10]> 0, 1, sum)
+  apply(NSbinwide[, 2:9]> 0, 1, sum)
 }
 NSbinwide$SRmudfish <- mapply(nonschoolspeciesrichness, x = 2)
 
@@ -1125,10 +1113,11 @@ mudfish <- dplyr::select(NSbinwide, c("BinID", "Abundancemudfish", "SRmudfish"))
 bininfo <- merge(bininfo, mudfish, by = "BinID", na.rm = TRUE, all = TRUE)
 
 # Save 
-save(bininfo, file = "wdata/bininfo20240614.RData")
-write.csv(bininfo,"wdata/bininfo20240614.csv", row.names = FALSE)
+save(bininfo, file = "wdata/bininfo20241104.RData")
+write.csv(bininfo,"wdata/bininfo20241104.csv", row.names = FALSE)
 
-save(siteinfo, file = "wdata/siteinfo20240614.Rdata")
-write.csv(siteinfo,"wdata/siteinfo20240614.csv", row.names = FALSE)
+save(siteinfo, file = "wdata/siteinfo20241104.Rdata")
+write.csv(siteinfo,"wdata/siteinfo20241104.csv", row.names = FALSE)
 
+#proceed to script 5_lines_calculations.R
 
