@@ -1,13 +1,8 @@
-## Hutton Noth ##
-# June 4th # 
+#Comparing Pass 1 to Pass 3
 
 lp<-function(pck){
   if(!require(pck,character.only = TRUE))install.packages(pck);library(pck,character.only = TRUE)
 }
-
-
-#### Testing to see if we can compare t1 and t3 #### 
-setwd("C:/Users/HuttonNoth(HFS)/OneDrive - Ha’oom Fisheries Society/Nootka Rockfish Paper/Nootka_Aug2023/R/Nootka")
 
 lp("geosphere")
 lp("sp")
@@ -129,9 +124,9 @@ View(t1_t3_distance_results)
 
 #### Lets test if NASC values significantly vary across our study site ####
 ## lets load in neccessary data 
-load("wdata/full_df_t3.RData")
-load("wdata/full10_1m_df.RData")
-load("wdata/full15_1m_df.RData")
+load("odata/full_df_t3.RData")
+load("odata/full10_1m_df.RData")
+load("odata/full15_1m_df.RData")
 
 ## lets pull only the data we need from the larger data frames
 nasct3 <- full_df_t3 %>% select("Site_ID", "NASC_10_t3")
