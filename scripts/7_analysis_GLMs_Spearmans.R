@@ -391,7 +391,8 @@ print(rugRatioSTD_wilcox)
 rugSTDROV <- ggplot(sitefull_s, aes(x = Rugosity_s, y = Std_Dev_Slope_s)) +
   geom_point(color = "deepskyblue") +
   labs(title = "a)") +
-  sm_statCorr(corr_method="spearman", color = "deepskyblue4")+
+  sm_statCorr(corr_method="spearman", color = "deepskyblue3", linetype = "dashed")+
+  #geom_smooth(method = "loess", color = "deepskyblue4", linetype = "dashed", se=FALSE)+
   labs(x = "ROV", y = "SD Slope")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -400,7 +401,7 @@ rugSTDROV
 rugRatioROV <- ggplot(sitefull_s, aes(x = Rugosity_s, y = Ratio_s)) +
   geom_point(color = "deepskyblue") +
   labs(title = "b)") +
-  sm_statCorr(corr_method="spearman", color = "deepskyblue4")+
+  sm_statCorr(corr_method="spearman", color = "deepskyblue3", linetype = "dashed")+
   labs(x = "ROV", y = "Ratio")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -409,7 +410,7 @@ rugRatioROV
 rugRatioSTD <- ggplot(sitefull_s, aes(x = Ratio_s, y = Std_Dev_Slope_s)) +
   geom_point(color = "deepskyblue") +
   labs(title = "c)") +
-  sm_statCorr(corr_method="spearman", color = "deepskyblue4")+
+  sm_statCorr(corr_method="spearman", color = "deepskyblue3", linetype = "dashed")+
   labs(x = "Ratio", y = "SD Slope")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -445,7 +446,7 @@ rug_box<-ggplot(sitefull_s_longR, aes(x = Method, y = Rugosity )) +
 rug_box
 
 
-
+lp("grid")
 ###put all rugosity plots together
 allrug<-grid.arrange(rugSTDROV, rugRatioROV, rugRatioSTD, rug_box, nrow = 1, respect=TRUE)
 grid.text(
@@ -499,7 +500,7 @@ colors()
 rugSTDrock <- ggplot(sitefull_s, aes(x = Rock, y = Std_Dev_Slope_s)) +
   geom_point(color = "orange1") +
   labs(title = "e)") +
-  sm_statCorr(corr_method="spearman", color = "orange3")+
+  sm_statCorr(corr_method="spearman", color = "orange3", linetype = "dashed")+
   labs(x = "Rock (%)", y = "SD Slope")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -508,7 +509,7 @@ rugSTDrock
 rugRATIOrock <- ggplot(sitefull_s, aes(x = Rock, y = Ratio_s)) +
   geom_point(color = "orange1") +
   labs(title = "f)") +
-  sm_statCorr(corr_method="spearman", color = "orange3")+
+  sm_statCorr(corr_method="spearman", color = "orange3", linetype = "dashed")+
   labs(x = "Rock (%)", y = "Ratio")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -525,7 +526,7 @@ rugRATIOrock
 ROV_Rock_Rugosity <- ggplot(sitefull_s, aes(x = Rock, y = Rugosity_s )) +
   geom_point(color = "orange1") +
   labs(title = "g)") +
-  sm_statCorr(corr_method="spearman", color = "orange3")+
+  sm_statCorr(corr_method="spearman", color = "orange3", linetype = "dashed")+
   labs(x = "Rock (%)", y = "ROV")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -605,7 +606,7 @@ print(slope20_wilcox)
 slope20_s <- ggplot(sitefull_s, aes(x = Slope_s, y = Average_20m_slope_s)) +
   geom_point(color = "indianred2") +
   labs(title = "i)") +
-  sm_statCorr(corr_method="spearman", color = "indianred4")+
+  sm_statCorr(corr_method="spearman", color = "indianred3", linetype = "dashed")+
   labs(x = "ROV", y = "20m")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -614,7 +615,7 @@ slope20_s
 slope5_s <- ggplot(sitefull_s, aes(x = Slope_s, y = Average_5m_slope_s)) +
   geom_point(color = "indianred2") +
   labs(title = "j)") +
-  sm_statCorr(corr_method="spearman", color = "indianred4")+
+  sm_statCorr(corr_method="spearman", color = "indianred3", linetype = "dashed")+
   labs(x = "ROV", y = "5m")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -625,7 +626,7 @@ colors()
 slope20_5_s <- ggplot(sitefull_s, aes(x = Average_5m_slope_s, y = Average_20m_slope_s)) +
   geom_point(color = "indianred2") +
   labs(title = "k)") +
-  sm_statCorr(corr_method="spearman", color = "indianred4")+
+  sm_statCorr(corr_method="spearman", color = "indianred3", linetype = "dashed")+
   labs(x = "5m", y = "20m")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
