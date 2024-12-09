@@ -1708,11 +1708,12 @@ pearson
 Cor_T1T3 <- ggplot(T1_T3_NASC, aes(x = NASC_10_1m, y = NASC_10_t3)) +
   geom_point(color = "gray40") +
  # labs(title = "b)") +
-  sm_statCorr(corr_method="pearson", color = "gray40")+
+  sm_statCorr(corr_method="pearson", color = "gray40", linetype = "dashed")+
   labs(x = "Pass 1 NASC", y = "Pass 3 NASC")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 Cor_T1T3
+
 
 ggsave("figures/T1_T3_pearsonscor_plot.png", plot = Cor_T1T3, width = 25, height = 25, units = "cm")
 
