@@ -1779,50 +1779,6 @@ trio<-grid.arrange(glmplot_fSlope, glmplot_ROV, glmplot_HYBRID, nrow = 1, respec
 
 ggsave("figures/Top_3_GLMS_plotted.png", plot = trio, width = 25, height = 25, units = "cm")
 
-#############
-
-
-glmplot<- sitefull%>%
-  mutate(predicted = predict(m, sitefull))%>%
-  ggplot(aes(x=Slope, y = Ben, color = NASC_10_1m))+
-  geom_point(show.legend = TRUE)+
-  geom_smooth(aes(y=predicted), se = TRUE, color = "darkred")+
-  labs( x= "Slope",
-        y= "Benthic Fish Density",
-        color = "NASC")+
-  scale_color_gradient(low = "black", high = "red")+
-  theme_classic()
-glmplot
-
-glmplot1<- sitefull%>%
-  mutate(predicted = predict(m, sitefull))%>%
-  ggplot(aes(x=Rugosity, y = Ben, color = Slope))+
-  geom_point(show.legend = TRUE)+
-  geom_smooth(aes(y=predicted), se = TRUE, color = "darkred")+
-  labs( x= "Rugosity",
-        y= "Benthic Fish Density",
-        color = "Slope")+
-  scale_color_gradient(low = "black", high = "red")+
-  theme_classic()
-glmplot1
-
-glmplot2<- sitefull%>%
-  mutate(predicted = predict(m, sitefull))%>%
-  ggplot(aes(x=NASC_10_1m, y = Ben, color= Slope))+
-  geom_point(show.legend = TRUE)+
-  geom_smooth(aes(y=predicted), se = TRUE, color = "darkred")+
-  labs( x= "NASC",
-        y= "Benthic Fish Density",
-        color = "Slope")+
-  scale_color_gradient(low = "black", high = "red")+
-  theme_classic()
-glmplot2
-
-ROVechotop<-grid.arrange(glmplot2, glmplot, glmplot1, nrow =3)
-
-
-
-ggsave("figures/Top_ROVEcho_GLM_plot.png", plot = ROVechotop, width = 25, height = 25, units = "cm")
 
 #######################################################
 ####different deadzone in echo models####
