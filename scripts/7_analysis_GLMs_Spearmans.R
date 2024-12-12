@@ -992,7 +992,7 @@ r <- simulateResiduals(NASC_Slope_NASCSLOPE, n = 1000, plot = TRUE)  #some issue
 #check dispersion
 testDispersion(NASC_Slope_NASCSLOPE)
 
-#####plot GLM results####
+#####plot GLM results - ROV top model####
 
 # Create an empty dataframe
 
@@ -1032,7 +1032,7 @@ max(sitefull$Average_5m_slope) #30
 #predict values for Ben using real model on simulated data 
 ################
 #low slope
-sitefull4$predicted<-predict(m, sitefull4) #low slope - fixed at 3.6
+sitefull4$predicted<-pmax(predict(m, sitefull4), 0) #low slope - fixed at 3.6
 
 ##get confidence intervals (low slope)
 predicted_se <- predict(m, sitefull4, type = "response", se.fit = TRUE)
@@ -1045,7 +1045,7 @@ sitefull4$upper_bound <- predictions + 1.96 * se.fit
 
 ####################
 #High slope
-sitefull8$predicted<-predict(m, sitefull8) #high slope - fixed at 30
+sitefull8$predicted<-pmax(predict(m, sitefull8), 0) #high slope - fixed at 30
 
 ##get confidence intervals (high slope)
 predicted_se <- predict(m, sitefull8, type = "response", se.fit = TRUE)
@@ -1058,7 +1058,7 @@ sitefull8$upper_bound <- predictions + 1.96 * se.fit
 
 ################
 #mean slope
-sitefull11$predicted<-predict(m, sitefull11) #mean slope - fixed at 16.7
+sitefull11$predicted<-pmax(predict(m, sitefull11), 0) #mean slope - fixed at 16.7
 
 ##get confidence intervals (high slope)
 predicted_se <- predict(m, sitefull11, type = "response", se.fit = TRUE)
@@ -1071,15 +1071,14 @@ sitefull11$upper_bound <- predictions + 1.96 * se.fit
 
 #set any negative sitefull8 predicted values to NA, and set lower limit confidence intervals to zero
 sitefull8<-sitefull8%>%
-  mutate(predicted = replace(predicted, which(predicted<0), NA))%>%
-  mutate(lower_bound = replace(lower_bound, which(lower_bound<0), 0))%>%
-  mutate(upper_bound = replace(upper_bound, which(upper_bound<0), NA))
+  mutate(lower_bound = replace(lower_bound, which(lower_bound<0), 0))
 
 
 
 glmplot_fSlope<- sitefull%>%
   ggplot(aes(x=NASC_10_1m, y = Ben))+ #plot actual raw data of NASC vs. benthic fish density
   geom_point()+
+  labs(title = "a)") +
   geom_line(aes(y=predicted ),   data = sitefull4,  color = "deepskyblue3", size = 1)+ #predictions for low slope (5 degree) line
   geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull4,  fill = "deepskyblue3", alpha = 0.2) +  # Confidence interval
   geom_line(aes(y=predicted ),   data = sitefull8, color = "orange3",  linetype = "dotted", size = 1)+ #predictions for high slope (30 degree) line
@@ -1087,96 +1086,21 @@ glmplot_fSlope<- sitefull%>%
   geom_line(aes(y=predicted ),   data = sitefull11,  color = "indianred4", linetype = "dashed", size = 1)+ #predictions for low slope (16.7 degree) line
   geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull11,  fill = "indianred", alpha = 0.2) +  # Confidence interval
   #geom_smooth(method = "lm", data = sitefull, se = TRUE, color = "green")+ #predictions for basic linear model of NASC vs. benthic fish density (no slope included)
+  geom_text(data = sitefull4, aes(x = mean(NASC_10_1m), y = max(upper_bound), label = "Minimum Slope"), 
+            color = "deepskyblue3", size = 4, hjust = -0.1, vjust = 1.5) +
+  geom_text(data = sitefull11, aes(x = mean(NASC_10_1m), y = min(predicted), label = "Maximum Slope"), 
+            color = "orange3", size = 4, hjust = -0.1, vjust = 1.5) +
+  
+  geom_text(data = sitefull11, aes(x = mean(NASC_10_1m), y = mean(predicted), label = "Mean Slope"), 
+            color = "indianred4", size = 4, hjust = -0.1, vjust = 1.5) +
   labs( x= "NASC",
-        y= "Benthic Fish Density",
-        color = "Slope")+
-  scale_color_gradient(low = "black", high = "deepskyblue")+
-  #ylim(0, 0.15)+
+        y= "Benthic Fish Density")+
+  scale_y_continuous(limits = c(0, 0.15), breaks = seq(0, 0.15, by = 0.05)) +  # Set y-axis limits and breaks
+  scale_x_continuous(limits = c(0, 3020), breaks = seq(0, 3020, by = 1000)) +  # Set y-axis limits and breaks
   theme_classic()
 glmplot_fSlope
 
-
-
-
-
-
-
-
-
-m <- glm(Ben ~ NASC_10_1m + Average_5m_slope + 
-              NASC_10_1m:Average_5m_slope, 
-            family = gaussian,  data = sitefull)
-summary(m)
-
-m2 <- glm(Ben ~ NASC_10_1m, 
-         family = gaussian,  data = sitefull)
-summary(m2)
-# 
-# # Step 1: Extract predictions and confidence intervals
-# predictions_with_se <- predict(m, type = "response", se.fit = TRUE)
-# predictions <- predictions_with_se$fit
-# se.fit <- predictions_with_se$se.fit
-# 
-# # Calculate confidence intervals (95% CI)
-# lower_bound <- predictions - 1.96 * se.fit
-# upper_bound <- predictions + 1.96 * se.fit
-# 
-# # Step 2: Create a data frame with the necessary values
-# plot_data <- data.frame(
-#   Ben = sitefull$Ben,
-#   NASC_10_1m = sitefull$NASC_10_1m,
-#   Average_5m_slope = sitefull$Average_5m_slope,
-#   predictions = predictions,
-#   lower_bound = lower_bound,
-#   upper_bound = upper_bound
-# )
-# 
-# plot_data <- plot_data[order(plot_data$NASC_10_1m), ]
-# 
-# # Step 3: Create the ggplot
-# ggplot(plot_data, aes(x = NASC_10_1m, y = Ben )) +
-#   geom_point(aes(color = "Actual"), alpha = 0.8) +  # Plot actual points
-#   geom_line(aes(y = predictions), color = "red", size = 1) +  # Add predicted values
-#   geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), fill = "blue", alpha = 0.2) +  # Confidence interval
-#   labs(
-#     title = "Predictions with Confidence Intervals",
-#     x = "NASC_10_1m",
-#     y = "Ben"
-#   ) +
-#   theme_minimal() +
-#   theme(legend.position = "none")
-
-
-glmplot<- sitefull%>%
-  mutate(predicted = predict(m, sitefull))%>%
-  mutate(predicted2 = predict(m2, sitefull))%>%
-  ggplot(aes(x=NASC_10_1m, y = Ben, colour = Average_5m_slope))+
-  geom_point(show.legend = TRUE)+
-  geom_smooth(aes(y=predicted2 ), se = TRUE, colour = "red")+
-  geom_smooth(aes(y=predicted ), method = "lm",  se = TRUE, color = "deepskyblue3")+
-  labs( x= "NASC",
-        y= "Benthic Fish Density",
-        color = "Slope")+
-  scale_color_gradient(low = "black", high = "deepskyblue")+
-  theme_classic()
-glmplot
-
-glmplot1<- sitefull%>%
-  mutate(predicted = predict(m, sitefull))%>%
-  ggplot(aes(x=Average_5m_slope, y = Ben, colour = NASC_10_1m))+
-  geom_point(show.legend = TRUE)+
-  geom_smooth(aes(y=predicted), se = TRUE, color = "deepskyblue3")+
-  labs( x= "Slope",
-        y= "Benthic Fish Density",
-        color = "NASC")+
-  scale_color_gradient(low = "black", high = "deepskyblue")+
-  theme_classic()
-glmplot1
-
-echotop<-grid.arrange(glmplot, glmplot1, nrow =2)
-
-ggsave("figures/Top_Echo_GLM_plot.png", plot = echotop, width = 25, height = 25, units = "cm")
-
+ggsave("figures/Top_Echo_Mod_HMLfixedSlopePlot.png", plot = glmplot_fSlope, width = 25, height = 25, units = "cm")
 
 #######################################
 #5m model
@@ -1440,13 +1364,17 @@ vif(model2)
 #model using only variables also available from echosounder (best model - 18% dev explained)
 ###full model
 
+#add constant
+sitefull <- sitefull %>%
+  mutate(Ben = ifelse(Ben == 0, Ben + 0.0001, Ben))
+
 Slope_Rugosity_Depth <- glm(Ben ~  Slope + Rugosity + Depth,
           family = gaussian,  data = sitefull)
 summary(Slope_Rugosity_Depth)
 AIC(Slope_Rugosity_Depth) #-199 (18% Dev Exp)
 
 Slope_Rugosity <- glm(Ben ~  Slope + Rugosity,
-                                 family = gaussian,  data = sitefull)
+                      family = gaussian,  data = sitefull)
 summary(Slope_Rugosity)
 AIC(Slope_Rugosity) #-199 (18% Dev Exp)
 
@@ -1456,7 +1384,7 @@ explaineddeviance<- 100*(((Slope_Rugosity)$null.deviance-(Slope_Rugosity)$devian
 explaineddeviance
 
 Rugosity <- glm(Ben ~ Rugosity,
-                           family = gaussian,  data = sitefull)
+                family = gaussian,  data = sitefull)
 summary(Rugosity)
 AIC(Rugosity) #-199 (18% Dev Exp)
 
@@ -1466,15 +1394,9 @@ explaineddeviance<- 100*(((Rugosity)$null.deviance-(Rugosity)$deviance)/(Rugosit
 explaineddeviance
 
 Slope <- glm(Ben ~ Slope ,
-                     family = gaussian,  data = sitefull)
+             family = gaussian,  data = sitefull)
 summary(Slope)
 AIC(Slope) #-199 (18% Dev Exp)
-
-###AIC selection BEST MODEL (remove Depth)
-Slope_Rugosity <- glm(Ben ~  Slope + Rugosity,
-          family = gaussian,  data = sitefull)
-summary(Slope_Rugosity)
-AIC(Slope_Rugosity) #-201 (17% Dev Exp)
 
 
 ###put all models in a list to compare AIC weights
@@ -1530,90 +1452,120 @@ r <- simulateResiduals(Slope_Rugosity, n = 1000, plot = TRUE)  #some issues with
 #check dispersion
 testDispersion(D1)
 
+#####plot GLM results - ROV MODEL####
+
+# Create an empty dataframe
+
+#create data frame with Slope fixed at 5 and NASC going from 76 to ~3000
+sitefull2 <- data.frame(Slope = rep(12.4, 39))
+sitefull2$Rugosity<- seq(1, by = 0.05, length.out = 39)
+sitefull3<-sitefull%>%
+  dplyr::select(Ben)
+sitefull4<- cbind(sitefull2, sitefull3)
+
+#Max slope dataframe
+#create data frame with Slope fixed at 30 and NASC going from 76 to ~3000
+sitefull6 <- data.frame(Slope = rep(71.7, 39))
+sitefull6$Rugosity<- seq(1, by = 0.05, length.out = 39)
+sitefull7<-sitefull%>%
+  dplyr::select(Ben)
+sitefull8<- cbind(sitefull6, sitefull7)
+
+#Max slope dataframe
+#create data frame with Slope fixed at 30 and NASC going from 76 to ~3000
+sitefull9 <- data.frame(Slope = rep(35.6, 39))
+sitefull9$Rugosity<- seq(1, by = 0.05, length.out = 39)
+sitefull10<-sitefull%>%
+  dplyr::select(Ben)
+sitefull11<- cbind(sitefull9, sitefull10)
+
+#run glm model on real data
 ###plot glm results
 
-m <- glm(Ben ~  Slope + Rugosity + Rock,
+m <- glm(Ben ~  Slope + Rugosity,
          family = gaussian,  data = sitefull)
+summary(m)
 
-# Step 1: Extract predictions and confidence intervals
-predictions_with_se <- predict(m, type = "response", se.fit = TRUE)
-predictions <- predictions_with_se$fit
-se.fit <- predictions_with_se$se.fit
+mean(sitefull$Slope)# 35.6
+min(sitefull$Slope) #12.4
+max(sitefull$Slope) #71.7
+
+
+#predict values for Ben using real model on simulated data 
+################
+#low slope
+sitefull4$predicted<-pmax(predict(m, sitefull4), 0) #low slope - fixed at 3.6
+
+##get confidence intervals (low slope)
+predicted_se <- predict(m, sitefull4, type = "response", se.fit = TRUE)
+predictions <- predicted_se$fit
+se.fit <- predicted_se$se.fit
 
 # Calculate confidence intervals (95% CI)
-lower_bound <- predictions - 1.96 * se.fit
-upper_bound <- predictions + 1.96 * se.fit
+sitefull4$lower_bound <- predictions - 1.96 * se.fit
+sitefull4$upper_bound <- predictions + 1.96 * se.fit
 
-# Step 2: Create a data frame with the necessary values
-plot_data <- data.frame(
-  Ben = sitefull$Ben,
-  NASC_10_1m = sitefull$NASC_10_1m,
-  predictions = predictions,
-  lower_bound = lower_bound,
-  upper_bound = upper_bound
-)
+####################
+#High slope
+sitefull8$predicted<-pmax(predict(m, sitefull8), 0) #high slope - fixed at 30
 
-# Step 3: Create the ggplot
-ggplot(plot_data, aes(x = NASC_10_1m, y = Ben, color =  )) +
-  geom_point(aes(color = "Actual"), alpha = 0.5) +  # Plot actual points
-  geom_line(aes(y = predictions), color = "blue", size = 1) +  # Add predicted values
-  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), fill = "blue", alpha = 0.2) +  # Confidence interval
-  labs(
-    title = "Predictions with Confidence Intervals",
-    x = "Ben",
-    y = "NASC_10_1m"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "none")
+##get confidence intervals (high slope)
+predicted_se <- predict(m, sitefull8, type = "response", se.fit = TRUE)
+predictions <- predicted_se$fit
+se.fit <- predicted_se$se.fit
 
-glmplot<- sitefull%>%
-  mutate(predicted = predict(m, sitefull))%>%
-  ggplot(aes(x=Slope, y = Ben))+
-  geom_point(colour = "blue", show.legend = TRUE)+
-  geom_smooth(aes(y=predicted), se = TRUE, color = "darkblue")+
-  labs( x= "Slope",
-        y= "Benthic Fish Density")+
-  theme_classic()
-glmplot
+# Calculate confidence intervals (95% CI)
+sitefull8$lower_bound <- predictions - 1.96 * se.fit
+sitefull8$upper_bound <- predictions + 1.96 * se.fit
 
+################
+#mean slope
+sitefull11$predicted<-pmax(predict(m, sitefull11), 0) #mean slope - fixed at 16.7
 
+##get confidence intervals (high slope)
+predicted_se <- predict(m, sitefull11, type = "response", se.fit = TRUE)
+predictions <- predicted_se$fit
+se.fit <- predicted_se$se.fit
 
+# Calculate confidence intervals (95% CI)
+sitefull11$lower_bound <- predictions - 1.96 * se.fit
+sitefull11$upper_bound <- predictions + 1.96 * se.fit
 
+#set any negative sitefull8 predicted values to NA, and set lower limit confidence intervals to zero
+sitefull8<-sitefull8%>%
+  mutate(lower_bound = replace(lower_bound, which(lower_bound<0), 0))
 
+sitefull4<-sitefull4%>%
+  mutate(lower_bound = replace(lower_bound, which(lower_bound<0), 0))
 
+sitefull11<-sitefull11%>%
+  mutate(lower_bound = replace(lower_bound, which(lower_bound<0), 0))
 
-
-
-
-glmplot1<- sitefull%>%
-  mutate(predicted = predict(m, sitefull))%>%
-  ggplot(aes(x=Rugosity, y = Ben))+
-  geom_point(colour = "indianred3", show.legend = TRUE)+
-  geom_smooth(aes(y=predicted), se = TRUE, color = "indianred4")+
+glmplot_ROV<- sitefull%>%
+  ggplot(aes(x=Rugosity, y = Ben))+ #plot actual raw data of NASC vs. benthic fish density
+  geom_point()+
+  labs(title = "b)") +
+  geom_line(aes(y=predicted ),   data = sitefull4,  color = "deepskyblue3", size = 1)+ #predictions for low slope (5 degree) line
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull4,  fill = "deepskyblue3", alpha = 0.2) +  # Confidence interval
+  geom_line(aes(y=predicted ),   data = sitefull8, color = "orange3",  linetype = "dotted", size = 1)+ #predictions for high slope (30 degree) line
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull8,  fill = "orange", alpha = 0.2) +  # Confidence interval
+  geom_line(aes(y=predicted ),   data = sitefull11,  color = "indianred4", linetype = "dashed", size = 1)+ #predictions for low slope (16.7 degree) line
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull11,  fill = "indianred", alpha = 0.2) +  # Confidence interval
+  #geom_smooth(method = "lm", data = sitefull, se = TRUE, color = "green")+ #predictions for basic linear model of NASC vs. benthic fish density (no slope included)
+  geom_text(data = sitefull4, aes(x = mean(Rugosity), y = max(Ben), label = "Minimum Slope"), 
+            color = "deepskyblue3", size = 4, hjust = -0.1, vjust = 1.5) +
+  geom_text(data = sitefull11, aes(x = mean(Rugosity), y = min(predicted), label = "Maximum Slope"), 
+            color = "orange3", size = 4, hjust = -0.1, vjust = 1.5) +
+  
+  geom_text(data = sitefull11, aes(x = mean(Rugosity), y = mean(predicted), label = "Mean Slope"), 
+            color = "indianred4", size = 4, hjust = -0.1, vjust = 1.5) +
   labs( x= "Rugosity",
-        y= "Benthic Fish Density",
-        color = "Slope")+
+        y= "Benthic Fish Density")+
+  scale_y_continuous(limits = c(0, 0.15), breaks = seq(0, 0.15, by = 0.05)) +  # Set y-axis limits and breaks
   theme_classic()
-glmplot1
+glmplot_ROV
 
-glmplot2<- sitefull%>%
-  mutate(predicted = predict(m, sitefull))%>%
-  ggplot(aes(x=NASC_10_1m, y = Ben, color= Slope))+
-  geom_point(colour = "indianred3", show.legend = TRUE)+
-  geom_smooth(aes(y=predicted), se = TRUE, color = "indianred4")+
-  labs( x= "NASC",
-        y= "Benthic Fish Density",
-        color = "Slope")+
-  theme_classic()
-glmplot2
-
-ROVechotop<-grid.arrange(glmplot2, glmplot, glmplot1, nrow =3)
-
-
-
-ggsave("figures/Top_ROVEcho_GLM_plot.png", plot = ROVechotop, width = 25, height = 25, units = "cm")
-
-
+ggsave("figures/Top_ROV_Mod_HMLfixedSlopePlot.png", plot = glmplot_ROV, width = 25, height = 25, units = "cm")
 
 
 ##### ROV/ECHO hybrid model with rock and NASC included ####
@@ -1701,10 +1653,133 @@ resVpred<-grid.arrange(E1, E2, E3, E4,  nrow = 2, respect=TRUE)
 #check model fit with DHARMa tests
 r <- simulateResiduals(Slope_Rug_NASC_NASCSlope, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
 
-###plot top hybrid ROV/Echo model####
+#####plot GLM results - ROV/Echo HYBRID MODEL####
+
+# Create an empty dataframe
+
+#create data frame with Slope fixed at 5 and NASC going from 76 to ~3000
+sitefull2 <- data.frame(Slope = rep(12.4, 39))
+sitefull2$NASC_10_1m<- seq(0, by = 76, length.out = 39)
+sitefull2$Rugosity<- rep(1.57, 39) #using mean value of RUGOSITY
+sitefull3<-sitefull%>%
+  dplyr::select(Ben)
+sitefull4<- cbind(sitefull2, sitefull3)
+
+#Max slope dataframe
+#create data frame with Slope fixed at 30 and NASC going from 76 to ~3000
+sitefull6 <- data.frame(Slope = rep(71.7, 39))
+sitefull6$NASC_10_1m<- seq(0, by = 76, length.out = 39)
+sitefull6$Rugosity<- rep(1.57, 39)
+sitefull7<-sitefull%>%
+  dplyr::select(Ben)
+sitefull8<- cbind(sitefull6, sitefull7)
+
+#Max slope dataframe
+#create data frame with Slope fixed at 30 and NASC going from 76 to ~3000
+sitefull9 <- data.frame(Slope = rep(35.6, 39))
+sitefull9$NASC_10_1m<- seq(0, by = 76, length.out = 39)
+sitefull9$Rugosity<- rep(1.57, 39)
+sitefull10<-sitefull%>%
+  dplyr::select(Ben)
+sitefull11<- cbind(sitefull9, sitefull10)
+
+#run glm model on real data
+###plot glm results
+
 m <- glm(Ben ~  Slope + Rugosity +NASC_10_1m +
            NASC_10_1m:Slope,
          family = gaussian,  data = sitefull)
+summary(m)
+
+mean(sitefull$Slope)# 35.6
+min(sitefull$Slope) #12.4
+max(sitefull$Slope) #71.7
+
+
+#predict values for Ben using real model on simulated data 
+################
+#low slope
+sitefull4$predicted<-pmax(predict(m, sitefull4), 0) #low slope - fixed at 3.6
+
+##get confidence intervals (low slope)
+predicted_se <- predict(m, sitefull4, type = "response", se.fit = TRUE)
+predictions <- predicted_se$fit
+se.fit <- predicted_se$se.fit
+
+# Calculate confidence intervals (95% CI)
+sitefull4$lower_bound <- predictions - 1.96 * se.fit
+sitefull4$upper_bound <- predictions + 1.96 * se.fit
+
+####################
+#High slope
+sitefull8$predicted<-pmax(predict(m, sitefull8), 0) #high slope - fixed at 30
+
+##get confidence intervals (high slope)
+predicted_se <- predict(m, sitefull8, type = "response", se.fit = TRUE)
+predictions <- predicted_se$fit
+se.fit <- predicted_se$se.fit
+
+# Calculate confidence intervals (95% CI)
+sitefull8$lower_bound <- predictions - 1.96 * se.fit
+sitefull8$upper_bound <- predictions + 1.96 * se.fit
+
+################
+#mean slope
+sitefull11$predicted<-pmax(predict(m, sitefull11), 0) #mean slope - fixed at 16.7
+
+##get confidence intervals (high slope)
+predicted_se <- predict(m, sitefull11, type = "response", se.fit = TRUE)
+predictions <- predicted_se$fit
+se.fit <- predicted_se$se.fit
+
+# Calculate confidence intervals (95% CI)
+sitefull11$lower_bound <- predictions - 1.96 * se.fit
+sitefull11$upper_bound <- predictions + 1.96 * se.fit
+
+#set any negative sitefull8 predicted values to NA, and set lower limit confidence intervals to zero
+sitefull8<-sitefull8%>%
+  mutate(lower_bound = replace(lower_bound, which(lower_bound<0), 0))%>%
+  mutate(upper_bound = replace(upper_bound, which(upper_bound<0), 0))
+
+sitefull4<-sitefull4%>%
+  mutate(lower_bound = replace(lower_bound, which(lower_bound<0), 0))
+
+sitefull11<-sitefull11%>%
+  mutate(lower_bound = replace(lower_bound, which(lower_bound<0), 0))
+
+glmplot_HYBRID<- sitefull%>%
+  ggplot(aes(x=NASC_10_1m, y = Ben))+ #plot actual raw data of NASC vs. benthic fish density
+  geom_point()+
+  labs(title = "c)") +
+  geom_line(aes(y=predicted ),   data = sitefull4,  color = "deepskyblue3", size = 1)+ #predictions for low slope (5 degree) line
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull4,  fill = "deepskyblue3", alpha = 0.2) +  # Confidence interval
+  geom_line(aes(y=predicted ),   data = sitefull8, color = "orange3",  linetype = "dotted", size = 1)+ #predictions for high slope (30 degree) line
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull8,  fill = "orange", alpha = 0.2) +  # Confidence interval
+  geom_line(aes(y=predicted ),   data = sitefull11,  color = "indianred4", linetype = "dashed", size = 1)+ #predictions for low slope (16.7 degree) line
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull11,  fill = "indianred", alpha = 0.2) +  # Confidence interval
+  #geom_smooth(method = "lm", data = sitefull, se = TRUE, color = "green")+ #predictions for basic linear model of NASC vs. benthic fish density (no slope included)
+  geom_text(data = sitefull4, aes(x = mean(NASC_10_1m), y = max(upper_bound), label = "Minimum Slope"), 
+            color = "deepskyblue3", size = 4, hjust = -0.1, vjust = 1.5) +
+  geom_text(data = sitefull11, aes(x = mean(NASC_10_1m), y = min(predicted), label = "Maximum Slope"), 
+            color = "orange3", size = 4, hjust = -0.1, vjust = 1.5) +
+  
+  geom_text(data = sitefull11, aes(x = mean(NASC_10_1m), y = mean(predicted), label = "Mean Slope"), 
+            color = "indianred4", size = 4, hjust = -0.1, vjust = 1.5) +
+  labs( x= "NASC",
+        y= "Benthic Fish Density")+
+  scale_y_continuous(limits = c(0, 0.15), breaks = seq(0, 0.15, by = 0.05)) +  # Set y-axis limits and breaks
+  scale_x_continuous(limits = c(0, 3020), breaks = seq(0, 3020, by = 1000)) +  # Set y-axis limits and breaks
+  theme_classic()
+glmplot_HYBRID
+
+ggsave("figures/Top_HYBRID_Mod_HMLfixedSlopePlot.png", plot = glmplot_HYBRID, width = 25, height = 25, units = "cm")
+
+
+trio<-grid.arrange(glmplot_fSlope, glmplot_ROV, glmplot_HYBRID, nrow = 1, respect=TRUE)
+
+ggsave("figures/Top_3_GLMS_plotted.png", plot = trio, width = 25, height = 25, units = "cm")
+
+#############
 
 
 glmplot<- sitefull%>%
