@@ -845,6 +845,9 @@ ggsave("figures/NASC_RFZ_DZ_boxes.png", plot = NASC_all, width = 25, height = 25
 
 ####GLM ANALYSES####
 
+#visualize interaction between NASC and Slope with a coplot
+plot<- coplot(Ben~NASC_10_1m|Average_5m_slope, panel = panel.car, col = "darkblue", rows = 1, data = sitefull)
+
 #convert benthic count to density
 sitefull$Ben<-sitefull$AbundanceNonSchooling/sitefull$Volume
 
@@ -988,6 +991,191 @@ resVpred<-grid.arrange(E1, E2, E3, E4, E5, nrow = 2, respect=TRUE)
 r <- simulateResiduals(NASC_Slope_NASCSLOPE, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
 #check dispersion
 testDispersion(NASC_Slope_NASCSLOPE)
+
+#####plot GLM results####
+
+# Create an empty dataframe
+
+#create data frame with Slope fixed at 5 and NASC going from 76 to ~3000
+sitefull2 <- data.frame(Average_5m_slope = rep(3.6, 39))
+sitefull2$NASC_10_1m<- seq(0, by = 76, length.out = 39)
+sitefull3<-sitefull%>%
+  dplyr::select(Ben)
+sitefull4<- cbind(sitefull2, sitefull3)
+
+#Max slope dataframe
+#create data frame with Slope fixed at 30 and NASC going from 76 to ~3000
+sitefull6 <- data.frame(Average_5m_slope = rep(30, 39))
+sitefull6$NASC_10_1m<- seq(0, by = 76, length.out = 39)
+sitefull7<-sitefull%>%
+  dplyr::select(Ben)
+sitefull8<- cbind(sitefull6, sitefull7)
+
+#Max slope dataframe
+#create data frame with Slope fixed at 30 and NASC going from 76 to ~3000
+sitefull9 <- data.frame(Average_5m_slope = rep(16.7, 39))
+sitefull9$NASC_10_1m<- seq(0, by = 76, length.out = 39)
+sitefull10<-sitefull%>%
+  dplyr::select(Ben)
+sitefull11<- cbind(sitefull9, sitefull10)
+
+#run glm model on real data
+m <- glm(Ben ~ NASC_10_1m + Average_5m_slope + 
+           NASC_10_1m:Average_5m_slope, 
+         family = gaussian,  data = sitefull)
+summary(m)
+
+mean(sitefull$Average_5m_slope)# 16.7
+min(sitefull$Average_5m_slope) #3.6
+max(sitefull$Average_5m_slope) #30
+
+#predict values for Ben using real model on simulated data 
+################
+#low slope
+sitefull4$predicted<-predict(m, sitefull4) #low slope - fixed at 3.6
+
+##get confidence intervals (low slope)
+predicted_se <- predict(m, sitefull4, type = "response", se.fit = TRUE)
+predictions <- predicted_se$fit
+se.fit <- predicted_se$se.fit
+
+# Calculate confidence intervals (95% CI)
+sitefull4$lower_bound <- predictions - 1.96 * se.fit
+sitefull4$upper_bound <- predictions + 1.96 * se.fit
+
+####################
+#High slope
+sitefull8$predicted<-predict(m, sitefull8) #high slope - fixed at 30
+
+##get confidence intervals (high slope)
+predicted_se <- predict(m, sitefull8, type = "response", se.fit = TRUE)
+predictions <- predicted_se$fit
+se.fit <- predicted_se$se.fit
+
+# Calculate confidence intervals (95% CI)
+sitefull8$lower_bound <- predictions - 1.96 * se.fit
+sitefull8$upper_bound <- predictions + 1.96 * se.fit
+
+################
+#mean slope
+sitefull11$predicted<-predict(m, sitefull11) #mean slope - fixed at 16.7
+
+##get confidence intervals (high slope)
+predicted_se <- predict(m, sitefull11, type = "response", se.fit = TRUE)
+predictions <- predicted_se$fit
+se.fit <- predicted_se$se.fit
+
+# Calculate confidence intervals (95% CI)
+sitefull11$lower_bound <- predictions - 1.96 * se.fit
+sitefull11$upper_bound <- predictions + 1.96 * se.fit
+
+#set any negative sitefull8 predicted values to NA, and set lower limit confidence intervals to zero
+sitefull8<-sitefull8%>%
+  mutate(predicted = replace(predicted, which(predicted<0), NA))%>%
+  mutate(lower_bound = replace(lower_bound, which(lower_bound<0), 0))%>%
+  mutate(upper_bound = replace(upper_bound, which(upper_bound<0), NA))
+
+
+
+glmplot_fSlope<- sitefull%>%
+  ggplot(aes(x=NASC_10_1m, y = Ben))+ #plot actual raw data of NASC vs. benthic fish density
+  geom_point()+
+  geom_line(aes(y=predicted ),   data = sitefull4,  color = "deepskyblue3", size = 1)+ #predictions for low slope (5 degree) line
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull4,  fill = "deepskyblue3", alpha = 0.2) +  # Confidence interval
+  geom_line(aes(y=predicted ),   data = sitefull8, color = "orange3",  linetype = "dotted", size = 1)+ #predictions for high slope (30 degree) line
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull8,  fill = "orange", alpha = 0.2) +  # Confidence interval
+  geom_line(aes(y=predicted ),   data = sitefull11,  color = "indianred4", linetype = "dashed", size = 1)+ #predictions for low slope (16.7 degree) line
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), data = sitefull11,  fill = "indianred", alpha = 0.2) +  # Confidence interval
+  #geom_smooth(method = "lm", data = sitefull, se = TRUE, color = "green")+ #predictions for basic linear model of NASC vs. benthic fish density (no slope included)
+  labs( x= "NASC",
+        y= "Benthic Fish Density",
+        color = "Slope")+
+  scale_color_gradient(low = "black", high = "deepskyblue")+
+  #ylim(0, 0.15)+
+  theme_classic()
+glmplot_fSlope
+
+
+
+
+
+
+
+
+
+m <- glm(Ben ~ NASC_10_1m + Average_5m_slope + 
+              NASC_10_1m:Average_5m_slope, 
+            family = gaussian,  data = sitefull)
+summary(m)
+
+m2 <- glm(Ben ~ NASC_10_1m, 
+         family = gaussian,  data = sitefull)
+summary(m2)
+# 
+# # Step 1: Extract predictions and confidence intervals
+# predictions_with_se <- predict(m, type = "response", se.fit = TRUE)
+# predictions <- predictions_with_se$fit
+# se.fit <- predictions_with_se$se.fit
+# 
+# # Calculate confidence intervals (95% CI)
+# lower_bound <- predictions - 1.96 * se.fit
+# upper_bound <- predictions + 1.96 * se.fit
+# 
+# # Step 2: Create a data frame with the necessary values
+# plot_data <- data.frame(
+#   Ben = sitefull$Ben,
+#   NASC_10_1m = sitefull$NASC_10_1m,
+#   Average_5m_slope = sitefull$Average_5m_slope,
+#   predictions = predictions,
+#   lower_bound = lower_bound,
+#   upper_bound = upper_bound
+# )
+# 
+# plot_data <- plot_data[order(plot_data$NASC_10_1m), ]
+# 
+# # Step 3: Create the ggplot
+# ggplot(plot_data, aes(x = NASC_10_1m, y = Ben )) +
+#   geom_point(aes(color = "Actual"), alpha = 0.8) +  # Plot actual points
+#   geom_line(aes(y = predictions), color = "red", size = 1) +  # Add predicted values
+#   geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), fill = "blue", alpha = 0.2) +  # Confidence interval
+#   labs(
+#     title = "Predictions with Confidence Intervals",
+#     x = "NASC_10_1m",
+#     y = "Ben"
+#   ) +
+#   theme_minimal() +
+#   theme(legend.position = "none")
+
+
+glmplot<- sitefull%>%
+  mutate(predicted = predict(m, sitefull))%>%
+  mutate(predicted2 = predict(m2, sitefull))%>%
+  ggplot(aes(x=NASC_10_1m, y = Ben, colour = Average_5m_slope))+
+  geom_point(show.legend = TRUE)+
+  geom_smooth(aes(y=predicted2 ), se = TRUE, colour = "red")+
+  geom_smooth(aes(y=predicted ), method = "lm",  se = TRUE, color = "deepskyblue3")+
+  labs( x= "NASC",
+        y= "Benthic Fish Density",
+        color = "Slope")+
+  scale_color_gradient(low = "black", high = "deepskyblue")+
+  theme_classic()
+glmplot
+
+glmplot1<- sitefull%>%
+  mutate(predicted = predict(m, sitefull))%>%
+  ggplot(aes(x=Average_5m_slope, y = Ben, colour = NASC_10_1m))+
+  geom_point(show.legend = TRUE)+
+  geom_smooth(aes(y=predicted), se = TRUE, color = "deepskyblue3")+
+  labs( x= "Slope",
+        y= "Benthic Fish Density",
+        color = "NASC")+
+  scale_color_gradient(low = "black", high = "deepskyblue")+
+  theme_classic()
+glmplot1
+
+echotop<-grid.arrange(glmplot, glmplot1, nrow =2)
+
+ggsave("figures/Top_Echo_GLM_plot.png", plot = echotop, width = 25, height = 25, units = "cm")
 
 
 #######################################
@@ -1226,48 +1414,61 @@ testDispersion(NASC15_Slope_NASC15SLOPE)
 
 ######density model with ROV data#####
 
+#check Variance Inflation Factors (VIF) for colinearity
+TF<-sitefull%>%
+  dplyr::select(Site_ID, Rugosity, Slope, Rock, Ben, Depth)
+
+site_explan<-TF%>%
+  dplyr::select(-c( Site_ID))
+str(site_explan)
+
+####can also check colinearity with variance inflation factors####
+model <- lm(Ben ~ ., data = site_explan)
+vif(model)
+#remove Rock(highly collinear)
+site_explan2<-site_explan%>%
+  dplyr::select(-c( Rock))
+str(site_explan2)
+
+model2 <- lm(Ben ~ ., data = site_explan2)
+vif(model2)
+
+#none of the other variables have a VIF above 3 which is a typical cut off
+
+
 #### ROV model - Slope, Rug, Depth only####
 #model using only variables also available from echosounder (best model - 18% dev explained)
 ###full model
-Slope_Rugosity_Rock_ROCKSLOPE <- glm(Ben ~  Slope + Rugosity + Rock +Rock:Slope,
-                                 family = gaussian,  data = sitefull)
-summary(Slope_Rugosity_Rock_ROCKSLOPE)
-AIC(Slope_Rugosity_Rock_ROCKSLOPE)
 
-#get glm equivalent of R-squared (explained deviance)
-explaineddeviance<- 100*(((Slope_Rugosity_Rock_ROCKSLOPE)$null.deviance-(Slope_Rugosity_Rock_ROCKSLOPE)$deviance)/(Slope_Rugosity_Rock_ROCKSLOPE)$null.deviance)
-#get value for explained deviance (also known as pseudo Rsquared)
-explaineddeviance
-
-Slope_Rugosity_Depth_Rock <- glm(Ben ~  Slope + Rugosity + Depth+Rock,
+Slope_Rugosity_Depth <- glm(Ben ~  Slope + Rugosity + Depth,
           family = gaussian,  data = sitefull)
-summary(Slope_Rugosity_Depth_Rock)
-AIC(Slope_Rugosity_Depth_Rock) #-199 (18% Dev Exp)
+summary(Slope_Rugosity_Depth)
+AIC(Slope_Rugosity_Depth) #-199 (18% Dev Exp)
 
-Slope_Rugosity_Rock <- glm(Ben ~  Slope + Rugosity + Rock,
+Slope_Rugosity <- glm(Ben ~  Slope + Rugosity,
                                  family = gaussian,  data = sitefull)
-summary(Slope_Rugosity_Rock)
-AIC(Slope_Rugosity_Rock) #-199 (18% Dev Exp)
+summary(Slope_Rugosity)
+AIC(Slope_Rugosity) #-199 (18% Dev Exp)
 
 #get glm equivalent of R-squared (explained deviance)
-explaineddeviance<- 100*(((Slope_Rugosity_Rock)$null.deviance-(Slope_Rugosity_Rock)$deviance)/(Slope_Rugosity_Rock)$null.deviance)
+explaineddeviance<- 100*(((Slope_Rugosity)$null.deviance-(Slope_Rugosity)$deviance)/(Slope_Rugosity)$null.deviance)
 #get value for explained deviance (also known as pseudo Rsquared)
 explaineddeviance
 
-Rugosity_Rock <- glm(Ben ~ Rugosity + Rock,
+Rugosity <- glm(Ben ~ Rugosity,
                            family = gaussian,  data = sitefull)
-summary(Rugosity_Rock)
-AIC(Rugosity_Rock) #-199 (18% Dev Exp)
+summary(Rugosity)
+AIC(Rugosity) #-199 (18% Dev Exp)
 
 #get glm equivalent of R-squared (explained deviance)
-explaineddeviance<- 100*(((Rugosity_Rock)$null.deviance-(Rugosity_Rock)$deviance)/(Rugosity_Rock)$null.deviance)
+explaineddeviance<- 100*(((Rugosity)$null.deviance-(Rugosity)$deviance)/(Rugosity)$null.deviance)
 #get value for explained deviance (also known as pseudo Rsquared)
 explaineddeviance
 
-Slope_Rock <- glm(Ben ~ Slope + Rock,
+Slope <- glm(Ben ~ Slope ,
                      family = gaussian,  data = sitefull)
-summary(Slope_Rock)
-AIC(Slope_Rock) #-199 (18% Dev Exp)
+summary(Slope)
+AIC(Slope) #-199 (18% Dev Exp)
 
 ###AIC selection BEST MODEL (remove Depth)
 Slope_Rugosity <- glm(Ben ~  Slope + Rugosity,
@@ -1277,9 +1478,9 @@ AIC(Slope_Rugosity) #-201 (17% Dev Exp)
 
 
 ###put all models in a list to compare AIC weights
-models <- list(Slope_Rugosity_Depth_Rock, Slope_Rugosity_Rock,Rugosity_Rock,Slope_Rock, Slope_Rugosity,Slope_Rugosity_Rock_ROCKSLOPE)
+models <- list(Slope_Rugosity_Depth, Rugosity, Slope, Slope_Rugosity)
 
-model.names <- c('Slope_Rugosity_Depth_Rock', 'Slope_Rugosity_Rock','Rugosity_Rock','Slope_Rock', 'Slope_Rugosity', 'Slope_Rugosity_Rock_ROCKSLOPE')
+model.names <- c('Slope_Rugosity_Depth', 'Rugosity', 'Slope', 'Slope_Rugosity')
 
 AIC_ROV_results<-aictab(cand.set = models, modnames = model.names)
 flextable(AIC_ROV_results)
@@ -1287,13 +1488,13 @@ flextable(AIC_ROV_results)
 ### model validation for ROV model
 
 par(mfrow = c(2, 2))
-plot(Slope_Rugosity_Rock)
+plot(Slope_Rugosity)
 
-check_overdispersion(Slope_Rugosity_Rock)
+check_overdispersion(Slope_Rugosity)
 
 
 #####calculate residuals and add to dataframe
-residuals <- residuals(Slope_Rugosity_Rock)
+residuals <- residuals(Slope_Rugosity)
 TF2 <- sitefull %>%
   mutate(resid = residuals)
 
@@ -1315,13 +1516,6 @@ E2<-ggplot(TF2) +
               method = "lm")
 
 E3<-ggplot(TF2) +
-  geom_point(aes(x = Rock,
-                 y = resid)) +
-  geom_smooth(aes(x = Rock,
-                  y = resid),
-              method = "lm")
-
-E4<-ggplot(TF2) +
   geom_point(aes(x = Depth,
                  y = resid)) +
   geom_smooth(aes(x = Depth,
@@ -1329,39 +1523,110 @@ E4<-ggplot(TF2) +
               method = "lm")
 
 
-resVpred<-grid.arrange(E1, E2, E3, E4,  nrow = 2, respect=TRUE)
+resVpred<-grid.arrange(E1, E2, E3,  nrow = 2, respect=TRUE)
 
 #check model fit with DHARMa tests
-r <- simulateResiduals(Slope_Rugosity_Rock, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
+r <- simulateResiduals(Slope_Rugosity, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
 #check dispersion
 testDispersion(D1)
 
+###plot glm results
+
+m <- glm(Ben ~  Slope + Rugosity + Rock,
+         family = gaussian,  data = sitefull)
+
+# Step 1: Extract predictions and confidence intervals
+predictions_with_se <- predict(m, type = "response", se.fit = TRUE)
+predictions <- predictions_with_se$fit
+se.fit <- predictions_with_se$se.fit
+
+# Calculate confidence intervals (95% CI)
+lower_bound <- predictions - 1.96 * se.fit
+upper_bound <- predictions + 1.96 * se.fit
+
+# Step 2: Create a data frame with the necessary values
+plot_data <- data.frame(
+  Ben = sitefull$Ben,
+  NASC_10_1m = sitefull$NASC_10_1m,
+  predictions = predictions,
+  lower_bound = lower_bound,
+  upper_bound = upper_bound
+)
+
+# Step 3: Create the ggplot
+ggplot(plot_data, aes(x = NASC_10_1m, y = Ben, color =  )) +
+  geom_point(aes(color = "Actual"), alpha = 0.5) +  # Plot actual points
+  geom_line(aes(y = predictions), color = "blue", size = 1) +  # Add predicted values
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound), fill = "blue", alpha = 0.2) +  # Confidence interval
+  labs(
+    title = "Predictions with Confidence Intervals",
+    x = "Ben",
+    y = "NASC_10_1m"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+glmplot<- sitefull%>%
+  mutate(predicted = predict(m, sitefull))%>%
+  ggplot(aes(x=Slope, y = Ben))+
+  geom_point(colour = "blue", show.legend = TRUE)+
+  geom_smooth(aes(y=predicted), se = TRUE, color = "darkblue")+
+  labs( x= "Slope",
+        y= "Benthic Fish Density")+
+  theme_classic()
+glmplot
+
+
+
+
+
+
+
+
+
+
+glmplot1<- sitefull%>%
+  mutate(predicted = predict(m, sitefull))%>%
+  ggplot(aes(x=Rugosity, y = Ben))+
+  geom_point(colour = "indianred3", show.legend = TRUE)+
+  geom_smooth(aes(y=predicted), se = TRUE, color = "indianred4")+
+  labs( x= "Rugosity",
+        y= "Benthic Fish Density",
+        color = "Slope")+
+  theme_classic()
+glmplot1
+
+glmplot2<- sitefull%>%
+  mutate(predicted = predict(m, sitefull))%>%
+  ggplot(aes(x=NASC_10_1m, y = Ben, color= Slope))+
+  geom_point(colour = "indianred3", show.legend = TRUE)+
+  geom_smooth(aes(y=predicted), se = TRUE, color = "indianred4")+
+  labs( x= "NASC",
+        y= "Benthic Fish Density",
+        color = "Slope")+
+  theme_classic()
+glmplot2
+
+ROVechotop<-grid.arrange(glmplot2, glmplot, glmplot1, nrow =3)
+
+
+
+ggsave("figures/Top_ROVEcho_GLM_plot.png", plot = ROVechotop, width = 25, height = 25, units = "cm")
 
 
 
 
 ##### ROV/ECHO hybrid model with rock and NASC included ####
 ## Full model
-Slope_Rug_Dep_Rock_NASC_NASCSlope <- glm(Ben ~  Slope + Rugosity + Depth + Rock +NASC_10_1m +
+Slope_Rug_Dep_NASC_NASCSlope <- glm(Ben ~  Slope + Rugosity + Depth  +NASC_10_1m +
             NASC_10_1m:Slope,
           family = gaussian,  data = sitefull)
-summary(Slope_Rug_Dep_Rock_NASC_NASCSlope)
-AIC(Slope_Rug_Dep_Rock_NASC_NASCSlope) #-220 (59% Dev Exp)
-
-Slope_Rug_Rock_NASC_NASCSlope <- glm(Ben ~  Slope + Rugosity  + Rock +NASC_10_1m +
-                                           NASC_10_1m:Slope,
-                                         family = gaussian,  data = sitefull)
-summary(Slope_Rug_Rock_NASC_NASCSlope)
-AIC(Slope_Rug_Rock_NASC_NASCSlope) #-220 (59% Dev Exp)
-
-#get glm equivalent of R-squared (explained deviance)
-explaineddeviance<- 100*(((Slope_Rug_Rock_NASC_NASCSlope)$null.deviance-(Slope_Rug_Rock_NASC_NASCSlope)$deviance)/(Slope_Rug_Rock_NASC_NASCSlope)$null.deviance)
-#get value for explained deviance (also known as pseudo Rsquared)
-explaineddeviance
+summary(Slope_Rug_Dep_NASC_NASCSlope)
+AIC(Slope_Rug_Dep_NASC_NASCSlope) #-220 (59% Dev Exp)
 
 Slope_Rug_NASC_NASCSlope <- glm(Ben ~  Slope + Rugosity +NASC_10_1m +
-                                       NASC_10_1m:Slope,
-                                     family = gaussian,  data = sitefull)
+                                           NASC_10_1m:Slope,
+                                         family = gaussian,  data = sitefull)
 summary(Slope_Rug_NASC_NASCSlope)
 AIC(Slope_Rug_NASC_NASCSlope) #-220 (59% Dev Exp)
 
@@ -1370,6 +1635,7 @@ explaineddeviance<- 100*(((Slope_Rug_NASC_NASCSlope)$null.deviance-(Slope_Rug_NA
 #get value for explained deviance (also known as pseudo Rsquared)
 explaineddeviance
 
+
 Slope_NASC_NASCSlope <- glm(Ben ~  Slope  +NASC_10_1m +
                                   NASC_10_1m:Slope,
                                 family = gaussian,  data = sitefull)
@@ -1377,9 +1643,9 @@ summary(Slope_NASC_NASCSlope)
 AIC(Slope_NASC_NASCSlope) #-220 (59% Dev Exp)
 
 ###put all models in a list to compare AIC weights
-models <- list(Slope_Rug_Dep_Rock_NASC_NASCSlope, Slope_Rug_Rock_NASC_NASCSlope,Slope_Rug_NASC_NASCSlope, Slope_NASC_NASCSlope)
+models <- list(Slope_Rug_Dep_NASC_NASCSlope, Slope_Rug_NASC_NASCSlope, Slope_NASC_NASCSlope)
 
-model.names <- c('Slope_Rug_Dep_Rock_NASC_NASCSlope', 'Slope_Rug_Rock_NASC_NASCSlope','Slope_Rug_NASC_NASCSlope', 'Slope_NASC_NASCSlope')
+model.names <- c('Slope_Rug_Dep_NASC_NASCSlope', 'Slope_Rug_NASC_NASCSlope', 'Slope_NASC_NASCSlope')
 
 AIC_hybrid_results<-aictab(cand.set = models, modnames = model.names)
 flextable(AIC_hybrid_results)
@@ -1398,14 +1664,6 @@ residuals <- residuals(Slope_Rug_NASC_NASCSlope)
 TF2 <- sitefull %>%
   mutate(resid = residuals)
 
-hist(sitefull$Rock)
-
-sitefullT<-sitefull
-sitefullT$RockT<-sitefullT$Rock/100
-
-sitefullT$RockTlogit<-logit(sitefullT$RockT)
-hist(sitefullT$RockTlogit)
-
 ## plot residuals vs predictors (looking for flat line with lm)
 
 
@@ -1424,20 +1682,13 @@ E2<-ggplot(TF2) +
               method = "lm")
 
 E3<-ggplot(TF2) +
-  geom_point(aes(x = Rock,
-                 y = resid)) +
-  geom_smooth(aes(x = Rock,
-                  y = resid),
-              method = "lm")
-
-E4<-ggplot(TF2) +
   geom_point(aes(x = Depth,
                  y = resid)) +
   geom_smooth(aes(x = Depth,
                   y = resid),
               method = "lm")
 
-E5<-ggplot(TF2) +
+E4<-ggplot(TF2) +
   geom_point(aes(x = NASC_10_1m,
                  y = resid)) +
   geom_smooth(aes(x = NASC_10_1m,
@@ -1445,11 +1696,58 @@ E5<-ggplot(TF2) +
               method = "lm")
 
 
-resVpred<-grid.arrange(E1, E2, E3, E4, E5,  nrow = 2, respect=TRUE)
+resVpred<-grid.arrange(E1, E2, E3, E4,  nrow = 2, respect=TRUE)
 
 #check model fit with DHARMa tests
 r <- simulateResiduals(Slope_Rug_NASC_NASCSlope, n = 1000, plot = TRUE)  #some issues with resid vs pred quantile plot (not an issue in density version of this model)
 
+###plot top hybrid ROV/Echo model####
+m <- glm(Ben ~  Slope + Rugosity +NASC_10_1m +
+           NASC_10_1m:Slope,
+         family = gaussian,  data = sitefull)
+
+
+glmplot<- sitefull%>%
+  mutate(predicted = predict(m, sitefull))%>%
+  ggplot(aes(x=Slope, y = Ben, color = NASC_10_1m))+
+  geom_point(show.legend = TRUE)+
+  geom_smooth(aes(y=predicted), se = TRUE, color = "darkred")+
+  labs( x= "Slope",
+        y= "Benthic Fish Density",
+        color = "NASC")+
+  scale_color_gradient(low = "black", high = "red")+
+  theme_classic()
+glmplot
+
+glmplot1<- sitefull%>%
+  mutate(predicted = predict(m, sitefull))%>%
+  ggplot(aes(x=Rugosity, y = Ben, color = Slope))+
+  geom_point(show.legend = TRUE)+
+  geom_smooth(aes(y=predicted), se = TRUE, color = "darkred")+
+  labs( x= "Rugosity",
+        y= "Benthic Fish Density",
+        color = "Slope")+
+  scale_color_gradient(low = "black", high = "red")+
+  theme_classic()
+glmplot1
+
+glmplot2<- sitefull%>%
+  mutate(predicted = predict(m, sitefull))%>%
+  ggplot(aes(x=NASC_10_1m, y = Ben, color= Slope))+
+  geom_point(show.legend = TRUE)+
+  geom_smooth(aes(y=predicted), se = TRUE, color = "darkred")+
+  labs( x= "NASC",
+        y= "Benthic Fish Density",
+        color = "Slope")+
+  scale_color_gradient(low = "black", high = "red")+
+  theme_classic()
+glmplot2
+
+ROVechotop<-grid.arrange(glmplot2, glmplot, glmplot1, nrow =3)
+
+
+
+ggsave("figures/Top_ROVEcho_GLM_plot.png", plot = ROVechotop, width = 25, height = 25, units = "cm")
 
 #######################################################
 ####different deadzone in echo models####
