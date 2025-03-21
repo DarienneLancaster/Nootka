@@ -34,6 +34,26 @@ nootkadata$T2_DepthDif <- nootkadata$T2_Edepth - nootkadata$T2_Sdepth
 
 nootkadata$T3_DepthDif <- nootkadata$T3_Edepth - nootkadata$T3_Sdepth
 
+#check how long echosounder transects take compared to ROV transects
+
+nootkadata$T1_duration<-as.numeric(nootkadata$T1_duration)
+nootkadata$T2_duration<-as.numeric(nootkadata$T2_duration)
+nootkadata$T3_duration<-as.numeric(nootkadata$T3_duration)
+nootkadata$site_duration<-as.numeric(nootkadata$site_duration)
+str(nootkadata)
+mean(nootkadata$T1_duration, na.rm = TRUE)
+sd(nootkadata$T1_duration, na.rm = TRUE)
+
+(mean(nootkadata$T2_duration, na.rm = TRUE)*60)
+(sd(nootkadata$T2_duration, na.rm = TRUE)*60)
+
+mean(nootkadata$T3_duration, na.rm = TRUE)
+sd(nootkadata$T3_duration, na.rm = TRUE)
+
+(mean(nootkadata$site_duration, na.rm = TRUE)*60)
+(sd(nootkadata$site_duration, na.rm = TRUE)*60)
+
+
 ## Lat and long conversion calculations ## 
 
 # Function to convert DMS to decimal degrees
