@@ -844,12 +844,11 @@ ggsave("figures/NASC_RFZ_DZ_boxes.png", plot = NASC_all, width = 25, height = 25
 #############################################################
 
 ####GLM ANALYSES####
+#convert benthic count to density
+sitefull$Ben<-sitefull$AbundanceNonSchooling/sitefull$Volume
 
 #visualize interaction between NASC and Slope with a coplot
 plot<- coplot(Ben~NASC_10_1m|Average_5m_slope, panel = panel.car, col = "darkblue", rows = 1, data = sitefull)
-
-#convert benthic count to density
-sitefull$Ben<-sitefull$AbundanceNonSchooling/sitefull$Volume
 
 ####examining quadratic in relationship
 #Echo slope vs fish density with quadratic line
@@ -880,6 +879,11 @@ ggplot(sitefull, aes(x = NASC_10_1m, y = Ben, color = Average_5m_slope)) +
 #Cumulative_LG_DZ_Area (AIC 220, 52%)
 
 ###AIC model selection
+
+#test model without missing laser sites (NS10, 11, 13)
+#remove sites
+# sitefullT<-sitefull%>%
+#   filter(Site_ID != "NS10", Site_ID != "NS11", Site_ID != "NS13")
 
 #Full model with all vars and no quadratic for slope
 NASC_Slope_Rugosity_Depth_DZ_DZNASC_NASCSLOPE <- glm(Ben ~ NASC_10_1m + Average_5m_slope + Std_Dev_Slope + Average_Depth + Cumulative_LG_DZ_Area +
@@ -1363,10 +1367,6 @@ vif(model2)
 #### ROV model - Slope, Rug, Depth only####
 #model using only variables also available from echosounder (best model - 18% dev explained)
 ###full model
-
-#add constant
-sitefull <- sitefull %>%
-  mutate(Ben = ifelse(Ben == 0, Ben + 0.0001, Ben))
 
 Slope_Rugosity_Depth <- glm(Ben ~  Slope + Rugosity + Depth,
           family = gaussian,  data = sitefull)
@@ -2042,6 +2042,17 @@ Cor_T1T3 <- ggplot(T1_T3_NASC, aes(x = NASC_10_1m, y = NASC_10_t3)) +
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 Cor_T1T3
+
+#pearson's correlation test (compare Volume measurement to categorical FOV estimate)
+FOVplot <- ggplot(sitefull, aes(x = FOVnVis, y = Volume)) +
+  geom_point(color = "gray40") +
+  # labs(title = "b)") +
+  sm_statCorr(corr_method="spearman", color = "gray40", linetype = "dashed")+
+  geom_text(aes(label = Site_ID), vjust = -0.5, hjust = 0.5, color = "blue", size = 3) +  # Add SiteID labels
+  labs(x = "FOV", y = "Volume")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+FOVplot
 
 
 ggsave("figures/T1_T3_pearsonscor_plot.png", plot = Cor_T1T3, width = 25, height = 25, units = "cm")
